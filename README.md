@@ -44,6 +44,14 @@ Infrastructure services:
 docker compose -f infra/docker-compose.yml up postgres redis
 ```
 
+Migrations and seed data:
+
+```bash
+cd backend
+alembic upgrade head
+python scripts/seed.py
+```
+
 ## Planned Stack
 
 - Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic.
