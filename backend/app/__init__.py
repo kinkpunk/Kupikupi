@@ -1,0 +1,2 @@
+"""Kupikupi backend package."""
+

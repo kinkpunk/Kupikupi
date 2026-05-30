@@ -12,7 +12,7 @@ Example request:
 
 ## Current Status
 
-Architecture baseline only. Backend, Telegram Bot, and WebApp implementation have not started yet.
+Backend foundation is in progress. Telegram Bot and WebApp implementation have not started yet.
 
 ## MVP Decisions
 
@@ -26,6 +26,23 @@ Architecture baseline only. Backend, Telegram Bot, and WebApp implementation hav
 
 - [Architecture](docs/architecture.md)
 - [OpenAPI draft](packages/openapi/openapi.yaml)
+
+## Backend Development
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+uvicorn app.main:app --reload
+```
+
+Infrastructure services:
+
+```bash
+docker compose -f infra/docker-compose.yml up postgres redis
+```
 
 ## Planned Stack
 
