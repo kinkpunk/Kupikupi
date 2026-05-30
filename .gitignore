@@ -1,0 +1,34 @@
+.DS_Store
+
+# Local workspace artifacts
+/work/
+/outputs/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+.next/
+dist/
+coverage/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/

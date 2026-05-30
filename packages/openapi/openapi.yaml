@@ -1,0 +1,1275 @@
+openapi: 3.1.0
+info:
+  title: Kupikupi API
+  version: 0.1.0
+  description: API draft for the Kupikupi personal shopping agent MVP.
+servers:
+  - url: https://api.kupikupi.cz/v1
+    description: Production
+  - url: http://localhost:8000/v1
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: Users
+  - name: Shopping Requests
+  - name: Watchlists
+  - name: Products
+  - name: Offers
+  - name: Price History
+  - name: Deals
+  - name: Notifications
+  - name: Admin
+paths:
+  /health:
+    get:
+      security: []
+      tags: [Users]
+      summary: Healthcheck
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /auth/telegram:
+    post:
+      security: []
+      tags: [Auth]
+      summary: Authenticate via Telegram WebApp init data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelegramAuthRequest"
+      responses:
+        "200":
+          description: Authenticated user and JWT tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/refresh:
+    post:
+      security: []
+      tags: [Auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: New access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPair"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      tags: [Users]
+      summary: Update current user settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /shopping-requests:
+    get:
+      tags: [Shopping Requests]
+      summary: List user's shopping requests
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Shopping requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingRequestList"
+    post:
+      tags: [Shopping Requests]
+      summary: Create a natural-language shopping request
+      description: Parses user intent deterministically and returns initial recommendations when available.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShoppingRequestCreate"
+      responses:
+        "201":
+          description: Created shopping request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingRequest"
+
+  /shopping-requests/{request_id}:
+    get:
+      tags: [Shopping Requests]
+      summary: Get shopping request details
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200":
+          description: Shopping request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /shopping-requests/{request_id}/recommendations:
+    get:
+      tags: [Shopping Requests]
+      summary: List recommendations for a shopping request
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200":
+          description: Ranked recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationList"
+
+  /shopping-requests/{request_id}/watchlist:
+    post:
+      tags: [Shopping Requests]
+      summary: Create watchlist from a shopping request after user confirmation
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "201":
+          description: Created watchlist rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+
+  /watchlists:
+    get:
+      tags: [Watchlists]
+      summary: List watchlists
+      parameters:
+        - name: active
+          in: query
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Watchlists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistList"
+    post:
+      tags: [Watchlists]
+      summary: Create watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistCreate"
+      responses:
+        "201":
+          description: Created watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+
+  /watchlists/{watchlist_id}:
+    get:
+      tags: [Watchlists]
+      summary: Get watchlist
+      parameters:
+        - $ref: "#/components/parameters/WatchlistId"
+      responses:
+        "200":
+          description: Watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Watchlists]
+      summary: Replace watchlist
+      parameters:
+        - $ref: "#/components/parameters/WatchlistId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistUpdate"
+      responses:
+        "200":
+          description: Updated watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+    delete:
+      tags: [Watchlists]
+      summary: Delete watchlist
+      parameters:
+        - $ref: "#/components/parameters/WatchlistId"
+      responses:
+        "204":
+          description: Deleted
+
+  /watchlists/{watchlist_id}/pause:
+    post:
+      tags: [Watchlists]
+      summary: Pause watchlist notifications and matching
+      parameters:
+        - $ref: "#/components/parameters/WatchlistId"
+      responses:
+        "200":
+          description: Paused watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+
+  /watchlists/{watchlist_id}/matches:
+    get:
+      tags: [Watchlists]
+      summary: List current offers matching a watchlist
+      parameters:
+        - $ref: "#/components/parameters/WatchlistId"
+      responses:
+        "200":
+          description: Matching offers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferList"
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Search normalized products
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: size
+          in: query
+          schema:
+            type: string
+        - name: max_price_eur
+          in: query
+          schema:
+            type: number
+            format: decimal
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductList"
+
+  /products/{product_id}:
+    get:
+      tags: [Products]
+      summary: Get product details
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /products/{product_id}/offers:
+    get:
+      tags: [Offers]
+      summary: List current offers for a product
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+        - name: size
+          in: query
+          schema:
+            type: string
+        - name: in_stock
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Offers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferList"
+
+  /price-history/{product_id}:
+    get:
+      tags: [Price History]
+      summary: Get price history and analytics for a product
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [30d, 90d, 180d, 365d, all]
+            default: 90d
+        - name: store_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Price history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceHistoryResponse"
+
+  /deals:
+    get:
+      tags: [Deals]
+      summary: List current deals
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: personalized
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: max_price_eur
+          in: query
+          schema:
+            type: number
+            format: decimal
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Deals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealList"
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notification history
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationList"
+
+  /admin/stores:
+    get:
+      tags: [Admin]
+      summary: List stores
+      responses:
+        "200":
+          description: Stores
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreList"
+    post:
+      tags: [Admin]
+      summary: Create store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreCreate"
+      responses:
+        "201":
+          description: Created store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+
+  /admin/stores/{store_id}:
+    patch:
+      tags: [Admin]
+      summary: Update store
+      parameters:
+        - $ref: "#/components/parameters/StoreId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreUpdate"
+      responses:
+        "200":
+          description: Updated store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Store"
+
+  /admin/sync-runs:
+    get:
+      tags: [Admin]
+      summary: List source synchronization runs
+      responses:
+        "200":
+          description: Sync runs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncRunList"
+    post:
+      tags: [Admin]
+      summary: Trigger manual synchronization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManualSyncRequest"
+      responses:
+        "202":
+          description: Synchronization queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncRun"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    RequestId:
+      name: request_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    WatchlistId:
+      name: watchlist_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProductId:
+      name: product_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    StoreId:
+      name: store_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: ok
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    TelegramAuthRequest:
+      type: object
+      required: [init_data]
+      properties:
+        init_data:
+          type: string
+          description: Raw Telegram WebApp init data.
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+
+    AuthResponse:
+      type: object
+      required: [user, tokens]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tokens:
+          $ref: "#/components/schemas/TokenPair"
+
+    User:
+      type: object
+      required: [id, telegram_id, country, currency, is_admin, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        telegram_id:
+          type: integer
+          format: int64
+        username:
+          type: string
+          nullable: true
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        language:
+          type: string
+          example: ru
+        country:
+          type: string
+          example: CZ
+        currency:
+          type: string
+          example: EUR
+        is_admin:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    UserUpdate:
+      type: object
+      properties:
+        language:
+          type: string
+        currency:
+          type: string
+        notification_enabled:
+          type: boolean
+
+    ShoppingRequestCreate:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          example: Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.
+        create_watchlist_after_confirmation:
+          type: boolean
+          default: false
+
+    ShoppingRequest:
+      type: object
+      required: [id, user_id, raw_text, status, constraints, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        raw_text:
+          type: string
+        status:
+          type: string
+          enum: [created, parsed, matched, failed]
+        budget_amount:
+          type: number
+          format: decimal
+          nullable: true
+        display_currency:
+          type: string
+          nullable: true
+        constraints:
+          $ref: "#/components/schemas/ShoppingConstraints"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ShoppingRequestList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShoppingRequest"
+        total:
+          type: integer
+
+    ShoppingConstraints:
+      type: object
+      properties:
+        category:
+          type: string
+          example: Running Shoes
+        use_case:
+          type: string
+          example: daily training
+        size_value:
+          type: string
+          example: "41"
+        size_system:
+          type: string
+          example: EU
+        preferred_brand:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        max_price:
+          type: number
+          format: decimal
+          nullable: true
+        max_price_currency:
+          type: string
+          nullable: true
+          example: EUR
+        attributes:
+          type: object
+          additionalProperties: true
+
+    Recommendation:
+      type: object
+      required: [id, product, score, reason]
+      properties:
+        id:
+          type: string
+          format: uuid
+        product:
+          $ref: "#/components/schemas/Product"
+        best_offer:
+          $ref: "#/components/schemas/Offer"
+          nullable: true
+        score:
+          type: number
+          format: float
+        reason:
+          type: string
+
+    RecommendationList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recommendation"
+
+    WatchlistCreate:
+      type: object
+      required: [type]
+      properties:
+        type:
+          $ref: "#/components/schemas/WatchlistType"
+        product_id:
+          type: string
+          format: uuid
+          nullable: true
+        source_request_id:
+          type: string
+          format: uuid
+          nullable: true
+        brand:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        size_value:
+          type: string
+          nullable: true
+        size_system:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        target_price:
+          type: number
+          format: decimal
+          nullable: true
+        target_price_currency:
+          type: string
+          nullable: true
+          example: EUR
+        discount_threshold:
+          type: number
+          format: decimal
+          nullable: true
+        notify_on_historical_min:
+          type: boolean
+          default: true
+
+    WatchlistUpdate:
+      allOf:
+        - $ref: "#/components/schemas/WatchlistCreate"
+        - type: object
+          properties:
+            active:
+              type: boolean
+            archived:
+              type: boolean
+
+    Watchlist:
+      allOf:
+        - $ref: "#/components/schemas/WatchlistUpdate"
+        - type: object
+          required: [id, user_id, type, active, archived, created_at]
+          properties:
+            id:
+              type: string
+              format: uuid
+            user_id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    WatchlistType:
+      type: string
+      enum: [exact_product, category_rule, brand_rule, agent_request]
+
+    WatchlistList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Watchlist"
+        total:
+          type: integer
+
+    Product:
+      type: object
+      required: [id, name, category, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        brand:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        name:
+          type: string
+        sku:
+          type: string
+          nullable: true
+        category:
+          type: string
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ProductList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: integer
+
+    Offer:
+      type: object
+      required: [id, product_id, store, source_price, source_currency, eur_price, availability, product_url, last_seen_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        store:
+          $ref: "#/components/schemas/StoreSummary"
+        source_price:
+          type: number
+          format: decimal
+        source_old_price:
+          type: number
+          format: decimal
+          nullable: true
+        source_currency:
+          type: string
+          example: CZK
+        eur_price:
+          type: number
+          format: decimal
+        eur_old_price:
+          type: number
+          format: decimal
+          nullable: true
+        fx_rate_to_eur:
+          type: number
+          format: decimal
+          nullable: true
+        discount_percent:
+          type: number
+          format: decimal
+          nullable: true
+        availability:
+          type: string
+          enum: [in_stock, out_of_stock, limited, unknown]
+        product_url:
+          type: string
+          format: uri
+        sizes:
+          type: array
+          items:
+            $ref: "#/components/schemas/OfferSizeAvailability"
+        is_historical_min:
+          type: boolean
+        is_lowest_10_percent_365d:
+          type: boolean
+        last_seen_at:
+          type: string
+          format: date-time
+
+    OfferSizeAvailability:
+      type: object
+      required: [size_value, in_stock]
+      properties:
+        size_value:
+          type: string
+        size_system:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        in_stock:
+          type: boolean
+        stock_count:
+          type: integer
+          nullable: true
+
+    OfferList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Offer"
+        total:
+          type: integer
+
+    PriceHistoryResponse:
+      type: object
+      required: [product_id, period, points, analytics]
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        period:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricePoint"
+        analytics:
+          $ref: "#/components/schemas/PriceAnalytics"
+
+    PricePoint:
+      type: object
+      required: [captured_at, source_price, source_currency, eur_price, store_id]
+      properties:
+        captured_at:
+          type: string
+          format: date-time
+        source_price:
+          type: number
+          format: decimal
+        source_old_price:
+          type: number
+          format: decimal
+          nullable: true
+        source_currency:
+          type: string
+        eur_price:
+          type: number
+          format: decimal
+        eur_old_price:
+          type: number
+          format: decimal
+          nullable: true
+        fx_rate_to_eur:
+          type: number
+          format: decimal
+          nullable: true
+        store_id:
+          type: string
+          format: uuid
+
+    PriceAnalytics:
+      type: object
+      properties:
+        eur_min_30d:
+          type: number
+          format: decimal
+          nullable: true
+        eur_min_90d:
+          type: number
+          format: decimal
+          nullable: true
+        eur_min_180d:
+          type: number
+          format: decimal
+          nullable: true
+        eur_min_365d:
+          type: number
+          format: decimal
+          nullable: true
+        eur_min_all_time:
+          type: number
+          format: decimal
+          nullable: true
+        eur_avg_365d:
+          type: number
+          format: decimal
+          nullable: true
+
+    Deal:
+      type: object
+      required: [offer, score, reasons]
+      properties:
+        offer:
+          $ref: "#/components/schemas/Offer"
+        score:
+          type: number
+          format: float
+        reasons:
+          type: array
+          items:
+            type: string
+
+    DealList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+        total:
+          type: integer
+
+    Notification:
+      type: object
+      required: [id, type, status, message, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        watchlist_id:
+          type: string
+          format: uuid
+          nullable: true
+        shopping_request_id:
+          type: string
+          format: uuid
+          nullable: true
+        offer_id:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+          enum: [target_price, discount, historical_min, lowest_10_percent_365d, recommendation]
+        status:
+          type: string
+          enum: [created, sent, failed, skipped]
+        message:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    NotificationList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        total:
+          type: integer
+
+    StoreSummary:
+      type: object
+      required: [id, name, url]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+
+    Store:
+      allOf:
+        - $ref: "#/components/schemas/StoreSummary"
+        - type: object
+          required: [country, active, delivers_to_cz, created_at]
+          properties:
+            country:
+              type: string
+              example: CZ
+            active:
+              type: boolean
+            delivers_to_cz:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+
+    StoreCreate:
+      type: object
+      required: [name, country, url]
+      properties:
+        name:
+          type: string
+        country:
+          type: string
+          example: CZ
+        url:
+          type: string
+          format: uri
+        active:
+          type: boolean
+          default: true
+        delivers_to_cz:
+          type: boolean
+          default: true
+
+    StoreUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        active:
+          type: boolean
+        delivers_to_cz:
+          type: boolean
+
+    StoreList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Store"
+
+    ManualSyncRequest:
+      type: object
+      properties:
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        source_type:
+          type: string
+          enum: [api, affiliate_feed, heureka, playwright]
+          nullable: true
+
+    SyncRun:
+      type: object
+      required: [id, status, started_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed]
+        products_seen:
+          type: integer
+          nullable: true
+        offers_seen:
+          type: integer
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    SyncRunList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SyncRun"
