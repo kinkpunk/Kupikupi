@@ -1,0 +1,74 @@
+import hashlib
+import hmac
+import json
+import time
+from urllib.parse import urlencode
+
+from fastapi.testclient import TestClient
+
+
+def build_init_data(bot_token: str, user: dict[str, object], auth_date: int | None = None) -> str:
+    payload = {
+        "auth_date": str(auth_date or int(time.time())),
+        "query_id": "test-query-id",
+        "user": json.dumps(user, separators=(",", ":")),
+    }
+    data_check_string = "\n".join(f"{key}={value}" for key, value in sorted(payload.items()))
+    secret_key = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
+    payload["hash"] = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    return urlencode(payload)
+
+
+def test_telegram_auth_creates_user_and_allows_me(client: TestClient) -> None:
+    init_data = build_init_data(
+        "test-bot-token",
+        {
+            "id": 123456789,
+            "username": "kupitest",
+            "first_name": "Kupi",
+            "last_name": "Tester",
+            "language_code": "ru",
+        },
+    )
+
+    auth_response = client.post("/v1/auth/telegram", json={"init_data": init_data})
+
+    assert auth_response.status_code == 200
+    auth_body = auth_response.json()
+    assert auth_body["user"]["telegram_id"] == 123456789
+    assert auth_body["user"]["username"] == "kupitest"
+    assert auth_body["user"]["country"] == "CZ"
+    assert auth_body["user"]["currency"] == "EUR"
+    assert auth_body["tokens"]["token_type"] == "bearer"
+
+    me_response = client.get(
+        "/v1/me",
+        headers={"Authorization": f"Bearer {auth_body['tokens']['access_token']}"},
+    )
+
+    assert me_response.status_code == 200
+    assert me_response.json()["telegram_id"] == 123456789
+
+
+def test_refresh_token_rotates_token_pair(client: TestClient) -> None:
+    init_data = build_init_data("test-bot-token", {"id": 222, "first_name": "Refresh"})
+    auth_response = client.post("/v1/auth/telegram", json={"init_data": init_data})
+    refresh_token = auth_response.json()["tokens"]["refresh_token"]
+
+    refresh_response = client.post("/v1/auth/refresh", json={"refresh_token": refresh_token})
+
+    assert refresh_response.status_code == 200
+    refreshed = refresh_response.json()
+    assert refreshed["access_token"]
+    assert refreshed["refresh_token"] != refresh_token
+
+    old_token_response = client.post("/v1/auth/refresh", json={"refresh_token": refresh_token})
+    assert old_token_response.status_code == 401
+
+
+def test_telegram_auth_rejects_invalid_hash(client: TestClient) -> None:
+    init_data = build_init_data("wrong-token", {"id": 333, "first_name": "Nope"})
+
+    response = client.post("/v1/auth/telegram", json={"init_data": init_data})
+
+    assert response.status_code == 401
