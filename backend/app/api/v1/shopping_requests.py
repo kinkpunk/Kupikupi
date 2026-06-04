@@ -15,6 +15,8 @@ from app.domains.shopping_requests.service import (
     list_recommendations,
     list_shopping_requests,
 )
+from app.domains.watchlists.schemas import WatchlistRead
+from app.domains.watchlists.service import create_watchlist_from_shopping_request
 
 router = APIRouter(prefix="/shopping-requests")
 
@@ -83,3 +85,30 @@ async def get_my_shopping_request_recommendations(
     return RecommendationList(
         items=await list_recommendations(session, user_id=current_user.id, request_id=request_id)
     )
+
+
+@router.post(
+    "/{request_id}/watchlist",
+    response_model=WatchlistRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def confirm_watchlist_from_shopping_request(
+    request_id: uuid.UUID,
+    session: DbSessionDep,
+    current_user: CurrentUserDep,
+) -> WatchlistRead:
+    request = await get_shopping_request(session, user_id=current_user.id, request_id=request_id)
+    if request is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Shopping request not found.",
+        )
+
+    watchlist = await create_watchlist_from_shopping_request(
+        session,
+        user_id=current_user.id,
+        request=request,
+    )
+    await session.commit()
+    await session.refresh(watchlist)
+    return watchlist
