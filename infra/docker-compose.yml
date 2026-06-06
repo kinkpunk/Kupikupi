@@ -63,6 +63,20 @@ services:
       - ../telegram_bot/.env.example
     environment:
       BACKEND_API_URL: http://backend:8000/v1
+      TELEGRAM_WEBAPP_URL: http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_started
+
+  webapp:
+    build:
+      context: ../webapp
+    env_file:
+      - ../webapp/.env.example
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/v1
+    ports:
+      - "3000:3000"
     depends_on:
       backend:
         condition: service_started
