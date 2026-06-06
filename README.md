@@ -12,7 +12,8 @@ Example request:
 
 ## Current Status
 
-Backend foundation is in progress. Telegram Bot and WebApp implementation have not started yet.
+Backend foundation is in progress. Telegram Bot foundation is in progress. WebApp implementation
+has not started yet.
 Implemented backend modules include users/auth, catalog, shopping requests, watchlists, offers,
 price analytics, deals, notifications, Telegram delivery, Celery jobs, and the initial source sync
 foundation with FX normalization.
@@ -53,6 +54,12 @@ Backend with worker:
 docker compose -f infra/docker-compose.yml up backend worker
 ```
 
+Backend with Telegram Bot:
+
+```bash
+docker compose -f infra/docker-compose.yml up backend worker telegram-bot
+```
+
 Migrations and seed data:
 
 ```bash
@@ -72,6 +79,17 @@ celery -A app.core.celery_app.celery_app call analytics.recompute_all
 celery -A app.core.celery_app.celery_app call sync.run_fake
 celery -A app.core.celery_app.celery_app call sync.run_source_config --args='["SOURCE_CONFIG_ID"]'
 celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
+```
+
+Telegram Bot development:
+
+```bash
+cd telegram_bot
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+python -m bot.main
 ```
 
 ## Planned Stack

@@ -56,5 +56,16 @@ services:
       redis:
         condition: service_healthy
 
+  telegram-bot:
+    build:
+      context: ../telegram_bot
+    env_file:
+      - ../telegram_bot/.env.example
+    environment:
+      BACKEND_API_URL: http://backend:8000/v1
+    depends_on:
+      backend:
+        condition: service_started
+
 volumes:
   postgres_data:
