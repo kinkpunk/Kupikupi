@@ -76,6 +76,27 @@ class BackendClient:
                 return await self._list_watchlists(client, limit=limit)
         return await self._list_watchlists(self._client, limit=limit)
 
+    async def pause_watchlist(self, watchlist_id: str) -> WatchlistSummary:
+        self._ensure_access_token()
+        if self._client is None:
+            async with httpx.AsyncClient(timeout=10) as client:
+                return await self._post_watchlist_action(client, watchlist_id, "pause")
+        return await self._post_watchlist_action(self._client, watchlist_id, "pause")
+
+    async def archive_watchlist(self, watchlist_id: str) -> WatchlistSummary:
+        self._ensure_access_token()
+        if self._client is None:
+            async with httpx.AsyncClient(timeout=10) as client:
+                return await self._post_watchlist_action(client, watchlist_id, "archive")
+        return await self._post_watchlist_action(self._client, watchlist_id, "archive")
+
+    async def resume_watchlist(self, watchlist_id: str) -> WatchlistSummary:
+        self._ensure_access_token()
+        if self._client is None:
+            async with httpx.AsyncClient(timeout=10) as client:
+                return await self._resume_watchlist(client, watchlist_id)
+        return await self._resume_watchlist(self._client, watchlist_id)
+
     def _ensure_access_token(self) -> None:
         if not self._access_token:
             raise BackendClientError("Backend access token is not configured.")
@@ -134,6 +155,34 @@ class BackendClient:
             raise BackendClientError(f"Backend returned {response.status_code}.")
         payload = response.json()
         return [_watchlist_summary_from_payload(item) for item in payload.get("items", [])]
+
+    async def _post_watchlist_action(
+        self,
+        client: httpx.AsyncClient,
+        watchlist_id: str,
+        action: str,
+    ) -> WatchlistSummary:
+        response = await client.post(
+            f"{self._base_url}/watchlists/{watchlist_id}/{action}",
+            headers={"Authorization": f"Bearer {self._access_token}"},
+        )
+        if response.status_code >= 400:
+            raise BackendClientError(f"Backend returned {response.status_code}.")
+        return _watchlist_summary_from_payload(response.json())
+
+    async def _resume_watchlist(
+        self,
+        client: httpx.AsyncClient,
+        watchlist_id: str,
+    ) -> WatchlistSummary:
+        response = await client.put(
+            f"{self._base_url}/watchlists/{watchlist_id}",
+            headers={"Authorization": f"Bearer {self._access_token}"},
+            json={"active": True, "archived": False},
+        )
+        if response.status_code >= 400:
+            raise BackendClientError(f"Backend returned {response.status_code}.")
+        return _watchlist_summary_from_payload(response.json())
 
 
 def _shopping_request_summary_from_payload(payload: dict[str, object]) -> ShoppingRequestSummary:

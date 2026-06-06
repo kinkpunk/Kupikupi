@@ -152,3 +152,81 @@ async def test_backend_client_lists_watchlists() -> None:
     assert result[0].category == "running-shoes"
     assert result[0].size_value == "41"
     assert result[0].target_price == 150
+
+
+@pytest.mark.asyncio
+async def test_backend_client_pauses_watchlist() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/v1/watchlists/watchlist-1/pause"
+        assert request.headers["Authorization"] == "Bearer token"
+        return httpx.Response(200, json=_watchlist_payload(active=False, archived=False))
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        client = BackendClient(
+            base_url="https://api.example.test/v1",
+            access_token="token",
+            client=http_client,
+        )
+        result = await client.pause_watchlist("watchlist-1")
+
+    assert result.id == "watchlist-1"
+    assert result.active is False
+    assert result.archived is False
+
+
+@pytest.mark.asyncio
+async def test_backend_client_archives_watchlist() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/v1/watchlists/watchlist-1/archive"
+        assert request.headers["Authorization"] == "Bearer token"
+        return httpx.Response(200, json=_watchlist_payload(active=False, archived=True))
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        client = BackendClient(
+            base_url="https://api.example.test/v1",
+            access_token="token",
+            client=http_client,
+        )
+        result = await client.archive_watchlist("watchlist-1")
+
+    assert result.id == "watchlist-1"
+    assert result.active is False
+    assert result.archived is True
+
+
+@pytest.mark.asyncio
+async def test_backend_client_resumes_watchlist() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "PUT"
+        assert request.url.path == "/v1/watchlists/watchlist-1"
+        assert request.headers["Authorization"] == "Bearer token"
+        assert request.content == b'{"active":true,"archived":false}'
+        return httpx.Response(200, json=_watchlist_payload(active=True, archived=False))
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        client = BackendClient(
+            base_url="https://api.example.test/v1",
+            access_token="token",
+            client=http_client,
+        )
+        result = await client.resume_watchlist("watchlist-1")
+
+    assert result.id == "watchlist-1"
+    assert result.active is True
+    assert result.archived is False
+
+
+def _watchlist_payload(*, active: bool, archived: bool) -> dict[str, object]:
+    return {
+        "id": "watchlist-1",
+        "type": "agent_request",
+        "active": active,
+        "archived": archived,
+        "model": "Nike Pegasus",
+        "category": "running-shoes",
+        "size_value": "41",
+        "target_price": 150,
+        "target_price_currency": "EUR",
+    }

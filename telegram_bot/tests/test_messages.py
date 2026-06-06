@@ -8,6 +8,10 @@ from bot.messages import (
     shopping_requests_reply,
     shopping_text_reply,
     start_reply,
+    watchlist_action_reply,
+    watchlist_action_usage_reply,
+    watchlist_ambiguous_reply,
+    watchlist_not_found_reply,
     watchlists_reply,
 )
 
@@ -31,6 +35,9 @@ def test_help_reply_lists_commands() -> None:
     assert "/help" in reply.text
     assert "/requests" in reply.text
     assert "/watchlists" in reply.text
+    assert "/pause" in reply.text
+    assert "/resume" in reply.text
+    assert "/archive" in reply.text
 
 
 def test_shopping_text_reply_trims_and_previews_request() -> None:
@@ -130,6 +137,7 @@ def test_watchlists_reply_lists_active_watchlists() -> None:
     )
 
     assert "Активные списки" in reply.text
+    assert "watchlis" in reply.text
     assert "Nike Pegasus" in reply.text
     assert "активен" in reply.text
     assert "размер 41" in reply.text
@@ -159,3 +167,42 @@ def test_backend_unavailable_reply_points_to_webapp() -> None:
 
     assert "не получилось получить данные" in reply.text
     assert reply.webapp_url == "https://kupikupi.example/app"
+
+
+def test_watchlist_action_reply_summarizes_pause() -> None:
+    reply = watchlist_action_reply(
+        BotSettings(telegram_bot_token="token"),
+        WatchlistSummary(
+            id="watchlist-1",
+            type="agent_request",
+            active=False,
+            archived=False,
+            model="Nike Pegasus",
+            category="running-shoes",
+            size_value="41",
+            target_price=150,
+            target_price_currency="EUR",
+        ),
+        "pause",
+    )
+
+    assert "watchlis" in reply.text
+    assert "Nike Pegasus" in reply.text
+    assert "поставлен на паузу" in reply.text
+
+
+def test_watchlist_action_usage_reply_explains_short_id() -> None:
+    reply = watchlist_action_usage_reply(BotSettings(telegram_bot_token="token"), "pause")
+
+    assert "/pause <id>" in reply.text
+    assert "достаточно первых символов" in reply.text
+
+
+def test_watchlist_lookup_error_replies_are_specific() -> None:
+    settings = BotSettings(telegram_bot_token="token")
+
+    not_found = watchlist_not_found_reply(settings, "abc")
+    ambiguous = watchlist_ambiguous_reply(settings, "abc")
+
+    assert "Не нашел список" in not_found.text
+    assert "несколько списков" in ambiguous.text

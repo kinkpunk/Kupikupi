@@ -26,7 +26,8 @@ def help_reply(settings: BotSettings) -> BotReply:
         "- принять описание покупки обычным текстом;\n"
         "- передать запрос в Kupikupi WebApp;\n"
         "- позже присылать уведомления о хороших предложениях.\n\n"
-        "Команды: /start, /help, /requests, /watchlists."
+        "Команды: /start, /help, /requests, /watchlists, "
+        "/pause <id>, /resume <id>, /archive <id>."
     )
     return BotReply(text=text, webapp_url=settings.telegram_webapp_url)
 
@@ -105,8 +106,52 @@ def watchlists_reply(
         title = watchlist.model or watchlist.category or watchlist.type
         details = _watchlist_details(watchlist)
         state = "активен" if watchlist.active else "пауза"
-        lines.append(f"{index}. {title} — {state}{details}")
+        lines.append(f"{index}. {watchlist.id[:8]} — {title} — {state}{details}")
     return BotReply(text="\n".join(lines), webapp_url=settings.telegram_webapp_url)
+
+
+def watchlist_action_reply(
+    settings: BotSettings,
+    watchlist: WatchlistSummary,
+    action: str,
+) -> BotReply:
+    title = watchlist.model or watchlist.category or watchlist.type
+    action_text = {
+        "pause": "поставлен на паузу",
+        "resume": "возобновлен",
+        "archive": "отправлен в архив",
+    }[action]
+    return BotReply(
+        text=f"Список {watchlist.id[:8]} ({title}) {action_text}.",
+        webapp_url=settings.telegram_webapp_url,
+    )
+
+
+def watchlist_action_usage_reply(settings: BotSettings, command: str) -> BotReply:
+    return BotReply(
+        text=(
+            f"Укажи id списка: /{command} <id>.\n"
+            "Id можно взять из команды /watchlists, достаточно первых символов."
+        ),
+        webapp_url=settings.telegram_webapp_url,
+    )
+
+
+def watchlist_not_found_reply(settings: BotSettings, lookup: str) -> BotReply:
+    return BotReply(
+        text=f"Не нашел список по id {lookup}. Проверь /watchlists и попробуй еще раз.",
+        webapp_url=settings.telegram_webapp_url,
+    )
+
+
+def watchlist_ambiguous_reply(settings: BotSettings, lookup: str) -> BotReply:
+    return BotReply(
+        text=(
+            f"По id {lookup} нашлось несколько списков. "
+            "Укажи больше символов из id после /watchlists."
+        ),
+        webapp_url=settings.telegram_webapp_url,
+    )
 
 
 def backend_unavailable_reply(settings: BotSettings) -> BotReply:
