@@ -69,6 +69,9 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
         method: "POST",
       });
     },
+    listRecommendations(requestId) {
+      return request(`/shopping-requests/${requestId}/recommendations`);
+    },
     listShoppingRequests({ limit = 10, offset = 0 } = {}) {
       const params = new URLSearchParams({
         limit: String(limit),

@@ -9,7 +9,13 @@ import {
   notifyTelegramReady,
   storeTokens,
 } from "../lib/telegram-webapp.mjs";
-import type { AuthResponse, PaginatedResponse, ShoppingRequest, Watchlist } from "../lib/types";
+import type {
+  AuthResponse,
+  PaginatedResponse,
+  Recommendation,
+  ShoppingRequest,
+  Watchlist,
+} from "../lib/types";
 
 type Status =
   | "idle"
@@ -34,6 +40,7 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "stored" | "missing">("missing");
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [recentRequests, setRecentRequests] = useState<ShoppingRequest[]>([]);
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
 
@@ -132,16 +139,25 @@ export default function Home() {
     setStatus("submitting");
     setError(null);
     setWatchlist(null);
+    setRecommendations([]);
 
     try {
       const created = (await withAuthRetry((client) => client.createShoppingRequest(text))) as ShoppingRequest;
       setRequest(created);
+      await loadRecommendations(created.id);
       setStatus("success");
       await refreshDashboard();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Не удалось создать запрос.");
       setStatus("error");
     }
+  }
+
+  async function loadRecommendations(requestId: string) {
+    const response = (await withAuthRetry((client) =>
+      client.listRecommendations(requestId),
+    )) as { items: Recommendation[] };
+    setRecommendations(response.items);
   }
 
   async function handleConfirmWatchlist() {
@@ -294,6 +310,30 @@ export default function Home() {
           </p>
         ) : null}
 
+        {request ? (
+          <section className="dashboard-section">
+            <div className="section-heading compact-heading">
+              <h2>Рекомендации</h2>
+              <p>Подходящие модели по распознанным параметрам.</p>
+            </div>
+            {recommendations.length > 0 ? (
+              <div className="list-stack">
+                {recommendations.map((item) => (
+                  <article className="recommendation-item" key={item.id}>
+                    <div>
+                      <strong>{item.product.name}</strong>
+                      <span>{recommendationDescription(item)}</span>
+                    </div>
+                    <div className="score-pill">{formatScore(item.score)}</div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-state">Пока нет рекомендаций для этого запроса.</p>
+            )}
+          </section>
+        ) : null}
+
         <section className="dashboard-section">
           <div className="section-heading compact-heading">
             <h2>Последние запросы</h2>
@@ -393,6 +433,22 @@ function requestDescription(request: ShoppingRequest) {
     formatMoney(request.budget_amount, request.display_currency),
   ].filter(Boolean);
   return parts.join(" · ");
+}
+
+function recommendationDescription(recommendation: Recommendation) {
+  const parts = [
+    recommendation.product.model,
+    recommendation.product.sku ? `SKU ${recommendation.product.sku}` : null,
+    recommendation.reason,
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
+function formatScore(score: number) {
+  return score.toLocaleString("ru-RU", {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 0,
+  });
 }
 
 function watchlistTitle(watchlist: Watchlist) {

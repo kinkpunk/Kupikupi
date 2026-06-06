@@ -20,6 +20,26 @@ export type ShoppingRequest = {
   constraints?: ShoppingRequestConstraints | null;
 };
 
+export type Product = {
+  id: string;
+  brand_id?: string | null;
+  category_id: string;
+  model?: string | null;
+  name: string;
+  sku?: string | null;
+  image_url?: string | null;
+  attributes?: Record<string, unknown> | null;
+};
+
+export type Recommendation = {
+  id: string;
+  product: Product;
+  best_offer_id?: string | null;
+  score: number;
+  reason: string;
+  created_at: string;
+};
+
 export type Watchlist = {
   id: string;
   type: string;

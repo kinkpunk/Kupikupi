@@ -268,6 +268,45 @@ button:disabled {
   align-items: flex-start;
 }
 
+.recommendation-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #c9ded7;
+  border-radius: 8px;
+  background: #f8fcfa;
+}
+
+.recommendation-item div:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.recommendation-item strong,
+.recommendation-item span {
+  overflow-wrap: anywhere;
+}
+
+.recommendation-item span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.score-pill {
+  display: grid;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 36px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: #dcefe9;
+  font-weight: 800;
+}
+
 .button-row {
   display: flex;
   flex-shrink: 0;
@@ -318,6 +357,7 @@ button:disabled {
   }
 
   .list-item,
+  .recommendation-item,
   .button-row {
     display: grid;
   }

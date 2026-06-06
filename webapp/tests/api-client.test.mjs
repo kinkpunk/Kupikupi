@@ -100,6 +100,27 @@ test("confirmWatchlistFromShoppingRequest posts confirmation endpoint", async ()
   assert.equal(calls[0].init.method, "POST");
 });
 
+test("listRecommendations gets request recommendations", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, { items: [{ id: "recommendation-1" }] });
+    },
+  });
+
+  const result = await client.listRecommendations("request-1");
+
+  assert.equal(result.items[0].id, "recommendation-1");
+  assert.equal(
+    calls[0].url,
+    "https://api.example.test/v1/shopping-requests/request-1/recommendations",
+  );
+  assert.equal(calls[0].init.method, "GET");
+});
+
 test("listWatchlists includes paging and archived filter", async () => {
   const calls = [];
   const client = createApiClient({
