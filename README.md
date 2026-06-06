@@ -44,12 +44,28 @@ Infrastructure services:
 docker compose -f infra/docker-compose.yml up postgres redis
 ```
 
+Backend with worker:
+
+```bash
+docker compose -f infra/docker-compose.yml up backend worker
+```
+
 Migrations and seed data:
 
 ```bash
 cd backend
 alembic upgrade head
 python scripts/seed.py
+```
+
+Celery tasks:
+
+```bash
+cd backend
+celery -A app.core.celery_app.celery_app worker --loglevel=info
+celery -A app.core.celery_app.celery_app call notifications.generate
+celery -A app.core.celery_app.celery_app call notifications.dispatch
+celery -A app.core.celery_app.celery_app call analytics.recompute_all
 ```
 
 ## Planned Stack
