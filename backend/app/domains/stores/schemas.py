@@ -34,3 +34,25 @@ class StoreRead(BaseModel):
 class StoreList(BaseModel):
     items: list[StoreRead]
 
+
+class ManualSyncRequest(BaseModel):
+    store_id: uuid.UUID | None = None
+    source_type: str = "fake"
+
+
+class SyncRunRead(BaseModel):
+    id: uuid.UUID
+    store_id: uuid.UUID | None
+    source_type: str
+    status: str
+    products_seen: int
+    offers_seen: int
+    error_message: str | None
+    started_at: datetime
+    finished_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SyncRunList(BaseModel):
+    items: list[SyncRunRead]

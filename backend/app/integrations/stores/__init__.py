@@ -1,0 +1,2 @@
+"""Store source adapters."""
+

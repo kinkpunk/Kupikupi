@@ -13,6 +13,9 @@ Example request:
 ## Current Status
 
 Backend foundation is in progress. Telegram Bot and WebApp implementation have not started yet.
+Implemented backend modules include users/auth, catalog, shopping requests, watchlists, offers,
+price analytics, deals, notifications, Telegram delivery, Celery jobs, and the initial source sync
+foundation.
 
 ## MVP Decisions
 
@@ -66,6 +69,7 @@ celery -A app.core.celery_app.celery_app worker --loglevel=info
 celery -A app.core.celery_app.celery_app call notifications.generate
 celery -A app.core.celery_app.celery_app call notifications.dispatch
 celery -A app.core.celery_app.celery_app call analytics.recompute_all
+celery -A app.core.celery_app.celery_app call sync.run_fake
 ```
 
 ## Planned Stack
@@ -85,7 +89,7 @@ celery -A app.core.celery_app.celery_app call analytics.recompute_all
 4. Shopping request parser and recommendations.
 5. Watchlists.
 6. Offers, price history, and analytics.
-7. Source sync jobs.
-8. Deals and notifications.
+7. Deals and notifications.
+8. Source sync jobs.
 9. Telegram Bot.
 10. WebApp.

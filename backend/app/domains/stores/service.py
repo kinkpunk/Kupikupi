@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.stores.models import Store
+from app.domains.stores.models import SourceSyncRun, Store
 from app.domains.stores.schemas import StoreCreate, StoreUpdate
 
 
@@ -30,3 +30,7 @@ async def update_store(session: AsyncSession, store: Store, payload: StoreUpdate
     await session.flush()
     return store
 
+
+async def list_sync_runs(session: AsyncSession) -> list[SourceSyncRun]:
+    result = await session.execute(select(SourceSyncRun).order_by(SourceSyncRun.started_at.desc()))
+    return list(result.scalars().all())

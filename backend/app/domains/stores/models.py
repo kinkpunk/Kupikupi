@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -35,3 +35,17 @@ class SourceConfig(Base):
     settings: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
     store: Mapped[Store] = relationship(back_populates="source_configs")
+
+
+class SourceSyncRun(Base):
+    __tablename__ = "source_sync_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    store_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("stores.id"), index=True)
+    source_type: Mapped[str] = mapped_column(String(64), default="fake")
+    status: Mapped[str] = mapped_column(String(32), default="queued", index=True)
+    products_seen: Mapped[int] = mapped_column(Integer, default=0)
+    offers_seen: Mapped[int] = mapped_column(Integer, default=0)
+    error_message: Mapped[str | None] = mapped_column(String(1000))
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

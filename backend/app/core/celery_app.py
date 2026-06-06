@@ -12,6 +12,7 @@ celery_app = Celery(
         "app.jobs.analytics",
         "app.jobs.notifications",
         "app.jobs.seed",
+        "app.jobs.sync",
     ],
 )
 

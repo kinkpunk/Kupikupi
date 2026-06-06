@@ -15,6 +15,7 @@ def test_celery_registers_core_tasks() -> None:
     assert "analytics.recompute_product" in celery_app.tasks
     assert "analytics.recompute_all" in celery_app.tasks
     assert "seed.mvp_data" in celery_app.tasks
+    assert "sync.run_fake" in celery_app.tasks
 
 
 def test_dispatch_task_skips_when_telegram_token_missing() -> None:
