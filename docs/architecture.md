@@ -460,6 +460,9 @@ erDiagram
         text source_type
         text endpoint_url
         boolean active
+        int sync_interval_minutes
+        timestamptz last_sync_at
+        timestamptz next_sync_at
         jsonb settings
     }
 

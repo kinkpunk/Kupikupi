@@ -32,6 +32,9 @@ class SourceConfig(Base):
     source_type: Mapped[str] = mapped_column(String(64))
     endpoint_url: Mapped[str | None] = mapped_column(String(1000))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    sync_interval_minutes: Mapped[int | None] = mapped_column(Integer)
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    next_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     settings: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
     store: Mapped[Store] = relationship(back_populates="source_configs")

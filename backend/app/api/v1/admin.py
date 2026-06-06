@@ -27,6 +27,7 @@ from app.domains.stores.service import (
     list_stores,
     list_sync_run_items,
     list_sync_runs,
+    mark_source_config_synced,
     update_source_config,
     update_store,
 )
@@ -177,6 +178,7 @@ async def admin_trigger_sync_run(
             store_id=source_config.store_id,
             source_config_id=source_config.id,
         )
+        await mark_source_config_synced(session, source_config)
         await session.commit()
         await session.refresh(sync_run)
         return sync_run

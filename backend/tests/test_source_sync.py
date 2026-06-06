@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -12,6 +14,7 @@ from app.domains.stores.models import (
     SourceSyncRunItem,
     Store,
 )
+from app.domains.stores.service import list_due_source_configs, mark_source_config_synced
 from app.domains.stores.sync import run_source_sync
 from app.domains.users.models import User
 from app.integrations.stores.base import SourceOfferRecord
@@ -167,6 +170,8 @@ async def test_admin_can_manage_store_source_configs(
             "source_type": "static_json",
             "endpoint_url": None,
             "active": True,
+            "sync_interval_minutes": 60,
+            "next_sync_at": "2026-06-06T10:00:00Z",
             "settings": {"records": []},
         },
     )
@@ -174,14 +179,18 @@ async def test_admin_can_manage_store_source_configs(
     source_config = create_response.json()
     assert source_config["store_id"] == str(store.id)
     assert source_config["source_type"] == "static_json"
+    assert source_config["sync_interval_minutes"] == 60
+    assert source_config["last_sync_at"] is None
+    assert source_config["next_sync_at"].startswith("2026-06-06T10:00:00")
 
     patch_response = client.patch(
         f"/v1/admin/source-configs/{source_config['id']}",
         headers=headers,
-        json={"active": False},
+        json={"active": False, "sync_interval_minutes": 120},
     )
     assert patch_response.status_code == 200
     assert patch_response.json()["active"] is False
+    assert patch_response.json()["sync_interval_minutes"] == 120
 
     list_response = client.get(
         f"/v1/admin/stores/{store.id}/source-configs",
@@ -189,6 +198,51 @@ async def test_admin_can_manage_store_source_configs(
     )
     assert list_response.status_code == 200
     assert list_response.json()["items"][0]["id"] == source_config["id"]
+
+
+async def test_due_source_config_selection_and_mark_synced(db_session_factory) -> None:
+    now = datetime(2026, 6, 6, 12, 0, tzinfo=UTC)
+    async with db_session_factory() as session:
+        store = Store(name="Footshop", country="CZ", url="https://www.footshop.cz")
+        due = SourceConfig(
+            store=store,
+            source_type="static_json",
+            active=True,
+            sync_interval_minutes=30,
+            next_sync_at=now - timedelta(minutes=1),
+            settings={"records": []},
+        )
+        inactive = SourceConfig(
+            store=store,
+            source_type="static_json",
+            active=False,
+            sync_interval_minutes=30,
+            next_sync_at=now - timedelta(minutes=1),
+            settings={"records": []},
+        )
+        unscheduled = SourceConfig(
+            store=store,
+            source_type="static_json",
+            active=True,
+            settings={"records": []},
+        )
+        future = SourceConfig(
+            store=store,
+            source_type="static_json",
+            active=True,
+            sync_interval_minutes=30,
+            next_sync_at=now + timedelta(minutes=1),
+            settings={"records": []},
+        )
+        session.add_all([store, due, inactive, unscheduled, future])
+        await session.flush()
+
+        due_configs = await list_due_source_configs(session, now=now)
+        assert [source_config.id for source_config in due_configs] == [due.id]
+
+        await mark_source_config_synced(session, due, synced_at=now)
+        assert due.last_sync_at == now
+        assert due.next_sync_at == now + timedelta(minutes=30)
 
 
 async def test_admin_can_run_static_json_source_config_sync(
@@ -204,6 +258,7 @@ async def test_admin_can_run_static_json_source_config_sync(
         json={
             "source_type": "static_json",
             "active": True,
+            "sync_interval_minutes": 60,
             "settings": {
                 "records": [
                     {
@@ -241,6 +296,14 @@ async def test_admin_can_run_static_json_source_config_sync(
     assert body["products_seen"] == 1
     assert body["offers_seen"] == 1
     assert body["failed_offers"] == 0
+
+    source_configs_response = client.get(
+        f"/v1/admin/stores/{store.id}/source-configs",
+        headers=headers,
+    )
+    source_config = source_configs_response.json()["items"][0]
+    assert source_config["last_sync_at"] is not None
+    assert source_config["next_sync_at"] is not None
 
     async with db_session_factory() as session:
         offer = await session.scalar(

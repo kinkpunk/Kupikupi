@@ -1333,6 +1333,17 @@ components:
           nullable: true
         active:
           type: boolean
+        sync_interval_minutes:
+          type: integer
+          nullable: true
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_sync_at:
+          type: string
+          format: date-time
+          nullable: true
         settings:
           type: object
           additionalProperties: true
@@ -1352,6 +1363,14 @@ components:
         active:
           type: boolean
           default: true
+        sync_interval_minutes:
+          type: integer
+          minimum: 1
+          nullable: true
+        next_sync_at:
+          type: string
+          format: date-time
+          nullable: true
         settings:
           type: object
           additionalProperties: true
@@ -1366,6 +1385,14 @@ components:
           nullable: true
         active:
           type: boolean
+        sync_interval_minutes:
+          type: integer
+          minimum: 1
+          nullable: true
+        next_sync_at:
+          type: string
+          format: date-time
+          nullable: true
         settings:
           type: object
           additionalProperties: true

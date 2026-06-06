@@ -1,7 +1,11 @@
 import uuid
 
 from app.core.celery_app import celery_app
-from app.domains.stores.service import get_source_config
+from app.domains.stores.service import (
+    get_source_config,
+    list_due_source_configs,
+    mark_source_config_synced,
+)
 from app.domains.stores.sync import run_source_sync
 from app.integrations.stores.fake import FakeStoreSourceAdapter
 from app.integrations.stores.registry import adapter_from_source_config
@@ -41,7 +45,40 @@ def run_source_config_sync_task(source_config_id: str) -> dict[str, str]:
             store_id=source_config.store_id,
             source_config_id=source_config.id,
         )
+        await mark_source_config_synced(session, source_config)
         await session.commit()
         return {"id": str(sync_run.id), "status": sync_run.status}
+
+    return run_async_job(handler)
+
+
+@celery_app.task(name="sync.run_due_source_configs")
+def run_due_source_configs_task(limit: int = 50) -> dict[str, int]:
+    async def handler(session):
+        source_configs = await list_due_source_configs(session, limit=limit)
+        succeeded = 0
+        partially_failed = 0
+        failed = 0
+        for source_config in source_configs:
+            sync_run = await run_source_sync(
+                session,
+                adapter=adapter_from_source_config(source_config),
+                store_id=source_config.store_id,
+                source_config_id=source_config.id,
+            )
+            await mark_source_config_synced(session, source_config)
+            if sync_run.status == "succeeded":
+                succeeded += 1
+            elif sync_run.status == "partially_failed":
+                partially_failed += 1
+            else:
+                failed += 1
+        await session.commit()
+        return {
+            "scheduled": len(source_configs),
+            "succeeded": succeeded,
+            "partially_failed": partially_failed,
+            "failed": failed,
+        }
 
     return run_async_job(handler)

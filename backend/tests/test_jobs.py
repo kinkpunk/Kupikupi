@@ -17,6 +17,7 @@ def test_celery_registers_core_tasks() -> None:
     assert "seed.mvp_data" in celery_app.tasks
     assert "sync.run_fake" in celery_app.tasks
     assert "sync.run_source_config" in celery_app.tasks
+    assert "sync.run_due_source_configs" in celery_app.tasks
 
 
 def test_dispatch_task_skips_when_telegram_token_missing() -> None:

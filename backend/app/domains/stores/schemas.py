@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StoreCreate(BaseModel):
@@ -39,12 +39,16 @@ class SourceConfigCreate(BaseModel):
     source_type: str
     endpoint_url: str | None = None
     active: bool = True
+    sync_interval_minutes: int | None = Field(default=None, ge=1)
+    next_sync_at: datetime | None = None
     settings: dict[str, object] | None = None
 
 
 class SourceConfigUpdate(BaseModel):
     endpoint_url: str | None = None
     active: bool | None = None
+    sync_interval_minutes: int | None = Field(default=None, ge=1)
+    next_sync_at: datetime | None = None
     settings: dict[str, object] | None = None
 
 
@@ -54,6 +58,9 @@ class SourceConfigRead(BaseModel):
     source_type: str
     endpoint_url: str | None
     active: bool
+    sync_interval_minutes: int | None
+    last_sync_at: datetime | None
+    next_sync_at: datetime | None
     settings: dict[str, object] | None
 
     model_config = ConfigDict(from_attributes=True)

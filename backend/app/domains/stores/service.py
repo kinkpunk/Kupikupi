@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -78,6 +79,44 @@ async def update_source_config(
 ) -> SourceConfig:
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(source_config, field, value)
+    await session.flush()
+    return source_config
+
+
+async def list_due_source_configs(
+    session: AsyncSession,
+    *,
+    now: datetime | None = None,
+    limit: int = 50,
+) -> list[SourceConfig]:
+    now = now or datetime.now(UTC)
+    result = await session.execute(
+        select(SourceConfig)
+        .where(
+            SourceConfig.active.is_(True),
+            SourceConfig.sync_interval_minutes.is_not(None),
+            (SourceConfig.next_sync_at.is_(None) | (SourceConfig.next_sync_at <= now)),
+        )
+        .order_by(SourceConfig.next_sync_at.asc().nullsfirst(), SourceConfig.id.asc())
+        .limit(limit)
+    )
+    return list(result.scalars().all())
+
+
+async def mark_source_config_synced(
+    session: AsyncSession,
+    source_config: SourceConfig,
+    *,
+    synced_at: datetime | None = None,
+) -> SourceConfig:
+    synced_at = synced_at or datetime.now(UTC)
+    source_config.last_sync_at = synced_at
+    if source_config.sync_interval_minutes is None:
+        source_config.next_sync_at = None
+    else:
+        source_config.next_sync_at = synced_at + timedelta(
+            minutes=source_config.sync_interval_minutes,
+        )
     await session.flush()
     return source_config
 
