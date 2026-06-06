@@ -40,6 +40,36 @@ export type Recommendation = {
   created_at: string;
 };
 
+export type OfferAvailability = {
+  id: string;
+  variant_id?: string | null;
+  size_value?: string | null;
+  size_system?: string | null;
+  color?: string | null;
+  in_stock: boolean;
+  stock_count?: number | null;
+};
+
+export type Offer = {
+  id: string;
+  product_id: string;
+  store_id: string;
+  external_id?: string | null;
+  product_url: string;
+  source_price: number;
+  source_old_price?: number | null;
+  source_currency: string;
+  eur_price: number;
+  eur_old_price?: number | null;
+  fx_rate_to_eur?: number | null;
+  discount_percent?: number | null;
+  availability: string;
+  last_seen_at: string;
+  availability_items: OfferAvailability[];
+  is_historical_min: boolean;
+  is_lowest_10_percent_365d: boolean;
+};
+
 export type Watchlist = {
   id: string;
   type: string;

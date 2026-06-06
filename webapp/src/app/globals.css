@@ -285,6 +285,12 @@ button:disabled {
   gap: 6px;
 }
 
+.recommendation-content {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
 .recommendation-item strong,
 .recommendation-item span {
   overflow-wrap: anywhere;
@@ -305,6 +311,45 @@ button:disabled {
   color: var(--primary-dark);
   background: #dcefe9;
   font-weight: 800;
+}
+
+.offer-stack {
+  display: grid;
+  gap: 6px;
+}
+
+.offer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--panel);
+  text-decoration: none;
+}
+
+.offer-row:hover {
+  border-color: var(--primary);
+}
+
+.offer-row span {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.offer-row strong {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.offer-empty {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .button-row {
@@ -358,6 +403,7 @@ button:disabled {
 
   .list-item,
   .recommendation-item,
+  .offer-row,
   .button-row {
     display: grid;
   }

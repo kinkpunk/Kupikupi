@@ -72,6 +72,17 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
     listRecommendations(requestId) {
       return request(`/shopping-requests/${requestId}/recommendations`);
     },
+    listProductOffers(productId, { size, inStock = true } = {}) {
+      const params = new URLSearchParams();
+      if (size) {
+        params.set("size", size);
+      }
+      if (inStock !== undefined) {
+        params.set("in_stock", String(inStock));
+      }
+      const query = params.toString();
+      return request(`/products/${productId}/offers${query ? `?${query}` : ""}`);
+    },
     listShoppingRequests({ limit = 10, offset = 0 } = {}) {
       const params = new URLSearchParams({
         limit: String(limit),

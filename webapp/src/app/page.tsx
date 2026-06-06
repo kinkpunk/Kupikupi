@@ -11,6 +11,7 @@ import {
 } from "../lib/telegram-webapp.mjs";
 import type {
   AuthResponse,
+  Offer,
   PaginatedResponse,
   Recommendation,
   ShoppingRequest,
@@ -41,6 +42,7 @@ export default function Home() {
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [offersByProduct, setOffersByProduct] = useState<Record<string, Offer[]>>({});
   const [recentRequests, setRecentRequests] = useState<ShoppingRequest[]>([]);
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
 
@@ -140,11 +142,12 @@ export default function Home() {
     setError(null);
     setWatchlist(null);
     setRecommendations([]);
+    setOffersByProduct({});
 
     try {
       const created = (await withAuthRetry((client) => client.createShoppingRequest(text))) as ShoppingRequest;
       setRequest(created);
-      await loadRecommendations(created.id);
+      await loadRecommendations(created.id, created.constraints?.size_value);
       setStatus("success");
       await refreshDashboard();
     } catch (caught) {
@@ -153,11 +156,24 @@ export default function Home() {
     }
   }
 
-  async function loadRecommendations(requestId: string) {
+  async function loadRecommendations(requestId: string, size?: string | null) {
     const response = (await withAuthRetry((client) =>
       client.listRecommendations(requestId),
     )) as { items: Recommendation[] };
     setRecommendations(response.items);
+    await loadRecommendationOffers(response.items, size);
+  }
+
+  async function loadRecommendationOffers(items: Recommendation[], size?: string | null) {
+    const offersEntries = await Promise.all(
+      items.map(async (item) => {
+        const response = (await withAuthRetry((client) =>
+          client.listProductOffers(item.product.id, { size }),
+        )) as PaginatedResponse<Offer>;
+        return [item.product.id, response.items] as const;
+      }),
+    );
+    setOffersByProduct(Object.fromEntries(offersEntries));
   }
 
   async function handleConfirmWatchlist() {
@@ -320,9 +336,12 @@ export default function Home() {
               <div className="list-stack">
                 {recommendations.map((item) => (
                   <article className="recommendation-item" key={item.id}>
-                    <div>
-                      <strong>{item.product.name}</strong>
-                      <span>{recommendationDescription(item)}</span>
+                    <div className="recommendation-content">
+                      <div>
+                        <strong>{item.product.name}</strong>
+                        <span>{recommendationDescription(item)}</span>
+                      </div>
+                      <OfferList offers={offersByProduct[item.product.id] ?? []} />
                     </div>
                     <div className="score-pill">{formatScore(item.score)}</div>
                   </article>
@@ -442,6 +461,31 @@ function recommendationDescription(recommendation: Recommendation) {
     recommendation.reason,
   ].filter(Boolean);
   return parts.join(" · ");
+}
+
+function OfferList({ offers }: { offers: Offer[] }) {
+  if (offers.length === 0) {
+    return <span className="offer-empty">Предложений в наличии пока нет.</span>;
+  }
+
+  return (
+    <div className="offer-stack">
+      {offers.slice(0, 3).map((offer) => (
+        <a className="offer-row" href={offer.product_url} key={offer.id} rel="noreferrer" target="_blank">
+          <span>{formatOfferPrice(offer)}</span>
+          <strong>{offer.availability}</strong>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function formatOfferPrice(offer: Offer) {
+  const sourcePrice = `${offer.source_price.toLocaleString("ru-RU")} ${offer.source_currency}`;
+  if (offer.source_currency === "EUR") {
+    return sourcePrice;
+  }
+  return `${sourcePrice} · ${offer.eur_price.toLocaleString("ru-RU")} EUR`;
 }
 
 function formatScore(score: number) {

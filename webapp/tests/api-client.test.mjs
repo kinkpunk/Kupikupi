@@ -121,6 +121,30 @@ test("listRecommendations gets request recommendations", async () => {
   assert.equal(calls[0].init.method, "GET");
 });
 
+test("listProductOffers gets offers with size and stock filters", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, { items: [{ id: "offer-1" }], total: 1 });
+    },
+  });
+
+  const result = await client.listProductOffers("product-1", {
+    size: "41",
+    inStock: true,
+  });
+
+  assert.equal(result.items[0].id, "offer-1");
+  assert.equal(
+    calls[0].url,
+    "https://api.example.test/v1/products/product-1/offers?size=41&in_stock=true",
+  );
+  assert.equal(calls[0].init.method, "GET");
+});
+
 test("listWatchlists includes paging and archived filter", async () => {
   const calls = [];
   const client = createApiClient({
