@@ -3,9 +3,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.security import create_access_token
-from app.domains.catalog.models import Category, Product
+from app.domains.catalog.models import Brand, Category, Product
 from app.domains.offers.models import Offer, OfferAvailability, PriceSnapshot
-from app.domains.stores.models import SourceConfig, SourceSyncRun, Store
+from app.domains.stores.models import SourceConfig, SourceProductMapping, SourceSyncRun, Store
 from app.domains.stores.sync import run_source_sync
 from app.domains.users.models import User
 from app.integrations.stores.base import SourceOfferRecord
@@ -240,6 +240,85 @@ async def test_admin_can_run_static_json_source_config_sync(
         )
         assert offer is not None
         assert float(offer.eur_price) == 127.60
+
+
+async def test_static_json_sync_creates_product_and_mapping_from_source_data(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin, _product, store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+
+    create_response = client.post(
+        f"/v1/admin/stores/{store.id}/source-configs",
+        headers=headers,
+        json={
+            "source_type": "static_json",
+            "active": True,
+            "settings": {
+                "records": [
+                    {
+                        "external_id": "static-json-asics-gt-2000-offer",
+                        "product_url": "https://www.footshop.cz/asics-gt-2000",
+                        "source_price": 2990,
+                        "source_currency": "CZK",
+                        "eur_price": 119.60,
+                        "availability": "in_stock",
+                        "sizes": [{"size_value": "41", "size_system": "EU", "in_stock": True}],
+                        "product": {
+                            "external_product_id": "asics-gt-2000",
+                            "name": "ASICS GT-2000 13",
+                            "brand_name": "ASICS",
+                            "category_slug": "running-shoes",
+                            "category_name": "Running Shoes",
+                            "model": "GT-2000 13",
+                            "sku": "ASICS-GT-2000-13",
+                            "attributes": {"use_case": "daily training"},
+                        },
+                    }
+                ]
+            },
+        },
+    )
+    source_config_id = create_response.json()["id"]
+
+    for _ in range(2):
+        response = client.post(
+            "/v1/admin/sync-runs",
+            headers=headers,
+            json={"source_config_id": source_config_id},
+        )
+        assert response.status_code == 202
+        body = response.json()
+        assert body["error_message"] is None
+        assert body["products_seen"] == 1
+
+    async with db_session_factory() as session:
+        product = await session.scalar(select(Product).where(Product.sku == "ASICS-GT-2000-13"))
+        brand = await session.scalar(select(Brand).where(Brand.normalized_name == "asics"))
+        mapping_count = await session.scalar(select(func.count(SourceProductMapping.id)))
+        product_count = await session.scalar(
+            select(func.count(Product.id)).where(Product.sku == "ASICS-GT-2000-13")
+        )
+        offer_count = await session.scalar(
+            select(func.count(Offer.id)).where(
+                Offer.external_id == "static-json-asics-gt-2000-offer"
+            )
+        )
+        snapshot_count = await session.scalar(
+            select(func.count(PriceSnapshot.id))
+            .join(Offer, Offer.id == PriceSnapshot.offer_id)
+            .where(Offer.external_id == "static-json-asics-gt-2000-offer")
+        )
+
+        assert product is not None
+        assert product.name == "ASICS GT-2000 13"
+        assert product.attributes == {"use_case": "daily training"}
+        assert brand is not None
+        assert mapping_count == 1
+        assert product_count == 1
+        assert offer_count == 1
+        assert snapshot_count == 2
 
 
 async def test_admin_rejects_inactive_source_config_sync(

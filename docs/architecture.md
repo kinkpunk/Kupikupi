@@ -321,7 +321,11 @@ erDiagram
     stores ||--o{ source_configs : uses
     stores ||--o{ offers : publishes
     stores ||--o{ source_sync_runs : logs
+    stores ||--o{ source_product_mappings : maps
 
+    source_configs ||--o{ source_product_mappings : identifies
+    source_configs ||--o{ source_sync_runs : runs
+    source_product_mappings }o--|| products : links
     offers ||--o{ price_snapshots : records
     offers ||--o{ offer_availability : has
     product_variants ||--o{ offer_availability : maps_to
@@ -459,12 +463,23 @@ erDiagram
     source_sync_runs {
         uuid id PK
         uuid store_id FK
+        uuid source_config_id FK
+        text source_type
         text status
         int products_seen
         int offers_seen
         text error_message
         timestamptz started_at
         timestamptz finished_at
+    }
+
+    source_product_mappings {
+        uuid id PK
+        uuid store_id FK
+        uuid source_config_id FK
+        text external_product_id
+        uuid product_id FK
+        jsonb raw_data
     }
 
     offers {

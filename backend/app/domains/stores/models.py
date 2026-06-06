@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -35,6 +35,25 @@ class SourceConfig(Base):
     settings: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
     store: Mapped[Store] = relationship(back_populates="source_configs")
+
+
+class SourceProductMapping(Base):
+    __tablename__ = "source_product_mappings"
+    __table_args__ = (
+        UniqueConstraint(
+            "store_id",
+            "source_config_id",
+            "external_product_id",
+            name="uq_source_product_mapping_identity",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    store_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("stores.id"), index=True)
+    source_config_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("source_configs.id"), index=True)
+    external_product_id: Mapped[str] = mapped_column(String(255), index=True)
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"), index=True)
+    raw_data: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
 
 class SourceSyncRun(Base):
