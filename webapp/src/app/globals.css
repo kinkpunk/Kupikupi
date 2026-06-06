@@ -153,7 +153,7 @@ button:disabled {
 .result-panel {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 24px;
 }
 
@@ -203,6 +203,88 @@ button:disabled {
   background: #edf8f4;
 }
 
+.dashboard-section {
+  display: grid;
+  gap: 12px;
+}
+
+.compact-heading h2 {
+  font-size: 22px;
+}
+
+.compact-heading p {
+  margin-bottom: 0;
+}
+
+.list-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.list-item div:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.list-item strong,
+.list-item span {
+  overflow-wrap: anywhere;
+}
+
+.list-item strong {
+  font-size: 15px;
+}
+
+.list-item span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.watchlist-item {
+  align-items: flex-start;
+}
+
+.button-row {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.small-button {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.muted-button {
+  color: var(--primary-dark);
+  background: #dce9e6;
+}
+
+.muted-button:hover:not(:disabled) {
+  background: #c7d9d4;
+}
+
+.danger-button {
+  background: var(--danger);
+}
+
+.danger-button:hover:not(:disabled) {
+  background: #7a170f;
+}
+
 @media (max-width: 820px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -221,5 +303,15 @@ button:disabled {
   .topbar {
     display: grid;
     margin-bottom: 32px;
+  }
+
+  .list-item,
+  .button-row {
+    display: grid;
+  }
+
+  .button-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
   }
 }

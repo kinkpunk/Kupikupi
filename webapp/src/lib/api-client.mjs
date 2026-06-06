@@ -66,5 +66,24 @@ export function createApiClient({ baseUrl, accessToken, fetchImpl = fetch }) {
       });
       return request(`/watchlists?${params.toString()}`);
     },
+    pauseWatchlist(watchlistId) {
+      return request(`/watchlists/${watchlistId}/pause`, {
+        method: "POST",
+      });
+    },
+    resumeWatchlist(watchlistId) {
+      return request(`/watchlists/${watchlistId}`, {
+        method: "PUT",
+        body: {
+          active: true,
+          archived: false,
+        },
+      });
+    },
+    archiveWatchlist(watchlistId) {
+      return request(`/watchlists/${watchlistId}/archive`, {
+        method: "POST",
+      });
+    },
   };
 }

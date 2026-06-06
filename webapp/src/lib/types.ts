@@ -26,9 +26,15 @@ export type Watchlist = {
   active: boolean;
   archived: boolean;
   model?: string | null;
+  category?: string | null;
   size_value?: string | null;
   size_system?: string | null;
   color?: string | null;
   target_price?: number | null;
   target_price_currency?: string | null;
+};
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  total: number;
 };

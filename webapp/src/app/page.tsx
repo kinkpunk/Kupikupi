@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createApiClient } from "../lib/api-client.mjs";
-import type { ShoppingRequest, Watchlist } from "../lib/types";
+import type { PaginatedResponse, ShoppingRequest, Watchlist } from "../lib/types";
 
-type Status = "idle" | "submitting" | "confirming" | "success" | "error";
+type Status = "idle" | "loading" | "submitting" | "confirming" | "updating" | "success" | "error";
 
 const exampleText =
   "Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.";
@@ -15,6 +15,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
+  const [recentRequests, setRecentRequests] = useState<ShoppingRequest[]>([]);
+  const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
 
   const api = useMemo(
     () =>
@@ -24,6 +26,28 @@ export default function Home() {
       }),
     [],
   );
+
+  useEffect(() => {
+    void refreshDashboard();
+  }, []);
+
+  async function refreshDashboard() {
+    setStatus((current) => (current === "idle" ? "loading" : current));
+    setError(null);
+
+    try {
+      const [requestsResponse, watchlistsResponse] = await Promise.all([
+        api.listShoppingRequests({ limit: 5 }),
+        api.listWatchlists({ limit: 5 }),
+      ]);
+      setRecentRequests((requestsResponse as PaginatedResponse<ShoppingRequest>).items);
+      setWatchlists((watchlistsResponse as PaginatedResponse<Watchlist>).items);
+      setStatus((current) => (current === "loading" ? "idle" : current));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Не удалось загрузить данные.");
+      setStatus("error");
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,6 +59,7 @@ export default function Home() {
       const created = (await api.createShoppingRequest(text)) as ShoppingRequest;
       setRequest(created);
       setStatus("success");
+      await refreshDashboard();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Не удалось создать запрос.");
       setStatus("error");
@@ -53,8 +78,29 @@ export default function Home() {
       const created = (await api.confirmWatchlistFromShoppingRequest(request.id)) as Watchlist;
       setWatchlist(created);
       setStatus("success");
+      await refreshDashboard();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Не удалось подтвердить список.");
+      setStatus("error");
+    }
+  }
+
+  async function handleWatchlistAction(action: "pause" | "resume" | "archive", watchlistId: string) {
+    setStatus("updating");
+    setError(null);
+
+    try {
+      if (action === "pause") {
+        await api.pauseWatchlist(watchlistId);
+      } else if (action === "resume") {
+        await api.resumeWatchlist(watchlistId);
+      } else {
+        await api.archiveWatchlist(watchlistId);
+      }
+      setStatus("success");
+      await refreshDashboard();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Не удалось обновить список.");
       setStatus("error");
     }
   }
@@ -126,6 +172,77 @@ export default function Home() {
             Список создан: {watchlist.id.slice(0, 8)}. Уведомления будут приходить в Telegram.
           </p>
         ) : null}
+
+        <section className="dashboard-section">
+          <div className="section-heading compact-heading">
+            <h2>Последние запросы</h2>
+            <p>История того, что уже разобрал агент.</p>
+          </div>
+          {recentRequests.length > 0 ? (
+            <div className="list-stack">
+              {recentRequests.map((item) => (
+                <article className="list-item" key={item.id}>
+                  <div>
+                    <strong>{item.raw_text}</strong>
+                    <span>{requestDescription(item)}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Пока нет сохраненных запросов.</p>
+          )}
+        </section>
+
+        <section className="dashboard-section">
+          <div className="section-heading compact-heading">
+            <h2>Активные списки</h2>
+            <p>Управление списками покупок без выхода из WebApp.</p>
+          </div>
+          {watchlists.length > 0 ? (
+            <div className="list-stack">
+              {watchlists.map((item) => (
+                <article className="list-item watchlist-item" key={item.id}>
+                  <div>
+                    <strong>{watchlistTitle(item)}</strong>
+                    <span>{watchlistDescription(item)}</span>
+                  </div>
+                  <div className="button-row">
+                    {item.active ? (
+                      <button
+                        className="small-button muted-button"
+                        type="button"
+                        onClick={() => handleWatchlistAction("pause", item.id)}
+                        disabled={status === "updating"}
+                      >
+                        Пауза
+                      </button>
+                    ) : (
+                      <button
+                        className="small-button"
+                        type="button"
+                        onClick={() => handleWatchlistAction("resume", item.id)}
+                        disabled={status === "updating"}
+                      >
+                        Возобновить
+                      </button>
+                    )}
+                    <button
+                      className="small-button danger-button"
+                      type="button"
+                      onClick={() => handleWatchlistAction("archive", item.id)}
+                      disabled={status === "updating"}
+                    >
+                      Архив
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Активных списков пока нет.</p>
+          )}
+        </section>
       </section>
     </main>
   );
@@ -147,12 +264,42 @@ function formatMoney(amount?: number | null, currency?: string | null) {
   return `${amount.toLocaleString("ru-RU")} ${currency || "EUR"}`;
 }
 
+function requestDescription(request: ShoppingRequest) {
+  const parts = [
+    request.status,
+    request.constraints?.category,
+    request.constraints?.size_value ? `размер ${request.constraints.size_value}` : null,
+    formatMoney(request.budget_amount, request.display_currency),
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
+function watchlistTitle(watchlist: Watchlist) {
+  return watchlist.model || watchlist.category || watchlist.type;
+}
+
+function watchlistDescription(watchlist: Watchlist) {
+  const parts = [
+    watchlist.id.slice(0, 8),
+    watchlist.active ? "активен" : "пауза",
+    watchlist.size_value ? `размер ${watchlist.size_value}` : null,
+    formatMoney(watchlist.target_price, watchlist.target_price_currency),
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
 function statusLabel(status: Status) {
+  if (status === "loading") {
+    return "Загрузка";
+  }
   if (status === "submitting") {
     return "Разбор";
   }
   if (status === "confirming") {
     return "Подтверждение";
+  }
+  if (status === "updating") {
+    return "Обновление";
   }
   if (status === "error") {
     return "Ошибка";
