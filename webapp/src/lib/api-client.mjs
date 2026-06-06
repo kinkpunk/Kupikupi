@@ -87,6 +87,13 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
       const params = new URLSearchParams({ period });
       return request(`/price-history/${productId}?${params.toString()}`);
     },
+    listNotifications({ limit = 5, offset = 0 } = {}) {
+      const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset),
+      });
+      return request(`/notifications?${params.toString()}`);
+    },
     listShoppingRequests({ limit = 10, offset = 0 } = {}) {
       const params = new URLSearchParams({
         limit: String(limit),

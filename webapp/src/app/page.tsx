@@ -11,6 +11,7 @@ import {
 } from "../lib/telegram-webapp.mjs";
 import type {
   AuthResponse,
+  Notification,
   Offer,
   PaginatedResponse,
   PriceHistory,
@@ -47,6 +48,7 @@ export default function Home() {
   const [priceHistoryByProduct, setPriceHistoryByProduct] = useState<Record<string, PriceHistory>>({});
   const [recentRequests, setRecentRequests] = useState<ShoppingRequest[]>([]);
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const demoAccessToken = process.env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN ?? "";
   const api = useMemo(
@@ -125,12 +127,14 @@ export default function Home() {
     setError(null);
 
     try {
-      const [requestsResponse, watchlistsResponse] = await Promise.all([
+      const [requestsResponse, watchlistsResponse, notificationsResponse] = await Promise.all([
         withAuthRetry((client) => client.listShoppingRequests({ limit: 5 })),
         withAuthRetry((client) => client.listWatchlists({ limit: 5 })),
+        withAuthRetry((client) => client.listNotifications({ limit: 5 })),
       ]);
       setRecentRequests((requestsResponse as PaginatedResponse<ShoppingRequest>).items);
       setWatchlists((watchlistsResponse as PaginatedResponse<Watchlist>).items);
+      setNotifications((notificationsResponse as PaginatedResponse<Notification>).items);
       setStatus((current) => (current === "loading" ? "idle" : current));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Не удалось загрузить данные.");
@@ -395,6 +399,28 @@ export default function Home() {
 
         <section className="dashboard-section">
           <div className="section-heading compact-heading">
+            <h2>Уведомления</h2>
+            <p>Последние сигналы, которые агент подготовил для Telegram.</p>
+          </div>
+          {notifications.length > 0 ? (
+            <div className="list-stack">
+              {notifications.map((item) => (
+                <article className="notification-item" key={item.id}>
+                  <div>
+                    <strong>{notificationTitle(item)}</strong>
+                    <span>{item.message}</span>
+                  </div>
+                  <span className="notification-time">{formatDateTime(item.sent_at || item.created_at)}</span>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Уведомлений пока нет.</p>
+          )}
+        </section>
+
+        <section className="dashboard-section">
+          <div className="section-heading compact-heading">
             <h2>Активные списки</h2>
             <p>Управление списками покупок без выхода из WebApp.</p>
           </div>
@@ -558,6 +584,17 @@ function watchlistDescription(watchlist: Watchlist) {
     formatMoney(watchlist.target_price, watchlist.target_price_currency),
   ].filter(Boolean);
   return parts.join(" · ");
+}
+
+function notificationTitle(notification: Notification) {
+  return `${notification.type} · ${notification.status}`;
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
 
 function statusLabel(status: Status) {

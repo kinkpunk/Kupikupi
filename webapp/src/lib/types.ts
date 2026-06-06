@@ -101,6 +101,20 @@ export type PriceHistory = {
   analytics?: PriceAnalytics | null;
 };
 
+export type Notification = {
+  id: string;
+  user_id: string;
+  watchlist_id?: string | null;
+  shopping_request_id?: string | null;
+  offer_id?: string | null;
+  type: string;
+  status: string;
+  message: string;
+  dedupe_key: string;
+  sent_at?: string | null;
+  created_at: string;
+};
+
 export type Watchlist = {
   id: string;
   type: string;

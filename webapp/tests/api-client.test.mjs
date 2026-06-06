@@ -168,6 +168,24 @@ test("getPriceHistory gets product price history period", async () => {
   assert.equal(calls[0].init.method, "GET");
 });
 
+test("listNotifications gets paginated notifications", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, { items: [{ id: "notification-1" }], total: 1 });
+    },
+  });
+
+  const result = await client.listNotifications({ limit: 5, offset: 10 });
+
+  assert.equal(result.items[0].id, "notification-1");
+  assert.equal(calls[0].url, "https://api.example.test/v1/notifications?limit=5&offset=10");
+  assert.equal(calls[0].init.method, "GET");
+});
+
 test("listWatchlists includes paging and archived filter", async () => {
   const calls = [];
   const client = createApiClient({
