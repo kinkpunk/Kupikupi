@@ -1,5 +1,6 @@
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,12 +10,21 @@ from app.domains.catalog.models import Product
 from app.domains.notifications.models import Notification
 from app.domains.offers.models import Offer
 from app.domains.offers.service import attach_offer_flags
+from app.domains.users.models import User
 from app.domains.watchlists.models import Watchlist
+from app.integrations.telegram.client import TelegramDeliveryError, TelegramMessageClient
 
 
 @dataclass(frozen=True)
 class NotificationGenerationStats:
     created: int
+    skipped: int
+
+
+@dataclass(frozen=True)
+class NotificationDispatchStats:
+    sent: int
+    failed: int
     skipped: int
 
 
@@ -36,6 +46,47 @@ async def list_user_notifications(
         .offset(offset)
     )
     return list(result.scalars().all()), total or 0
+
+
+async def dispatch_created_notifications(
+    session: AsyncSession,
+    *,
+    telegram_client: TelegramMessageClient,
+    limit: int = 100,
+) -> NotificationDispatchStats:
+    result = await session.execute(
+        select(Notification, User)
+        .join(User, User.id == Notification.user_id)
+        .where(Notification.status == "created")
+        .order_by(Notification.created_at.asc())
+        .limit(limit)
+    )
+    rows = list(result.all())
+    sent = 0
+    failed = 0
+    skipped = 0
+
+    for notification, user in rows:
+        if user.telegram_id is None:
+            notification.status = "failed"
+            failed += 1
+            continue
+
+        try:
+            await telegram_client.send_message(
+                chat_id=user.telegram_id,
+                text=notification.message,
+            )
+        except TelegramDeliveryError:
+            notification.status = "failed"
+            failed += 1
+        else:
+            notification.status = "sent"
+            notification.sent_at = datetime.now(UTC)
+            sent += 1
+
+    await session.flush()
+    return NotificationDispatchStats(sent=sent, failed=failed, skipped=skipped)
 
 
 async def generate_notifications(session: AsyncSession) -> NotificationGenerationStats:

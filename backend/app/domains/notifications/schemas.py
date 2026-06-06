@@ -29,3 +29,8 @@ class NotificationGenerationResult(BaseModel):
     created: int
     skipped: int
 
+
+class NotificationDispatchResult(BaseModel):
+    sent: int
+    failed: int
+    skipped: int
