@@ -242,7 +242,26 @@ async def test_due_source_config_selection_and_mark_synced(db_session_factory) -
 
         await mark_source_config_synced(session, due, synced_at=now)
         assert due.last_sync_at == now
-        assert due.next_sync_at == now + timedelta(minutes=30)
+    assert due.next_sync_at == now + timedelta(minutes=30)
+
+
+async def test_admin_can_create_and_list_fx_rates(client: TestClient, db_session_factory) -> None:
+    admin, _product, _store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+
+    create_response = client.post(
+        "/v1/admin/fx-rates",
+        headers=headers,
+        json={"currency": "czk", "rate_to_eur": 0.040817, "source": "manual"},
+    )
+    assert create_response.status_code == 201
+    fx_rate = create_response.json()
+    assert fx_rate["currency"] == "CZK"
+    assert fx_rate["rate_to_eur"] == 0.040817
+
+    list_response = client.get("/v1/admin/fx-rates", headers=headers, params={"currency": "CZK"})
+    assert list_response.status_code == 200
+    assert list_response.json()["items"][0]["id"] == fx_rate["id"]
 
 
 async def test_admin_can_run_static_json_source_config_sync(
@@ -311,6 +330,103 @@ async def test_admin_can_run_static_json_source_config_sync(
         )
         assert offer is not None
         assert float(offer.eur_price) == 127.60
+
+
+async def test_static_json_sync_normalizes_source_currency_to_eur(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin, product, store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+    client.post(
+        "/v1/admin/fx-rates",
+        headers=headers,
+        json={"currency": "CZK", "rate_to_eur": 0.04, "source": "manual"},
+    )
+    create_response = client.post(
+        f"/v1/admin/stores/{store.id}/source-configs",
+        headers=headers,
+        json={
+            "source_type": "static_json",
+            "active": True,
+            "settings": {
+                "records": [
+                    {
+                        "external_id": "static-json-czk-normalized",
+                        "product_id": str(product.id),
+                        "product_url": "https://www.footshop.cz/nb-1080-normalized",
+                        "source_price": 3000,
+                        "source_old_price": 4000,
+                        "source_currency": "CZK",
+                        "availability": "in_stock",
+                    }
+                ]
+            },
+        },
+    )
+    source_config_id = create_response.json()["id"]
+
+    response = client.post(
+        "/v1/admin/sync-runs",
+        headers=headers,
+        json={"source_config_id": source_config_id},
+    )
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "succeeded"
+    async with db_session_factory() as session:
+        offer = await session.scalar(
+            select(Offer).where(Offer.external_id == "static-json-czk-normalized")
+        )
+        assert offer is not None
+        assert float(offer.eur_price) == 120.00
+        assert float(offer.eur_old_price) == 160.00
+        assert float(offer.fx_rate_to_eur) == 0.04
+
+
+async def test_static_json_sync_records_missing_fx_rate_as_item_error(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin, product, store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+    create_response = client.post(
+        f"/v1/admin/stores/{store.id}/source-configs",
+        headers=headers,
+        json={
+            "source_type": "static_json",
+            "active": True,
+            "settings": {
+                "records": [
+                    {
+                        "external_id": "static-json-missing-fx",
+                        "product_id": str(product.id),
+                        "product_url": "https://www.footshop.cz/missing-fx",
+                        "source_price": 3000,
+                        "source_currency": "CZK",
+                        "availability": "in_stock",
+                    }
+                ]
+            },
+        },
+    )
+    source_config_id = create_response.json()["id"]
+
+    response = client.post(
+        "/v1/admin/sync-runs",
+        headers=headers,
+        json={"source_config_id": source_config_id},
+    )
+    sync_run = response.json()
+
+    assert response.status_code == 202
+    assert sync_run["status"] == "failed"
+    assert sync_run["failed_offers"] == 1
+
+    items_response = client.get(f"/v1/admin/sync-runs/{sync_run['id']}/items", headers=headers)
+    item = items_response.json()["items"][0]
+    assert item["status"] == "failed"
+    assert "FX rate not found for CZK" in item["error_message"]
 
 
 async def test_static_json_sync_creates_product_and_mapping_from_source_data(

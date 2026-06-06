@@ -534,6 +534,41 @@ paths:
               schema:
                 $ref: "#/components/schemas/SourceConfig"
 
+  /admin/fx-rates:
+    get:
+      tags: [Admin]
+      summary: List FX rates
+      parameters:
+        - name: currency
+          in: query
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 3
+      responses:
+        "200":
+          description: FX rates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FxRateList"
+    post:
+      tags: [Admin]
+      summary: Create FX rate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FxRateCreate"
+      responses:
+        "201":
+          description: Created FX rate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FxRate"
+
   /admin/sync-runs:
     get:
       tags: [Admin]
@@ -1313,6 +1348,58 @@ components:
           type: string
           enum: [fake, static_json, api, affiliate_feed, heureka, playwright]
           nullable: true
+
+    FxRate:
+      type: object
+      required: [id, currency, rate_to_eur, source, valid_at, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        rate_to_eur:
+          type: number
+          format: decimal
+        source:
+          type: string
+        valid_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    FxRateCreate:
+      type: object
+      required: [currency, rate_to_eur]
+      properties:
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        rate_to_eur:
+          type: number
+          format: decimal
+          exclusiveMinimum: 0
+        source:
+          type: string
+          default: manual
+        valid_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    FxRateList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FxRate"
 
     SourceConfig:
       type: object

@@ -3,6 +3,8 @@ import uuid
 from fastapi import APIRouter, HTTPException, status
 
 from app.api.deps import CurrentAdminUserDep, DbSessionDep
+from app.domains.fx.schemas import FxRateCreate, FxRateList, FxRateRead
+from app.domains.fx.service import create_fx_rate, list_fx_rates
 from app.domains.stores.schemas import (
     ManualSyncRequest,
     SourceConfigCreate,
@@ -37,6 +39,27 @@ from app.integrations.stores.fake import FakeStoreSourceAdapter
 from app.integrations.stores.registry import adapter_from_source_config
 
 router = APIRouter(prefix="/admin")
+
+
+@router.get("/fx-rates", response_model=FxRateList)
+async def admin_list_fx_rates(
+    session: DbSessionDep,
+    _admin: CurrentAdminUserDep,
+    currency: str | None = None,
+) -> FxRateList:
+    return FxRateList(items=await list_fx_rates(session, currency=currency))
+
+
+@router.post("/fx-rates", response_model=FxRateRead, status_code=status.HTTP_201_CREATED)
+async def admin_create_fx_rate(
+    payload: FxRateCreate,
+    session: DbSessionDep,
+    _admin: CurrentAdminUserDep,
+) -> FxRateRead:
+    fx_rate = await create_fx_rate(session, payload)
+    await session.commit()
+    await session.refresh(fx_rate)
+    return fx_rate
 
 
 @router.get("/stores", response_model=StoreList)

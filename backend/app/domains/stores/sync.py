@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from app.domains.catalog.models import Brand, Category, Product
 from app.domains.catalog.service import normalize_name
+from app.domains.fx.service import convert_to_eur
 from app.domains.offers.models import Offer, OfferAvailability
 from app.domains.offers.schemas import OfferAvailabilityCreate, OfferCreate, OfferUpdate
 from app.domains.offers.service import create_offer, update_offer
@@ -89,6 +90,7 @@ async def upsert_offer_from_source_record(
     source_config_id=None,
     record: SourceOfferRecord,
 ) -> Offer:
+    eur_price, eur_old_price, fx_rate_to_eur = await _normalized_offer_prices(session, record)
     product_id = await resolve_source_product_id(
         session,
         store_id=store_id,
@@ -111,9 +113,9 @@ async def upsert_offer_from_source_record(
                 source_price=record.source_price,
                 source_old_price=record.source_old_price,
                 source_currency=record.source_currency,
-                eur_price=record.eur_price,
-                eur_old_price=record.eur_old_price,
-                fx_rate_to_eur=record.fx_rate_to_eur,
+                eur_price=eur_price,
+                eur_old_price=eur_old_price,
+                fx_rate_to_eur=fx_rate_to_eur,
                 discount_percent=record.discount_percent,
                 availability=record.availability,
                 availability_items=[
@@ -135,13 +137,35 @@ async def upsert_offer_from_source_record(
             source_price=record.source_price,
             source_old_price=record.source_old_price,
             source_currency=record.source_currency,
-            eur_price=record.eur_price,
-            eur_old_price=record.eur_old_price,
-            fx_rate_to_eur=record.fx_rate_to_eur,
+            eur_price=eur_price,
+            eur_old_price=eur_old_price,
+            fx_rate_to_eur=fx_rate_to_eur,
             discount_percent=record.discount_percent,
             availability=record.availability,
         ),
     )
+
+
+async def _normalized_offer_prices(
+    session: AsyncSession,
+    record: SourceOfferRecord,
+) -> tuple[float, float | None, float | None]:
+    if record.eur_price is not None:
+        return record.eur_price, record.eur_old_price, record.fx_rate_to_eur
+
+    eur_price, fx_rate_to_eur = await convert_to_eur(
+        session,
+        amount=record.source_price,
+        currency=record.source_currency,
+    )
+    eur_old_price, _old_price_rate = await convert_to_eur(
+        session,
+        amount=record.source_old_price,
+        currency=record.source_currency,
+    )
+    if eur_price is None:
+        raise ValueError("Source offer record must include source_price.")
+    return eur_price, eur_old_price, fx_rate_to_eur
 
 
 def _availability_from_mapping(item: dict[str, object]) -> OfferAvailabilityCreate:

@@ -33,7 +33,7 @@ def _record_from_mapping(record: object) -> SourceOfferRecord:
         source_price=float(record["source_price"]),
         source_old_price=_optional_float(record.get("source_old_price")),
         source_currency=str(record["source_currency"]),
-        eur_price=float(record["eur_price"]),
+        eur_price=_optional_float(record.get("eur_price")),
         eur_old_price=_optional_float(record.get("eur_old_price")),
         fx_rate_to_eur=_optional_float(record.get("fx_rate_to_eur")),
         discount_percent=_optional_float(record.get("discount_percent")),

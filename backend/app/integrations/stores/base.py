@@ -24,7 +24,7 @@ class SourceOfferRecord:
     source_price: float
     source_old_price: float | None
     source_currency: str
-    eur_price: float
+    eur_price: float | None
     eur_old_price: float | None
     fx_rate_to_eur: float | None
     discount_percent: float | None

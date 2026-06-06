@@ -492,6 +492,15 @@ erDiagram
         timestamptz created_at
     }
 
+    fx_rates {
+        uuid id PK
+        text currency
+        numeric rate_to_eur
+        text source
+        timestamptz valid_at
+        timestamptz created_at
+    }
+
     source_product_mappings {
         uuid id PK
         uuid store_id FK

@@ -15,7 +15,7 @@ Example request:
 Backend foundation is in progress. Telegram Bot and WebApp implementation have not started yet.
 Implemented backend modules include users/auth, catalog, shopping requests, watchlists, offers,
 price analytics, deals, notifications, Telegram delivery, Celery jobs, and the initial source sync
-foundation.
+foundation with FX normalization.
 
 ## MVP Decisions
 
