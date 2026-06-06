@@ -1,11 +1,14 @@
-from bot.backend_client import ShoppingRequestResult
+from bot.backend_client import ShoppingRequestResult, ShoppingRequestSummary, WatchlistSummary
 from bot.config import BotSettings
 from bot.messages import (
+    backend_unavailable_reply,
     help_reply,
     shopping_request_created_reply,
     shopping_request_failed_reply,
+    shopping_requests_reply,
     shopping_text_reply,
     start_reply,
+    watchlists_reply,
 )
 
 
@@ -26,6 +29,8 @@ def test_help_reply_lists_commands() -> None:
 
     assert "/start" in reply.text
     assert "/help" in reply.text
+    assert "/requests" in reply.text
+    assert "/watchlists" in reply.text
 
 
 def test_shopping_text_reply_trims_and_previews_request() -> None:
@@ -67,4 +72,90 @@ def test_shopping_request_failed_reply_points_to_webapp() -> None:
     )
 
     assert "не получилось отправить запрос" in reply.text
+    assert reply.webapp_url == "https://kupikupi.example/app"
+
+
+def test_shopping_requests_reply_lists_recent_requests() -> None:
+    reply = shopping_requests_reply(
+        BotSettings(telegram_bot_token="token"),
+        [
+            ShoppingRequestSummary(
+                id="request-1",
+                raw_text="Хочу беговые кроссовки для ежедневных тренировок. Размер 41.",
+                status="parsed",
+                category="running-shoes",
+                size_value="41",
+                budget_amount=150,
+                display_currency="EUR",
+            ),
+        ],
+    )
+
+    assert "Последние запросы" in reply.text
+    assert "Хочу беговые кроссовки" in reply.text
+    assert "parsed" in reply.text
+    assert "running-shoes" in reply.text
+    assert "150 EUR" in reply.text
+
+
+def test_shopping_requests_reply_handles_empty_list() -> None:
+    reply = shopping_requests_reply(
+        BotSettings(
+            telegram_bot_token="token",
+            telegram_webapp_url="https://kupikupi.example/app",
+        ),
+        [],
+    )
+
+    assert "Пока нет сохраненных запросов" in reply.text
+    assert reply.webapp_url == "https://kupikupi.example/app"
+
+
+def test_watchlists_reply_lists_active_watchlists() -> None:
+    reply = watchlists_reply(
+        BotSettings(telegram_bot_token="token"),
+        [
+            WatchlistSummary(
+                id="watchlist-1",
+                type="product_search",
+                active=True,
+                archived=False,
+                model="Nike Pegasus",
+                category="running-shoes",
+                size_value="41",
+                target_price=150,
+                target_price_currency="EUR",
+            ),
+        ],
+    )
+
+    assert "Активные списки" in reply.text
+    assert "Nike Pegasus" in reply.text
+    assert "активен" in reply.text
+    assert "размер 41" in reply.text
+    assert "цель 150 EUR" in reply.text
+
+
+def test_watchlists_reply_handles_empty_list() -> None:
+    reply = watchlists_reply(
+        BotSettings(
+            telegram_bot_token="token",
+            telegram_webapp_url="https://kupikupi.example/app",
+        ),
+        [],
+    )
+
+    assert "Активных списков пока нет" in reply.text
+    assert reply.webapp_url == "https://kupikupi.example/app"
+
+
+def test_backend_unavailable_reply_points_to_webapp() -> None:
+    reply = backend_unavailable_reply(
+        BotSettings(
+            telegram_bot_token="token",
+            telegram_webapp_url="https://kupikupi.example/app",
+        )
+    )
+
+    assert "не получилось получить данные" in reply.text
     assert reply.webapp_url == "https://kupikupi.example/app"

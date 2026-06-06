@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from bot.backend_client import ShoppingRequestResult
+from bot.backend_client import ShoppingRequestResult, ShoppingRequestSummary, WatchlistSummary
 from bot.config import BotSettings
 
 
@@ -26,7 +26,7 @@ def help_reply(settings: BotSettings) -> BotReply:
         "- принять описание покупки обычным текстом;\n"
         "- передать запрос в Kupikupi WebApp;\n"
         "- позже присылать уведомления о хороших предложениях.\n\n"
-        "Команды: /start, /help."
+        "Команды: /start, /help, /requests, /watchlists."
     )
     return BotReply(text=text, webapp_url=settings.telegram_webapp_url)
 
@@ -71,3 +71,74 @@ def shopping_request_failed_reply(settings: BotSettings, text: str) -> BotReply:
         ),
         webapp_url=fallback.webapp_url,
     )
+
+
+def shopping_requests_reply(
+    settings: BotSettings,
+    requests: list[ShoppingRequestSummary],
+) -> BotReply:
+    if not requests:
+        return BotReply(
+            text="Пока нет сохраненных запросов. Напиши, что хочешь купить.",
+            webapp_url=settings.telegram_webapp_url,
+        )
+
+    lines = ["Последние запросы:"]
+    for index, request in enumerate(requests, start=1):
+        details = _shopping_request_details(request)
+        lines.append(f"{index}. {request.raw_text[:80]} — {request.status}{details}")
+    return BotReply(text="\n".join(lines), webapp_url=settings.telegram_webapp_url)
+
+
+def watchlists_reply(
+    settings: BotSettings,
+    watchlists: list[WatchlistSummary],
+) -> BotReply:
+    if not watchlists:
+        return BotReply(
+            text="Активных списков пока нет. Создай запрос и подтверди список в WebApp.",
+            webapp_url=settings.telegram_webapp_url,
+        )
+
+    lines = ["Активные списки:"]
+    for index, watchlist in enumerate(watchlists, start=1):
+        title = watchlist.model or watchlist.category or watchlist.type
+        details = _watchlist_details(watchlist)
+        state = "активен" if watchlist.active else "пауза"
+        lines.append(f"{index}. {title} — {state}{details}")
+    return BotReply(text="\n".join(lines), webapp_url=settings.telegram_webapp_url)
+
+
+def backend_unavailable_reply(settings: BotSettings) -> BotReply:
+    return BotReply(
+        text=(
+            "Сейчас не получилось получить данные из backend. "
+            "Можно продолжить через WebApp."
+        ),
+        webapp_url=settings.telegram_webapp_url,
+    )
+
+
+def _shopping_request_details(request: ShoppingRequestSummary) -> str:
+    details = []
+    if request.category:
+        details.append(request.category)
+    if request.size_value:
+        details.append(f"размер {request.size_value}")
+    if request.budget_amount:
+        details.append(f"{request.budget_amount:g} {request.display_currency or 'EUR'}")
+    if not details:
+        return ""
+    return f" ({', '.join(details)})"
+
+
+def _watchlist_details(watchlist: WatchlistSummary) -> str:
+    details = []
+    if watchlist.size_value:
+        details.append(f"размер {watchlist.size_value}")
+    if watchlist.target_price:
+        currency = watchlist.target_price_currency or "EUR"
+        details.append(f"цель {watchlist.target_price:g} {currency}")
+    if not details:
+        return ""
+    return f" ({', '.join(details)})"
