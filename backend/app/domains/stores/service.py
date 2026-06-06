@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.stores.models import SourceConfig, SourceSyncRun, Store
+from app.domains.stores.models import SourceConfig, SourceSyncRun, SourceSyncRunItem, Store
 from app.domains.stores.schemas import (
     SourceConfigCreate,
     SourceConfigUpdate,
@@ -84,4 +84,22 @@ async def update_source_config(
 
 async def list_sync_runs(session: AsyncSession) -> list[SourceSyncRun]:
     result = await session.execute(select(SourceSyncRun).order_by(SourceSyncRun.started_at.desc()))
+    return list(result.scalars().all())
+
+
+async def get_sync_run(session: AsyncSession, sync_run_id: uuid.UUID) -> SourceSyncRun | None:
+    result = await session.execute(select(SourceSyncRun).where(SourceSyncRun.id == sync_run_id))
+    return result.scalar_one_or_none()
+
+
+async def list_sync_run_items(
+    session: AsyncSession,
+    *,
+    sync_run_id: uuid.UUID,
+) -> list[SourceSyncRunItem]:
+    result = await session.execute(
+        select(SourceSyncRunItem)
+        .where(SourceSyncRunItem.sync_run_id == sync_run_id)
+        .order_by(SourceSyncRunItem.created_at.asc(), SourceSyncRunItem.id.asc())
+    )
     return list(result.scalars().all())

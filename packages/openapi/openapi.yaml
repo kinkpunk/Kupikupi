@@ -562,6 +562,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/SyncRun"
 
+  /admin/sync-runs/{sync_run_id}/items:
+    get:
+      tags: [Admin]
+      summary: List source synchronization run items
+      parameters:
+        - name: sync_run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Sync run items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncRunItemList"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1380,11 +1399,14 @@ components:
           type: string
         status:
           type: string
-          enum: [queued, running, succeeded, failed]
+          enum: [queued, running, succeeded, partially_failed, failed]
         products_seen:
           type: integer
           nullable: true
         offers_seen:
+          type: integer
+          nullable: true
+        failed_offers:
           type: integer
           nullable: true
         error_message:
@@ -1406,3 +1428,47 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SyncRun"
+
+    SyncRunItem:
+      type: object
+      required: [id, sync_run_id, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        sync_run_id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [succeeded, failed]
+        product_id:
+          type: string
+          format: uuid
+          nullable: true
+        offer_id:
+          type: string
+          format: uuid
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        raw_data:
+          type: object
+          additionalProperties: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    SyncRunItemList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SyncRunItem"

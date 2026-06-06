@@ -13,6 +13,7 @@ from app.domains.stores.schemas import (
     StoreList,
     StoreRead,
     StoreUpdate,
+    SyncRunItemList,
     SyncRunList,
     SyncRunRead,
 )
@@ -21,8 +22,10 @@ from app.domains.stores.service import (
     create_store,
     get_source_config,
     get_store,
+    get_sync_run,
     list_source_configs,
     list_stores,
+    list_sync_run_items,
     list_sync_runs,
     update_source_config,
     update_store,
@@ -131,6 +134,18 @@ async def admin_list_sync_runs(
     _admin: CurrentAdminUserDep,
 ) -> SyncRunList:
     return SyncRunList(items=await list_sync_runs(session))
+
+
+@router.get("/sync-runs/{sync_run_id}/items", response_model=SyncRunItemList)
+async def admin_list_sync_run_items(
+    sync_run_id: uuid.UUID,
+    session: DbSessionDep,
+    _admin: CurrentAdminUserDep,
+) -> SyncRunItemList:
+    sync_run = await get_sync_run(session, sync_run_id)
+    if sync_run is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sync run not found.")
+    return SyncRunItemList(items=await list_sync_run_items(session, sync_run_id=sync_run_id))
 
 
 @router.post("/sync-runs", response_model=SyncRunRead, status_code=status.HTTP_202_ACCEPTED)

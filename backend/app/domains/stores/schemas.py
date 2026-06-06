@@ -77,6 +77,7 @@ class SyncRunRead(BaseModel):
     status: str
     products_seen: int
     offers_seen: int
+    failed_offers: int
     error_message: str | None
     started_at: datetime
     finished_at: datetime | None
@@ -86,3 +87,21 @@ class SyncRunRead(BaseModel):
 
 class SyncRunList(BaseModel):
     items: list[SyncRunRead]
+
+
+class SyncRunItemRead(BaseModel):
+    id: uuid.UUID
+    sync_run_id: uuid.UUID
+    external_id: str | None
+    status: str
+    product_id: uuid.UUID | None
+    offer_id: uuid.UUID | None
+    error_message: str | None
+    raw_data: dict[str, object] | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SyncRunItemList(BaseModel):
+    items: list[SyncRunItemRead]

@@ -5,7 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.security import create_access_token
 from app.domains.catalog.models import Brand, Category, Product
 from app.domains.offers.models import Offer, OfferAvailability, PriceSnapshot
-from app.domains.stores.models import SourceConfig, SourceProductMapping, SourceSyncRun, Store
+from app.domains.stores.models import (
+    SourceConfig,
+    SourceProductMapping,
+    SourceSyncRun,
+    SourceSyncRunItem,
+    Store,
+)
 from app.domains.stores.sync import run_source_sync
 from app.domains.users.models import User
 from app.integrations.stores.base import SourceOfferRecord
@@ -73,6 +79,7 @@ async def test_source_sync_creates_offer_run_and_price_snapshot(db_session_facto
         assert sync_run.status == "succeeded"
         assert sync_run.products_seen == 1
         assert sync_run.offers_seen == 1
+        assert sync_run.failed_offers == 0
 
         offer_count = await session.scalar(select(func.count(Offer.id)))
         snapshot_count = await session.scalar(select(func.count(PriceSnapshot.id)))
@@ -233,6 +240,7 @@ async def test_admin_can_run_static_json_source_config_sync(
     assert body["source_type"] == "static_json"
     assert body["products_seen"] == 1
     assert body["offers_seen"] == 1
+    assert body["failed_offers"] == 0
 
     async with db_session_factory() as session:
         offer = await session.scalar(
@@ -319,6 +327,72 @@ async def test_static_json_sync_creates_product_and_mapping_from_source_data(
         assert product_count == 1
         assert offer_count == 1
         assert snapshot_count == 2
+
+
+async def test_source_sync_records_item_errors_and_continues(db_session_factory) -> None:
+    _admin, product, store = await create_sync_fixture(db_session_factory)
+    valid_record = make_source_record(product, eur_price=139.60)
+    invalid_record = SourceOfferRecord(
+        external_id="broken-offer",
+        product_id=None,
+        product_url="https://www.footshop.cz/broken",
+        source_price=1000,
+        source_old_price=None,
+        source_currency="CZK",
+        eur_price=40,
+        eur_old_price=None,
+        fx_rate_to_eur=0.04,
+        discount_percent=None,
+        availability="in_stock",
+    )
+
+    async with db_session_factory() as session:
+        sync_run = await run_source_sync(
+            session,
+            adapter=FakeStoreSourceAdapter([valid_record, invalid_record]),
+            store_id=store.id,
+        )
+        await session.commit()
+
+        assert sync_run.status == "partially_failed"
+        assert sync_run.products_seen == 1
+        assert sync_run.offers_seen == 1
+        assert sync_run.failed_offers == 1
+
+    async with db_session_factory() as session:
+        persisted_run = await session.scalar(
+            select(SourceSyncRun).where(SourceSyncRun.id == sync_run.id)
+        )
+        result = await session.execute(
+            select(SourceSyncRunItem).order_by(SourceSyncRunItem.external_id.asc())
+        )
+        items = list(result.scalars().all())
+
+        assert len(items) == 2
+        assert persisted_run.status == "partially_failed"
+        assert items[0].external_id == "broken-offer"
+        assert items[0].status == "failed"
+        assert "product_id or product data" in (items[0].error_message or "")
+        assert items[1].external_id == "footshop-nb-1080"
+        assert items[1].status == "succeeded"
+        assert items[1].offer_id is not None
+
+
+async def test_admin_can_list_sync_run_items(client: TestClient, db_session_factory) -> None:
+    admin, _product, store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+
+    response = client.post(
+        "/v1/admin/sync-runs",
+        headers=headers,
+        json={"store_id": str(store.id), "source_type": "fake"},
+    )
+    sync_run_id = response.json()["id"]
+
+    items_response = client.get(f"/v1/admin/sync-runs/{sync_run_id}/items", headers=headers)
+
+    assert items_response.status_code == 200
+    assert items_response.json()["items"] == []
 
 
 async def test_admin_rejects_inactive_source_config_sync(

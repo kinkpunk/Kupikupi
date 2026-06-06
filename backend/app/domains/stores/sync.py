@@ -9,7 +9,7 @@ from app.domains.catalog.service import normalize_name
 from app.domains.offers.models import Offer, OfferAvailability
 from app.domains.offers.schemas import OfferAvailabilityCreate, OfferCreate, OfferUpdate
 from app.domains.offers.service import create_offer, update_offer
-from app.domains.stores.models import SourceProductMapping, SourceSyncRun
+from app.domains.stores.models import SourceProductMapping, SourceSyncRun, SourceSyncRunItem
 from app.integrations.stores.base import SourceOfferRecord, StoreSourceAdapter
 
 
@@ -32,17 +32,46 @@ async def run_source_sync(
     try:
         records = await adapter.fetch_offers(store_id=store_id)
         product_ids = set()
+        failed_offers = 0
         for record in records:
-            offer = await upsert_offer_from_source_record(
-                session,
-                store_id=store_id,
-                source_config_id=source_config_id,
-                record=record,
-            )
-            product_ids.add(offer.product_id)
+            try:
+                offer = await upsert_offer_from_source_record(
+                    session,
+                    store_id=store_id,
+                    source_config_id=source_config_id,
+                    record=record,
+                )
+                product_ids.add(offer.product_id)
+                session.add(
+                    SourceSyncRunItem(
+                        sync_run_id=sync_run.id,
+                        external_id=record.external_id,
+                        status="succeeded",
+                        product_id=offer.product_id,
+                        offer_id=offer.id,
+                        raw_data=_source_offer_raw_data(record),
+                    )
+                )
+            except Exception as exc:
+                failed_offers += 1
+                session.add(
+                    SourceSyncRunItem(
+                        sync_run_id=sync_run.id,
+                        external_id=record.external_id,
+                        status="failed",
+                        error_message=str(exc),
+                        raw_data=_source_offer_raw_data(record),
+                    )
+                )
         sync_run.products_seen = len(product_ids)
-        sync_run.offers_seen = len(records)
-        sync_run.status = "succeeded"
+        sync_run.offers_seen = len(records) - failed_offers
+        sync_run.failed_offers = failed_offers
+        if failed_offers == 0:
+            sync_run.status = "succeeded"
+        elif sync_run.offers_seen == 0:
+            sync_run.status = "failed"
+        else:
+            sync_run.status = "partially_failed"
     except Exception as exc:
         sync_run.status = "failed"
         sync_run.error_message = str(exc)
@@ -227,4 +256,22 @@ def _source_product_raw_data(record: SourceOfferRecord) -> dict[str, object] | N
         "sku": record.product.sku,
         "image_url": record.product.image_url,
         "attributes": record.product.attributes,
+    }
+
+
+def _source_offer_raw_data(record: SourceOfferRecord) -> dict[str, object]:
+    return {
+        "external_id": record.external_id,
+        "product_id": str(record.product_id) if record.product_id else None,
+        "product_url": record.product_url,
+        "source_price": record.source_price,
+        "source_old_price": record.source_old_price,
+        "source_currency": record.source_currency,
+        "eur_price": record.eur_price,
+        "eur_old_price": record.eur_old_price,
+        "fx_rate_to_eur": record.fx_rate_to_eur,
+        "discount_percent": record.discount_percent,
+        "availability": record.availability,
+        "sizes": record.sizes,
+        "product": _source_product_raw_data(record),
     }
