@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class BotSettings(BaseSettings):
     telegram_bot_token: str = ""
     backend_api_url: str = "http://localhost:8000/v1"
+    backend_access_token: str | None = None
     telegram_webapp_url: str | None = None
     bot_polling_timeout_seconds: int = Field(default=30, ge=1)
 

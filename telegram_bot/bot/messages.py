@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from bot.backend_client import ShoppingRequestResult
 from bot.config import BotSettings
 
 
@@ -39,3 +40,34 @@ def shopping_text_reply(settings: BotSettings, text: str) -> BotReply:
         "Следующий шаг: открой Kupikupi WebApp, чтобы подтвердить параметры и создать список."
     )
     return BotReply(text=reply_text, webapp_url=settings.telegram_webapp_url)
+
+
+def shopping_request_created_reply(
+    settings: BotSettings,
+    result: ShoppingRequestResult,
+) -> BotReply:
+    parts = ["Запрос создан в Kupikupi.", f"Статус: {result.status}."]
+    details = []
+    if result.category:
+        details.append(f"категория: {result.category}")
+    if result.size_value:
+        details.append(f"размер: {result.size_value}")
+    if result.budget_amount:
+        currency = result.display_currency or "EUR"
+        details.append(f"бюджет: {result.budget_amount:g} {currency}")
+    if details:
+        parts.append("Распознал: " + ", ".join(details) + ".")
+    parts.append("Открой WebApp, чтобы проверить параметры и подтвердить список.")
+    return BotReply(text="\n".join(parts), webapp_url=settings.telegram_webapp_url)
+
+
+def shopping_request_failed_reply(settings: BotSettings, text: str) -> BotReply:
+    fallback = shopping_text_reply(settings, text)
+    return BotReply(
+        text=(
+            f"{fallback.text}\n\n"
+            "Сейчас не получилось отправить запрос в backend. "
+            "Можно продолжить через WebApp."
+        ),
+        webapp_url=fallback.webapp_url,
+    )

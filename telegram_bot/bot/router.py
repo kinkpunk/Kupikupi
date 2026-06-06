@@ -2,13 +2,23 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
+from bot.backend_client import BackendClient, BackendClientError
 from bot.config import BotSettings
 from bot.keyboards import webapp_keyboard
-from bot.messages import help_reply, shopping_text_reply, start_reply
+from bot.messages import (
+    help_reply,
+    shopping_request_created_reply,
+    shopping_request_failed_reply,
+    start_reply,
+)
 
 
 def build_router(settings: BotSettings) -> Router:
     router = Router()
+    backend_client = BackendClient(
+        base_url=settings.backend_api_url,
+        access_token=settings.backend_access_token,
+    )
 
     @router.message(Command("start"))
     async def handle_start(message: Message) -> None:
@@ -22,7 +32,12 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(F.text)
     async def handle_text(message: Message) -> None:
-        reply = shopping_text_reply(settings, message.text or "")
+        text = message.text or ""
+        try:
+            result = await backend_client.create_shopping_request(text)
+            reply = shopping_request_created_reply(settings, result)
+        except BackendClientError:
+            reply = shopping_request_failed_reply(settings, text)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     return router
