@@ -25,3 +25,6 @@ class StoreSourceAdapter(Protocol):
     async def fetch_offers(self, *, store_id: uuid.UUID | None = None) -> list[SourceOfferRecord]:
         pass
 
+
+class UnknownSourceTypeError(ValueError):
+    pass

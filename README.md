@@ -70,6 +70,7 @@ celery -A app.core.celery_app.celery_app call notifications.generate
 celery -A app.core.celery_app.celery_app call notifications.dispatch
 celery -A app.core.celery_app.celery_app call analytics.recompute_all
 celery -A app.core.celery_app.celery_app call sync.run_fake
+celery -A app.core.celery_app.celery_app call sync.run_source_config --args='["SOURCE_CONFIG_ID"]'
 ```
 
 ## Planned Stack

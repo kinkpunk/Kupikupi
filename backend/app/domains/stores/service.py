@@ -3,8 +3,13 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.stores.models import SourceSyncRun, Store
-from app.domains.stores.schemas import StoreCreate, StoreUpdate
+from app.domains.stores.models import SourceConfig, SourceSyncRun, Store
+from app.domains.stores.schemas import (
+    SourceConfigCreate,
+    SourceConfigUpdate,
+    StoreCreate,
+    StoreUpdate,
+)
 
 
 async def create_store(session: AsyncSession, payload: StoreCreate) -> Store:
@@ -29,6 +34,52 @@ async def update_store(session: AsyncSession, store: Store, payload: StoreUpdate
         setattr(store, field, value)
     await session.flush()
     return store
+
+
+async def create_source_config(
+    session: AsyncSession,
+    *,
+    store_id: uuid.UUID,
+    payload: SourceConfigCreate,
+) -> SourceConfig:
+    source_config = SourceConfig(store_id=store_id, **payload.model_dump())
+    session.add(source_config)
+    await session.flush()
+    return source_config
+
+
+async def get_source_config(
+    session: AsyncSession,
+    source_config_id: uuid.UUID,
+) -> SourceConfig | None:
+    result = await session.execute(
+        select(SourceConfig).where(SourceConfig.id == source_config_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def list_source_configs(
+    session: AsyncSession,
+    *,
+    store_id: uuid.UUID,
+) -> list[SourceConfig]:
+    result = await session.execute(
+        select(SourceConfig)
+        .where(SourceConfig.store_id == store_id)
+        .order_by(SourceConfig.source_type, SourceConfig.id)
+    )
+    return list(result.scalars().all())
+
+
+async def update_source_config(
+    session: AsyncSession,
+    source_config: SourceConfig,
+    payload: SourceConfigUpdate,
+) -> SourceConfig:
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(source_config, field, value)
+    await session.flush()
+    return source_config
 
 
 async def list_sync_runs(session: AsyncSession) -> list[SourceSyncRun]:

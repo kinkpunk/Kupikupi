@@ -42,6 +42,10 @@ class SourceSyncRun(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     store_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("stores.id"), index=True)
+    source_config_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("source_configs.id"),
+        index=True,
+    )
     source_type: Mapped[str] = mapped_column(String(64), default="fake")
     status: Mapped[str] = mapped_column(String(32), default="queued", index=True)
     products_seen: Mapped[int] = mapped_column(Integer, default=0)

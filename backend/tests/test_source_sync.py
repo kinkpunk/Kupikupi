@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.security import create_access_token
 from app.domains.catalog.models import Category, Product
 from app.domains.offers.models import Offer, OfferAvailability, PriceSnapshot
-from app.domains.stores.models import SourceSyncRun, Store
+from app.domains.stores.models import SourceConfig, SourceSyncRun, Store
 from app.domains.stores.sync import run_source_sync
 from app.domains.users.models import User
 from app.integrations.stores.base import SourceOfferRecord
@@ -141,6 +141,130 @@ async def test_admin_rejects_unknown_sync_source(client: TestClient, db_session_
         "/v1/admin/sync-runs",
         headers=headers,
         json={"store_id": str(store.id), "source_type": "unknown"},
+    )
+
+    assert response.status_code == 400
+
+
+async def test_admin_can_manage_store_source_configs(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin, _product, store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+
+    create_response = client.post(
+        f"/v1/admin/stores/{store.id}/source-configs",
+        headers=headers,
+        json={
+            "source_type": "static_json",
+            "endpoint_url": None,
+            "active": True,
+            "settings": {"records": []},
+        },
+    )
+    assert create_response.status_code == 201
+    source_config = create_response.json()
+    assert source_config["store_id"] == str(store.id)
+    assert source_config["source_type"] == "static_json"
+
+    patch_response = client.patch(
+        f"/v1/admin/source-configs/{source_config['id']}",
+        headers=headers,
+        json={"active": False},
+    )
+    assert patch_response.status_code == 200
+    assert patch_response.json()["active"] is False
+
+    list_response = client.get(
+        f"/v1/admin/stores/{store.id}/source-configs",
+        headers=headers,
+    )
+    assert list_response.status_code == 200
+    assert list_response.json()["items"][0]["id"] == source_config["id"]
+
+
+async def test_admin_can_run_static_json_source_config_sync(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin, product, store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+
+    create_response = client.post(
+        f"/v1/admin/stores/{store.id}/source-configs",
+        headers=headers,
+        json={
+            "source_type": "static_json",
+            "active": True,
+            "settings": {
+                "records": [
+                    {
+                        "external_id": "static-json-nb-1080",
+                        "product_id": str(product.id),
+                        "product_url": "https://www.footshop.cz/nb-1080",
+                        "source_price": 3190,
+                        "source_old_price": 3990,
+                        "source_currency": "CZK",
+                        "eur_price": 127.60,
+                        "eur_old_price": 159.60,
+                        "fx_rate_to_eur": 0.04,
+                        "discount_percent": 20.05,
+                        "availability": "in_stock",
+                        "sizes": [{"size_value": "41", "size_system": "EU", "in_stock": True}],
+                    }
+                ]
+            },
+        },
+    )
+    source_config_id = create_response.json()["id"]
+
+    response = client.post(
+        "/v1/admin/sync-runs",
+        headers=headers,
+        json={"source_config_id": source_config_id},
+    )
+
+    assert response.status_code == 202
+    body = response.json()
+    assert body["status"] == "succeeded"
+    assert body["store_id"] == str(store.id)
+    assert body["source_config_id"] == source_config_id
+    assert body["source_type"] == "static_json"
+    assert body["products_seen"] == 1
+    assert body["offers_seen"] == 1
+
+    async with db_session_factory() as session:
+        offer = await session.scalar(
+            select(Offer).where(Offer.external_id == "static-json-nb-1080")
+        )
+        assert offer is not None
+        assert float(offer.eur_price) == 127.60
+
+
+async def test_admin_rejects_inactive_source_config_sync(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin, _product, store = await create_sync_fixture(db_session_factory)
+    headers = {"Authorization": f"Bearer {create_access_token(str(admin.id))}"}
+
+    async with db_session_factory() as session:
+        source_config = SourceConfig(
+            store_id=store.id,
+            source_type="static_json",
+            active=False,
+            settings={"records": []},
+        )
+        session.add(source_config)
+        await session.commit()
+        await session.refresh(source_config)
+        source_config_id = source_config.id
+
+    response = client.post(
+        "/v1/admin/sync-runs",
+        headers=headers,
+        json={"source_config_id": str(source_config_id)},
     )
 
     assert response.status_code == 400

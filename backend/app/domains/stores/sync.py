@@ -15,8 +15,14 @@ async def run_source_sync(
     *,
     adapter: StoreSourceAdapter,
     store_id,
+    source_config_id=None,
 ) -> SourceSyncRun:
-    sync_run = SourceSyncRun(store_id=store_id, source_type=adapter.source_type, status="running")
+    sync_run = SourceSyncRun(
+        store_id=store_id,
+        source_config_id=source_config_id,
+        source_type=adapter.source_type,
+        status="running",
+    )
     session.add(sync_run)
     await session.flush()
 

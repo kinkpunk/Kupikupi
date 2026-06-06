@@ -35,14 +35,44 @@ class StoreList(BaseModel):
     items: list[StoreRead]
 
 
+class SourceConfigCreate(BaseModel):
+    source_type: str
+    endpoint_url: str | None = None
+    active: bool = True
+    settings: dict[str, object] | None = None
+
+
+class SourceConfigUpdate(BaseModel):
+    endpoint_url: str | None = None
+    active: bool | None = None
+    settings: dict[str, object] | None = None
+
+
+class SourceConfigRead(BaseModel):
+    id: uuid.UUID
+    store_id: uuid.UUID
+    source_type: str
+    endpoint_url: str | None
+    active: bool
+    settings: dict[str, object] | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SourceConfigList(BaseModel):
+    items: list[SourceConfigRead]
+
+
 class ManualSyncRequest(BaseModel):
     store_id: uuid.UUID | None = None
+    source_config_id: uuid.UUID | None = None
     source_type: str = "fake"
 
 
 class SyncRunRead(BaseModel):
     id: uuid.UUID
     store_id: uuid.UUID | None
+    source_config_id: uuid.UUID | None
     source_type: str
     status: str
     products_seen: int

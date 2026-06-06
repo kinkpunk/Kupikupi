@@ -477,6 +477,63 @@ paths:
               schema:
                 $ref: "#/components/schemas/Store"
 
+  /admin/stores/{store_id}/source-configs:
+    get:
+      tags: [Admin]
+      summary: List store source configs
+      parameters:
+        - $ref: "#/components/parameters/StoreId"
+      responses:
+        "200":
+          description: Source configs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SourceConfigList"
+    post:
+      tags: [Admin]
+      summary: Create store source config
+      parameters:
+        - $ref: "#/components/parameters/StoreId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SourceConfigCreate"
+      responses:
+        "201":
+          description: Created source config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SourceConfig"
+
+  /admin/source-configs/{source_config_id}:
+    patch:
+      tags: [Admin]
+      summary: Update source config
+      parameters:
+        - name: source_config_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SourceConfigUpdate"
+      responses:
+        "200":
+          description: Updated source config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SourceConfig"
+
   /admin/sync-runs:
     get:
       tags: [Admin]
@@ -1229,10 +1286,80 @@ components:
           type: string
           format: uuid
           nullable: true
+        source_config_id:
+          type: string
+          format: uuid
+          nullable: true
         source_type:
           type: string
-          enum: [api, affiliate_feed, heureka, playwright]
+          enum: [fake, static_json, api, affiliate_feed, heureka, playwright]
           nullable: true
+
+    SourceConfig:
+      type: object
+      required: [id, store_id, source_type, active]
+      properties:
+        id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        source_type:
+          type: string
+          enum: [fake, static_json, api, affiliate_feed, heureka, playwright]
+        endpoint_url:
+          type: string
+          format: uri
+          nullable: true
+        active:
+          type: boolean
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    SourceConfigCreate:
+      type: object
+      required: [source_type]
+      properties:
+        source_type:
+          type: string
+          enum: [fake, static_json, api, affiliate_feed, heureka, playwright]
+        endpoint_url:
+          type: string
+          format: uri
+          nullable: true
+        active:
+          type: boolean
+          default: true
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    SourceConfigUpdate:
+      type: object
+      properties:
+        endpoint_url:
+          type: string
+          format: uri
+          nullable: true
+        active:
+          type: boolean
+        settings:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    SourceConfigList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceConfig"
 
     SyncRun:
       type: object
@@ -1245,6 +1372,12 @@ components:
           type: string
           format: uuid
           nullable: true
+        source_config_id:
+          type: string
+          format: uuid
+          nullable: true
+        source_type:
+          type: string
         status:
           type: string
           enum: [queued, running, succeeded, failed]
