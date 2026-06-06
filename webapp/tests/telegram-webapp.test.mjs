@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  clearStoredTokens,
   getTelegramInitData,
   loadStoredTokens,
   notifyTelegramReady,
@@ -22,6 +23,13 @@ test("stores and loads auth tokens", () => {
   assert.deepEqual(loadStoredTokens(storage), {
     accessToken: "access-token",
     refreshToken: "refresh-token",
+  });
+
+  clearStoredTokens(storage);
+
+  assert.deepEqual(loadStoredTokens(storage), {
+    accessToken: "",
+    refreshToken: "",
   });
 });
 
@@ -62,6 +70,9 @@ function createMemoryStorage() {
   return {
     getItem(key) {
       return values.get(key) ?? null;
+    },
+    removeItem(key) {
+      values.delete(key);
     },
     setItem(key, value) {
       values.set(key, value);

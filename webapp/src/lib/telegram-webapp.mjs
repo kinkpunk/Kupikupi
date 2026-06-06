@@ -33,6 +33,14 @@ export function storeTokens(tokens, storage = safeSessionStorage()) {
   storage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
 }
 
+export function clearStoredTokens(storage = safeSessionStorage()) {
+  if (!storage) {
+    return;
+  }
+  storage.removeItem(ACCESS_TOKEN_KEY);
+  storage.removeItem(REFRESH_TOKEN_KEY);
+}
+
 function safeSessionStorage() {
   if (typeof window === "undefined") {
     return null;

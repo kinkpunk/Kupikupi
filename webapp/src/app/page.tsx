@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createApiClient } from "../lib/api-client.mjs";
 import {
+  clearStoredTokens,
   getTelegramInitData,
   loadStoredTokens,
   notifyTelegramReady,
@@ -22,12 +23,14 @@ type Status =
 
 const exampleText =
   "Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/v1";
 
 export default function Home() {
   const [text, setText] = useState(exampleText);
   const [status, setStatus] = useState<Status>("authenticating");
   const [error, setError] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState("");
+  const [refreshToken, setRefreshToken] = useState("");
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "stored" | "missing">("missing");
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
@@ -38,7 +41,7 @@ export default function Home() {
   const api = useMemo(
     () =>
       createApiClient({
-        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/v1",
+        baseUrl: apiBaseUrl,
         accessToken,
       }),
     [accessToken],
@@ -49,6 +52,7 @@ export default function Home() {
     const storedTokens = loadStoredTokens();
     if (storedTokens.accessToken) {
       setAccessToken(storedTokens.accessToken);
+      setRefreshToken(storedTokens.refreshToken);
       setAuthMode("stored");
       setStatus("idle");
       return;
@@ -62,6 +66,7 @@ export default function Home() {
 
     if (demoAccessToken) {
       setAccessToken(demoAccessToken);
+      setRefreshToken("");
       setAuthMode("demo");
       setStatus("idle");
       return;
@@ -84,12 +89,13 @@ export default function Home() {
 
     try {
       const authApi = createApiClient({
-        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/v1",
+        baseUrl: apiBaseUrl,
         accessToken: "",
       });
       const response = (await authApi.authenticateTelegram(initData)) as AuthResponse;
       storeTokens(response.tokens);
       setAccessToken(response.tokens.access_token);
+      setRefreshToken(response.tokens.refresh_token);
       setAuthMode("telegram");
       setStatus("idle");
     } catch (caught) {
@@ -109,8 +115,8 @@ export default function Home() {
 
     try {
       const [requestsResponse, watchlistsResponse] = await Promise.all([
-        api.listShoppingRequests({ limit: 5 }),
-        api.listWatchlists({ limit: 5 }),
+        withAuthRetry((client) => client.listShoppingRequests({ limit: 5 })),
+        withAuthRetry((client) => client.listWatchlists({ limit: 5 })),
       ]);
       setRecentRequests((requestsResponse as PaginatedResponse<ShoppingRequest>).items);
       setWatchlists((watchlistsResponse as PaginatedResponse<Watchlist>).items);
@@ -128,7 +134,7 @@ export default function Home() {
     setWatchlist(null);
 
     try {
-      const created = (await api.createShoppingRequest(text)) as ShoppingRequest;
+      const created = (await withAuthRetry((client) => client.createShoppingRequest(text))) as ShoppingRequest;
       setRequest(created);
       setStatus("success");
       await refreshDashboard();
@@ -147,7 +153,9 @@ export default function Home() {
     setError(null);
 
     try {
-      const created = (await api.confirmWatchlistFromShoppingRequest(request.id)) as Watchlist;
+      const created = (await withAuthRetry((client) =>
+        client.confirmWatchlistFromShoppingRequest(request.id),
+      )) as Watchlist;
       setWatchlist(created);
       setStatus("success");
       await refreshDashboard();
@@ -163,17 +171,52 @@ export default function Home() {
 
     try {
       if (action === "pause") {
-        await api.pauseWatchlist(watchlistId);
+        await withAuthRetry((client) => client.pauseWatchlist(watchlistId));
       } else if (action === "resume") {
-        await api.resumeWatchlist(watchlistId);
+        await withAuthRetry((client) => client.resumeWatchlist(watchlistId));
       } else {
-        await api.archiveWatchlist(watchlistId);
+        await withAuthRetry((client) => client.archiveWatchlist(watchlistId));
       }
       setStatus("success");
       await refreshDashboard();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Не удалось обновить список.");
       setStatus("error");
+    }
+  }
+
+  async function withAuthRetry<T>(
+    operation: (client: ReturnType<typeof createApiClient>) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await operation(api);
+    } catch (caught) {
+      if (!isUnauthorizedError(caught) || !refreshToken) {
+        throw caught;
+      }
+
+      const authApi = createApiClient({
+        baseUrl: apiBaseUrl,
+        accessToken: "",
+      });
+      try {
+        const tokens = await authApi.refreshToken(refreshToken);
+        storeTokens(tokens);
+        setAccessToken(tokens.access_token);
+        setRefreshToken(tokens.refresh_token);
+        setAuthMode("stored");
+        const retryApi = createApiClient({
+          baseUrl: apiBaseUrl,
+          accessToken: tokens.access_token,
+        });
+        return await operation(retryApi);
+      } catch (refreshError) {
+        clearStoredTokens();
+        setAccessToken("");
+        setRefreshToken("");
+        setAuthMode("missing");
+        throw refreshError;
+      }
     }
   }
 
@@ -402,4 +445,8 @@ function authModeLabel(authMode: "telegram" | "demo" | "stored" | "missing") {
     return "Demo token";
   }
   return "Нет входа";
+}
+
+function isUnauthorizedError(error: unknown) {
+  return error instanceof Error && "status" in error && error.status === 401;
 }

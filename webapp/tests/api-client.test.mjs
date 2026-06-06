@@ -55,6 +55,33 @@ test("authenticateTelegram posts init data without bearer token", async () => {
   });
 });
 
+test("refreshToken posts refresh token without bearer token", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, {
+        access_token: "new-access-token",
+        refresh_token: "new-refresh-token",
+        token_type: "bearer",
+        expires_in: 900,
+      });
+    },
+  });
+
+  const result = await client.refreshToken("refresh-token");
+
+  assert.equal(result.access_token, "new-access-token");
+  assert.equal(calls[0].url, "https://api.example.test/v1/auth/refresh");
+  assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[0].init.headers.Authorization, undefined);
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    refresh_token: "refresh-token",
+  });
+});
+
 test("confirmWatchlistFromShoppingRequest posts confirmation endpoint", async () => {
   const calls = [];
   const client = createApiClient({
