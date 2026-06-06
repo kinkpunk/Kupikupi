@@ -5,6 +5,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.catalog import router as catalog_router
 from app.api.v1.deals import router as deals_router
 from app.api.v1.health import router as health_router
+from app.api.v1.notifications import router as notifications_router
 from app.api.v1.offers import router as offers_router
 from app.api.v1.shopping_requests import router as shopping_requests_router
 from app.api.v1.users import router as users_router
@@ -16,6 +17,7 @@ api_router.include_router(auth_router, tags=["Auth"])
 api_router.include_router(catalog_router, tags=["Catalog"])
 api_router.include_router(deals_router, tags=["Deals"])
 api_router.include_router(health_router, tags=["Health"])
+api_router.include_router(notifications_router, tags=["Notifications"])
 api_router.include_router(offers_router, tags=["Offers"])
 api_router.include_router(shopping_requests_router, tags=["Shopping Requests"])
 api_router.include_router(users_router, tags=["Users"])
