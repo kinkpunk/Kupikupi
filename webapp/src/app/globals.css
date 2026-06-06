@@ -91,6 +91,18 @@ h2 {
   background: #edf8f4;
 }
 
+.status-stack {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.status-stack span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .request-form {
   display: grid;
   gap: 14px;

@@ -38,3 +38,21 @@ export type PaginatedResponse<T> = {
   items: T[];
   total: number;
 };
+
+export type TokenPair = {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+};
+
+export type AuthResponse = {
+  tokens: TokenPair;
+  user: {
+    id: string;
+    telegram_id: number;
+    username?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+  };
+};

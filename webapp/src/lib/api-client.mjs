@@ -6,18 +6,26 @@ export class ApiError extends Error {
   }
 }
 
-export function createApiClient({ baseUrl, accessToken, fetchImpl = fetch }) {
+export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImpl = fetch }) {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
 
+  function resolveAccessToken() {
+    if (typeof getAccessToken === "function") {
+      return getAccessToken();
+    }
+    return accessToken;
+  }
+
   async function request(path, { method = "GET", body } = {}) {
-    if (!accessToken) {
+    const token = resolveAccessToken();
+    if (!token) {
       throw new ApiError("Access token is not configured.");
     }
 
     const response = await fetchImpl(`${normalizedBaseUrl}${path}`, {
       method,
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -37,6 +45,16 @@ export function createApiClient({ baseUrl, accessToken, fetchImpl = fetch }) {
   }
 
   return {
+    authenticateTelegram(initData) {
+      return authRequest("/auth/telegram", {
+        init_data: initData,
+      });
+    },
+    refreshToken(refreshToken) {
+      return authRequest("/auth/refresh", {
+        refresh_token: refreshToken,
+      });
+    },
     createShoppingRequest(text) {
       return request("/shopping-requests", {
         method: "POST",
@@ -86,4 +104,22 @@ export function createApiClient({ baseUrl, accessToken, fetchImpl = fetch }) {
       });
     },
   };
+
+  async function authRequest(path, body) {
+    const response = await fetchImpl(`${normalizedBaseUrl}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new ApiError(`Backend returned ${response.status}.`, {
+        status: response.status,
+      });
+    }
+
+    return response.json();
+  }
 }

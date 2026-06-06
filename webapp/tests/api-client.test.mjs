@@ -26,6 +26,35 @@ test("createShoppingRequest posts text without creating watchlist", async () => 
   });
 });
 
+test("authenticateTelegram posts init data without bearer token", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, {
+        tokens: {
+          access_token: "access-token",
+          refresh_token: "refresh-token",
+          token_type: "bearer",
+          expires_in: 900,
+        },
+      });
+    },
+  });
+
+  const result = await client.authenticateTelegram("query_id=abc");
+
+  assert.equal(result.tokens.access_token, "access-token");
+  assert.equal(calls[0].url, "https://api.example.test/v1/auth/telegram");
+  assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[0].init.headers.Authorization, undefined);
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    init_data: "query_id=abc",
+  });
+});
+
 test("confirmWatchlistFromShoppingRequest posts confirmation endpoint", async () => {
   const calls = [];
   const client = createApiClient({

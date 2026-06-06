@@ -14,7 +14,8 @@ npm run dev
 ```
 
 The app expects the backend API at `NEXT_PUBLIC_API_BASE_URL`.
-For local MVP testing, set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` to a backend access token.
+In Telegram, it authenticates with WebApp `initData` through `/auth/telegram`.
+For local MVP testing outside Telegram, set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` to a backend access token.
 
 ## Tests
 

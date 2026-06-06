@@ -2,36 +2,108 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createApiClient } from "../lib/api-client.mjs";
-import type { PaginatedResponse, ShoppingRequest, Watchlist } from "../lib/types";
+import {
+  getTelegramInitData,
+  loadStoredTokens,
+  notifyTelegramReady,
+  storeTokens,
+} from "../lib/telegram-webapp.mjs";
+import type { AuthResponse, PaginatedResponse, ShoppingRequest, Watchlist } from "../lib/types";
 
-type Status = "idle" | "loading" | "submitting" | "confirming" | "updating" | "success" | "error";
+type Status =
+  | "idle"
+  | "authenticating"
+  | "loading"
+  | "submitting"
+  | "confirming"
+  | "updating"
+  | "success"
+  | "error";
 
 const exampleText =
   "Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.";
 
 export default function Home() {
   const [text, setText] = useState(exampleText);
-  const [status, setStatus] = useState<Status>("idle");
+  const [status, setStatus] = useState<Status>("authenticating");
   const [error, setError] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState("");
+  const [authMode, setAuthMode] = useState<"telegram" | "demo" | "stored" | "missing">("missing");
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [recentRequests, setRecentRequests] = useState<ShoppingRequest[]>([]);
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
 
+  const demoAccessToken = process.env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN ?? "";
   const api = useMemo(
     () =>
       createApiClient({
         baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/v1",
-        accessToken: process.env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN ?? "",
+        accessToken,
       }),
-    [],
+    [accessToken],
   );
 
   useEffect(() => {
-    void refreshDashboard();
+    notifyTelegramReady();
+    const storedTokens = loadStoredTokens();
+    if (storedTokens.accessToken) {
+      setAccessToken(storedTokens.accessToken);
+      setAuthMode("stored");
+      setStatus("idle");
+      return;
+    }
+
+    const initData = getTelegramInitData();
+    if (initData) {
+      void authenticateWithTelegram(initData);
+      return;
+    }
+
+    if (demoAccessToken) {
+      setAccessToken(demoAccessToken);
+      setAuthMode("demo");
+      setStatus("idle");
+      return;
+    }
+
+    setAuthMode("missing");
+    setError("Открой WebApp из Telegram или укажи NEXT_PUBLIC_DEMO_ACCESS_TOKEN для локального теста.");
+    setStatus("error");
   }, []);
 
+  useEffect(() => {
+    if (accessToken) {
+      void refreshDashboard();
+    }
+  }, [accessToken]);
+
+  async function authenticateWithTelegram(initData: string) {
+    setStatus("authenticating");
+    setError(null);
+
+    try {
+      const authApi = createApiClient({
+        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/v1",
+        accessToken: "",
+      });
+      const response = (await authApi.authenticateTelegram(initData)) as AuthResponse;
+      storeTokens(response.tokens);
+      setAccessToken(response.tokens.access_token);
+      setAuthMode("telegram");
+      setStatus("idle");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Не удалось авторизоваться через Telegram.");
+      setAuthMode("missing");
+      setStatus("error");
+    }
+  }
+
   async function refreshDashboard() {
+    if (!accessToken) {
+      return;
+    }
+
     setStatus((current) => (current === "idle" ? "loading" : current));
     setError(null);
 
@@ -115,7 +187,10 @@ export default function Home() {
             <p className="eyebrow">Kupikupi</p>
             <h1>Персональный агент покупок</h1>
           </div>
-          <div className="status-pill">{statusLabel(status)}</div>
+          <div className="status-stack">
+            <div className="status-pill">{statusLabel(status)}</div>
+            <span>{authModeLabel(authMode)}</span>
+          </div>
         </header>
 
         <form className="request-form" onSubmit={handleSubmit}>
@@ -127,7 +202,10 @@ export default function Home() {
             rows={5}
             placeholder={exampleText}
           />
-          <button type="submit" disabled={status === "submitting" || text.trim().length < 8}>
+          <button
+            type="submit"
+            disabled={!accessToken || status === "submitting" || text.trim().length < 8}
+          >
             {status === "submitting" ? "Создаю запрос..." : "Разобрать запрос"}
           </button>
         </form>
@@ -161,7 +239,7 @@ export default function Home() {
             className="secondary-button"
             type="button"
             onClick={handleConfirmWatchlist}
-            disabled={status === "confirming"}
+            disabled={!accessToken || status === "confirming"}
           >
             {status === "confirming" ? "Создаю список..." : "Подтвердить список"}
           </button>
@@ -289,6 +367,9 @@ function watchlistDescription(watchlist: Watchlist) {
 }
 
 function statusLabel(status: Status) {
+  if (status === "authenticating") {
+    return "Вход";
+  }
   if (status === "loading") {
     return "Загрузка";
   }
@@ -308,4 +389,17 @@ function statusLabel(status: Status) {
     return "Готово";
   }
   return "MVP";
+}
+
+function authModeLabel(authMode: "telegram" | "demo" | "stored" | "missing") {
+  if (authMode === "telegram") {
+    return "Telegram";
+  }
+  if (authMode === "stored") {
+    return "Сессия";
+  }
+  if (authMode === "demo") {
+    return "Demo token";
+  }
+  return "Нет входа";
 }
