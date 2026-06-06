@@ -352,6 +352,28 @@ button:disabled {
   font-size: 13px;
 }
 
+.price-history-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.price-history-row span,
+.price-history-empty {
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: #edf8f4;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.price-history-empty {
+  justify-self: start;
+  color: var(--muted);
+  background: #eef2f3;
+}
+
 .button-row {
   display: flex;
   flex-shrink: 0;

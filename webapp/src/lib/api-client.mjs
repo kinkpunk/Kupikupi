@@ -83,6 +83,10 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
       const query = params.toString();
       return request(`/products/${productId}/offers${query ? `?${query}` : ""}`);
     },
+    getPriceHistory(productId, { period = "90d" } = {}) {
+      const params = new URLSearchParams({ period });
+      return request(`/price-history/${productId}?${params.toString()}`);
+    },
     listShoppingRequests({ limit = 10, offset = 0 } = {}) {
       const params = new URLSearchParams({
         limit: String(limit),

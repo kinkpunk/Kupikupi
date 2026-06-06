@@ -13,6 +13,7 @@ import type {
   AuthResponse,
   Offer,
   PaginatedResponse,
+  PriceHistory,
   Recommendation,
   ShoppingRequest,
   Watchlist,
@@ -43,6 +44,7 @@ export default function Home() {
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [offersByProduct, setOffersByProduct] = useState<Record<string, Offer[]>>({});
+  const [priceHistoryByProduct, setPriceHistoryByProduct] = useState<Record<string, PriceHistory>>({});
   const [recentRequests, setRecentRequests] = useState<ShoppingRequest[]>([]);
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
 
@@ -143,6 +145,7 @@ export default function Home() {
     setWatchlist(null);
     setRecommendations([]);
     setOffersByProduct({});
+    setPriceHistoryByProduct({});
 
     try {
       const created = (await withAuthRetry((client) => client.createShoppingRequest(text))) as ShoppingRequest;
@@ -161,7 +164,10 @@ export default function Home() {
       client.listRecommendations(requestId),
     )) as { items: Recommendation[] };
     setRecommendations(response.items);
-    await loadRecommendationOffers(response.items, size);
+    await Promise.all([
+      loadRecommendationOffers(response.items, size),
+      loadRecommendationPriceHistory(response.items),
+    ]);
   }
 
   async function loadRecommendationOffers(items: Recommendation[], size?: string | null) {
@@ -174,6 +180,18 @@ export default function Home() {
       }),
     );
     setOffersByProduct(Object.fromEntries(offersEntries));
+  }
+
+  async function loadRecommendationPriceHistory(items: Recommendation[]) {
+    const historyEntries = await Promise.all(
+      items.map(async (item) => {
+        const response = (await withAuthRetry((client) =>
+          client.getPriceHistory(item.product.id, { period: "90d" }),
+        )) as PriceHistory;
+        return [item.product.id, response] as const;
+      }),
+    );
+    setPriceHistoryByProduct(Object.fromEntries(historyEntries));
   }
 
   async function handleConfirmWatchlist() {
@@ -341,6 +359,7 @@ export default function Home() {
                         <strong>{item.product.name}</strong>
                         <span>{recommendationDescription(item)}</span>
                       </div>
+                      <PriceHistorySummary history={priceHistoryByProduct[item.product.id]} />
                       <OfferList offers={offersByProduct[item.product.id] ?? []} />
                     </div>
                     <div className="score-pill">{formatScore(item.score)}</div>
@@ -471,11 +490,36 @@ function OfferList({ offers }: { offers: Offer[] }) {
   return (
     <div className="offer-stack">
       {offers.slice(0, 3).map((offer) => (
-        <a className="offer-row" href={offer.product_url} key={offer.id} rel="noreferrer" target="_blank">
+        <a
+          className="offer-row"
+          href={offer.product_url}
+          key={offer.id}
+          rel="noreferrer"
+          target="_blank"
+        >
           <span>{formatOfferPrice(offer)}</span>
           <strong>{offer.availability}</strong>
         </a>
       ))}
+    </div>
+  );
+}
+
+function PriceHistorySummary({ history }: { history?: PriceHistory }) {
+  if (!history) {
+    return <span className="price-history-empty">История цены загружается.</span>;
+  }
+
+  if (!history.analytics && history.points.length === 0) {
+    return <span className="price-history-empty">Истории цены пока нет.</span>;
+  }
+
+  const analytics = history.analytics;
+  return (
+    <div className="price-history-row">
+      <span>90 дней: {formatEur(analytics?.eur_min_90d)}</span>
+      <span>Минимум: {formatEur(analytics?.eur_min_all_time)}</span>
+      <span>{history.points.length} точек</span>
     </div>
   );
 }
@@ -486,6 +530,13 @@ function formatOfferPrice(offer: Offer) {
     return sourcePrice;
   }
   return `${sourcePrice} · ${offer.eur_price.toLocaleString("ru-RU")} EUR`;
+}
+
+function formatEur(amount?: number | null) {
+  if (!amount) {
+    return "нет данных";
+  }
+  return `${amount.toLocaleString("ru-RU")} EUR`;
 }
 
 function formatScore(score: number) {

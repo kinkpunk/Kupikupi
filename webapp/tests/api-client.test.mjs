@@ -145,6 +145,29 @@ test("listProductOffers gets offers with size and stock filters", async () => {
   assert.equal(calls[0].init.method, "GET");
 });
 
+test("getPriceHistory gets product price history period", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, {
+        product_id: "product-1",
+        period: "90d",
+        points: [],
+        analytics: { eur_min_90d: 120 },
+      });
+    },
+  });
+
+  const result = await client.getPriceHistory("product-1", { period: "90d" });
+
+  assert.equal(result.analytics.eur_min_90d, 120);
+  assert.equal(calls[0].url, "https://api.example.test/v1/price-history/product-1?period=90d");
+  assert.equal(calls[0].init.method, "GET");
+});
+
 test("listWatchlists includes paging and archived filter", async () => {
   const calls = [];
   const client = createApiClient({

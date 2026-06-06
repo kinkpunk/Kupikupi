@@ -70,6 +70,37 @@ export type Offer = {
   is_lowest_10_percent_365d: boolean;
 };
 
+export type PriceAnalytics = {
+  eur_min_30d?: number | null;
+  eur_min_90d?: number | null;
+  eur_min_180d?: number | null;
+  eur_min_365d?: number | null;
+  eur_min_all_time?: number | null;
+  eur_avg_365d?: number | null;
+  eur_lowest_10pct_365d_threshold?: number | null;
+  calculated_at?: string | null;
+};
+
+export type PricePoint = {
+  captured_at: string;
+  source_price: number;
+  source_old_price?: number | null;
+  source_currency: string;
+  eur_price: number;
+  eur_old_price?: number | null;
+  fx_rate_to_eur?: number | null;
+  discount_percent?: number | null;
+  availability: string;
+  store_id: string;
+};
+
+export type PriceHistory = {
+  product_id: string;
+  period: string;
+  points: PricePoint[];
+  analytics?: PriceAnalytics | null;
+};
+
 export type Watchlist = {
   id: string;
   type: string;
