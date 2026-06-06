@@ -71,6 +71,8 @@ class OfferRead(BaseModel):
     availability: str
     last_seen_at: datetime
     availability_items: list[OfferAvailabilityRead]
+    is_historical_min: bool = False
+    is_lowest_10_percent_365d: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -93,8 +95,21 @@ class PricePoint(BaseModel):
     store_id: uuid.UUID
 
 
+class PriceAnalyticsRead(BaseModel):
+    eur_min_30d: float | None
+    eur_min_90d: float | None
+    eur_min_180d: float | None
+    eur_min_365d: float | None
+    eur_min_all_time: float | None
+    eur_avg_365d: float | None
+    eur_lowest_10pct_365d_threshold: float | None
+    calculated_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PriceHistoryResponse(BaseModel):
     product_id: uuid.UUID
     period: str
     points: list[PricePoint]
-
+    analytics: PriceAnalyticsRead | None

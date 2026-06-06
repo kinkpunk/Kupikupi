@@ -12,8 +12,10 @@ from app.domains.offers.schemas import (
     PricePoint,
 )
 from app.domains.offers.service import (
+    compute_price_analytics,
     create_offer,
     get_offer,
+    get_price_analytics,
     list_product_offers,
     list_product_price_points,
     update_offer,
@@ -44,7 +46,8 @@ async def get_price_history(
     session: DbSessionDep,
     period: str = Query(default="90d", pattern="^(30d|90d|180d|365d|all)$"),
 ) -> PriceHistoryResponse:
-    points = await list_product_price_points(session, product_id=product_id)
+    points = await list_product_price_points(session, product_id=product_id, period=period)
+    analytics = await get_price_analytics(session, product_id=product_id, store_id=None)
     return PriceHistoryResponse(
         product_id=product_id,
         period=period,
@@ -63,6 +66,7 @@ async def get_price_history(
             )
             for snapshot, store_id in points
         ],
+        analytics=analytics,
     )
 
 
@@ -104,3 +108,13 @@ async def admin_update_offer(
         )
     return updated
 
+
+@router.post("/admin/price-analytics/{product_id}/recompute")
+async def admin_recompute_price_analytics(
+    product_id: uuid.UUID,
+    session: DbSessionDep,
+    _admin: CurrentAdminUserDep,
+) -> dict[str, str]:
+    await compute_price_analytics(session, product_id=product_id, store_id=None)
+    await session.commit()
+    return {"status": "ok"}

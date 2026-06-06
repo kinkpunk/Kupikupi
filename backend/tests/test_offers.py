@@ -70,6 +70,8 @@ async def test_admin_creates_offer_and_price_history(
     offer = create_response.json()
     assert offer["source_currency"] == "CZK"
     assert offer["eur_price"] == 142.45
+    assert offer["is_historical_min"] is True
+    assert offer["is_lowest_10_percent_365d"] is True
     assert len(offer["availability_items"]) == 2
 
     offers_response = client.get(f"/v1/products/{product.id}/offers", params={"size": "41"})
@@ -83,6 +85,7 @@ async def test_admin_creates_offer_and_price_history(
     )
     assert update_response.status_code == 200
     assert update_response.json()["eur_price"] == 134.29
+    assert update_response.json()["is_historical_min"] is True
 
     history_response = client.get(f"/v1/price-history/{product.id}")
     assert history_response.status_code == 200
@@ -91,6 +94,20 @@ async def test_admin_creates_offer_and_price_history(
     assert len(history["points"]) == 2
     assert history["points"][0]["eur_price"] == 142.45
     assert history["points"][1]["eur_price"] == 134.29
+    assert history["analytics"]["eur_min_30d"] == 134.29
+    assert history["analytics"]["eur_min_365d"] == 134.29
+    assert history["analytics"]["eur_min_all_time"] == 134.29
+    assert history["analytics"]["eur_avg_365d"] == 138.37
+    assert history["analytics"]["eur_lowest_10pct_365d_threshold"] == 134.29
+
+    higher_price_response = client.patch(
+        f"/v1/admin/offers/{offer['id']}",
+        headers=headers,
+        json={"source_price": 3890, "eur_price": 158.78, "discount_percent": 13.36},
+    )
+    assert higher_price_response.status_code == 200
+    assert higher_price_response.json()["is_historical_min"] is False
+    assert higher_price_response.json()["is_lowest_10_percent_365d"] is False
 
 
 async def test_offer_filter_can_require_in_stock_size(

@@ -81,3 +81,23 @@ class PriceSnapshot(Base):
         DateTime(timezone=True),
         server_default=func.now(),
     )
+
+
+class PriceAnalytics(Base):
+    __tablename__ = "price_analytics"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"), index=True)
+    store_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("stores.id"), index=True)
+    eur_min_30d: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    eur_min_90d: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    eur_min_180d: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    eur_min_365d: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    eur_min_all_time: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    eur_avg_365d: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    eur_lowest_10pct_365d_threshold: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    calculated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
