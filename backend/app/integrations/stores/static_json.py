@@ -19,10 +19,10 @@ class StaticJsonSourceAdapter(StoreSourceAdapter):
         records = settings.get("records", [])
         if not isinstance(records, list):
             raise ValueError("Static JSON source settings.records must be a list.")
-        return [_record_from_mapping(record) for record in records]
+        return [source_offer_record_from_mapping(record) for record in records]
 
 
-def _record_from_mapping(record: object) -> SourceOfferRecord:
+def source_offer_record_from_mapping(record: object) -> SourceOfferRecord:
     if not isinstance(record, dict):
         raise ValueError("Static JSON source record must be an object.")
 

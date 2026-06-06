@@ -79,6 +79,7 @@ celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
 - Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic.
 - Queue/cache: Redis, Celery.
 - Store integrations: official APIs, affiliate feeds, Heureka, Playwright scrapers.
+- Implemented source adapters: `static_json`, `http_json`.
 - Telegram Bot: aiogram.
 - WebApp: Next.js, TypeScript.
 - Deployment: Docker Compose first, Kubernetes-ready later.
