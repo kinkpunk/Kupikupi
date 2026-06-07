@@ -111,6 +111,9 @@ If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender t
 8. Register the staging WebApp URL in Telegram Bot settings.
 9. Run staging smoke checks.
 
+Backend responses include `X-Request-ID`. Send this header from clients when available, and use the
+same value to correlate JSON access logs with user reports.
+
 ## Staging Smoke Checks
 
 Use a real Telegram account allowed to access the staging bot:
@@ -178,4 +181,4 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 
 - Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
-- Observability and backup/restore procedures are not yet complete.
+- Metrics, error reporting dashboards, and backup/restore procedures are not yet complete.

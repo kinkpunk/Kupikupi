@@ -18,6 +18,24 @@ def test_healthcheck_returns_ok() -> None:
     }
 
 
+def test_request_id_header_is_preserved() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/v1/health", headers={"X-Request-ID": "request-123"})
+
+    assert response.status_code == 200
+    assert response.headers["x-request-id"] == "request-123"
+
+
+def test_request_id_header_is_generated() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/v1/health")
+
+    assert response.status_code == 200
+    assert response.headers["x-request-id"]
+
+
 def test_readiness_returns_ok_when_dependencies_are_available(monkeypatch) -> None:
     async def check_ok() -> health.DependencyHealth:
         return health.DependencyHealth(status="ok")
