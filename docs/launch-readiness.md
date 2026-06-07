@@ -22,6 +22,7 @@ Implemented and covered:
 - Docker Compose for local backend, worker, scheduler, WebApp, optional Telegram Bot profile.
 - Staging deployment guide with environment matrix and smoke checklist.
 - Live FX-rate updater job for configured currencies.
+- Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
@@ -47,8 +48,7 @@ Blocking gaps:
 - No real production or staging environment is configured.
 - No HTTPS public domain for WebApp/API.
 - No real Telegram Bot token and webhook/polling deployment configuration for a public bot.
-- Store integrations are still demo/static or generic `http_json`; no live Czech store feeds are
-  configured.
+- Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
 - Product matching is basic deterministic matching by category/product data, not robust
   cross-store normalization.
 - No observability stack yet: structured request logs, metrics, tracing, alerting, or error
@@ -58,8 +58,7 @@ Blocking gaps:
 
 ## Recommended Next Iterations
 
-1. Add one real store source config path, preferably a stable affiliate/XML/JSON feed before
-   scrapers.
+1. Configure one real Czech store feed through `http_csv` or `http_json`.
 2. Add basic observability: JSON logs, request IDs, Sentry-compatible error hooks, and container
    health dashboard notes.
 3. Add backup/restore instructions for PostgreSQL.

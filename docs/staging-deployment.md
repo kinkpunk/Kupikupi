@@ -130,6 +130,42 @@ Use a real Telegram account allowed to access the staging bot:
 8. Trigger notification generation and dispatch in staging.
 9. Confirm a notification is delivered to the same Telegram user.
 
+## First Store Feed Configuration
+
+For the first real store feed, prefer `http_csv` or `http_json` source configs before scrapers.
+
+Example `http_csv` source config settings:
+
+```json
+{
+  "delimiter": ",",
+  "size_delimiter": "|",
+  "columns": {
+    "external_id": "id",
+    "product_url": "url",
+    "source_price": "price",
+    "source_old_price": "old_price",
+    "source_currency": "currency",
+    "product_name": "name",
+    "brand_name": "brand",
+    "category_slug": "category",
+    "category_name": "category_name",
+    "model": "model",
+    "sku": "sku",
+    "image_url": "image_url",
+    "sizes": "sizes"
+  },
+  "defaults": {
+    "source_currency": "CZK",
+    "availability": "in_stock",
+    "size_system": "EU"
+  }
+}
+```
+
+Required logical fields are `external_id`, `product_url`, `source_price`, and `product_name`.
+`source_currency` may come from a column or `defaults.source_currency`.
+
 ## Secrets Checklist
 
 - `JWT_SECRET_KEY` generated with high entropy.
@@ -140,6 +176,6 @@ Use a real Telegram account allowed to access the staging bot:
 
 ## Known Staging Limitations
 
-- Store data is still demo/static unless a real source config is added.
+- Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
 - Observability and backup/restore procedures are not yet complete.

@@ -183,7 +183,7 @@ testing.
 - Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic.
 - Queue/cache: Redis, Celery.
 - Store integrations: official APIs, affiliate feeds, Heureka, Playwright scrapers.
-- Implemented source adapters: `static_json`, `http_json`.
+- Implemented source adapters: `static_json`, `http_json`, `http_csv`.
 - Telegram Bot: aiogram.
 - WebApp: Next.js, TypeScript.
 - Deployment: Docker Compose first, Kubernetes-ready later.
