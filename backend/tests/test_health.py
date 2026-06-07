@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.api.v1 import health
 from app.core.config import settings
+from app.core.metrics import metrics_registry
 from app.main import create_app
 
 
@@ -34,6 +35,22 @@ def test_request_id_header_is_generated() -> None:
 
     assert response.status_code == 200
     assert response.headers["x-request-id"]
+
+
+def test_metrics_records_requests() -> None:
+    metrics_registry.reset()
+    client = TestClient(create_app())
+
+    client.get("/v1/health")
+    client.get("/v1/health")
+    response = client.get("/v1/metrics")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["requests"] >= 2
+    assert body["routes"]["GET /v1/health"]["requests"] == 2
+    assert body["routes"]["GET /v1/health"]["status_counts"]["200"] == 2
+    assert body["routes"]["GET /v1/health"]["avg_duration_ms"] >= 0
 
 
 def test_readiness_returns_ok_when_dependencies_are_available(monkeypatch) -> None:

@@ -24,6 +24,7 @@ Implemented and covered:
 - Live FX-rate updater job for configured currencies.
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Request ID propagation and JSON access logs for backend API requests.
+- In-process backend request metrics endpoint.
 - PostgreSQL backup and restore procedure for staging.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
@@ -54,13 +55,13 @@ Blocking gaps:
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
 - Product matching is basic deterministic matching by category/product data, not robust
   cross-store normalization.
-- No full observability stack yet: metrics, tracing, alerting, or error reporting dashboards.
+- No full observability stack yet: tracing, alerting, or error reporting dashboards.
 - No privacy policy, terms, or user-facing data retention controls.
 
 ## Recommended Next Iterations
 
 1. Configure one real Czech store feed through `http_csv` or `http_json`.
-2. Add metrics, error reporting hooks, and container health dashboard notes.
+2. Add error reporting hooks, tracing, and container health dashboard notes.
 3. Run the Docker Compose smoke runner on a machine with Docker available.
 
 ## Go/No-Go Summary

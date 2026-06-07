@@ -55,6 +55,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReadinessResponse"
 
+  /metrics:
+    get:
+      security: []
+      tags: [Health]
+      summary: Runtime request metrics
+      responses:
+        "200":
+          description: In-process request counters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsResponse"
+
   /auth/telegram:
     post:
       security: []
@@ -918,6 +931,30 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/DependencyHealth"
+
+    RouteMetricsResponse:
+      type: object
+      required: [requests, avg_duration_ms, status_counts]
+      properties:
+        requests:
+          type: integer
+        avg_duration_ms:
+          type: number
+        status_counts:
+          type: object
+          additionalProperties:
+            type: integer
+
+    MetricsResponse:
+      type: object
+      required: [requests, routes]
+      properties:
+        requests:
+          type: integer
+        routes:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/RouteMetricsResponse"
 
     Error:
       type: object

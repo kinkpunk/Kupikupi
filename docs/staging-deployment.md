@@ -113,6 +113,7 @@ If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender t
 
 Backend responses include `X-Request-ID`. Send this header from clients when available, and use the
 same value to correlate JSON access logs with user reports.
+Basic in-process request counters are available at `/v1/metrics`.
 
 Before deploying migrations or opening staging to testers, follow the PostgreSQL backup and restore
 procedure in `docs/postgres-backup-restore.md`.
@@ -190,4 +191,4 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 
 - Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
-- Metrics and error reporting dashboards are not yet complete.
+- Error reporting dashboards and tracing are not yet complete.

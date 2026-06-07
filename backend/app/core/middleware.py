@@ -8,6 +8,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.metrics import metrics_registry
+
 REQUEST_ID_HEADER = "X-Request-ID"
 
 logger = logging.getLogger("kupikupi.access")
@@ -31,6 +33,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
             if "response" in locals():
                 response.headers[REQUEST_ID_HEADER] = request_id
+            metrics_registry.record_request(
+                method=request.method,
+                path=request.url.path,
+                status_code=status_code,
+                duration_ms=duration_ms,
+            )
             logger.info(
                 json.dumps(
                     {

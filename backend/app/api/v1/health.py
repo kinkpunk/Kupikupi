@@ -4,6 +4,7 @@ from redis.asyncio import Redis
 from sqlalchemy import text
 
 from app.core.config import settings
+from app.core.metrics import metrics_registry
 from app.db.session import async_session_factory
 
 router = APIRouter()
@@ -27,9 +28,25 @@ class ReadinessResponse(BaseModel):
     dependencies: dict[str, DependencyHealth]
 
 
+class RouteMetricsResponse(BaseModel):
+    requests: int
+    avg_duration_ms: float
+    status_counts: dict[str, int]
+
+
+class MetricsResponse(BaseModel):
+    requests: int
+    routes: dict[str, RouteMetricsResponse]
+
+
 @router.get("/health", response_model=HealthResponse)
 async def healthcheck() -> HealthResponse:
     return HealthResponse(status="ok", service="kupikupi-backend", version="0.1.0")
+
+
+@router.get("/metrics", response_model=MetricsResponse)
+async def metrics() -> MetricsResponse:
+    return MetricsResponse.model_validate(metrics_registry.snapshot())
 
 
 @router.get(
