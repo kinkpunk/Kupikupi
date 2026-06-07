@@ -55,21 +55,23 @@ Backend with worker:
 docker compose -f infra/docker-compose.yml up backend worker scheduler
 ```
 
-Backend with Telegram Bot:
+Backend with worker and WebApp:
 
 ```bash
-docker compose -f infra/docker-compose.yml up backend worker scheduler telegram-bot
+docker compose -f infra/docker-compose.yml up backend worker scheduler webapp
 ```
 
 Backend with Telegram Bot and WebApp:
 
 ```bash
-docker compose -f infra/docker-compose.yml up backend worker scheduler telegram-bot webapp
+docker compose --profile telegram -f infra/docker-compose.yml up backend worker scheduler telegram-bot webapp
 ```
 
 The backend container runs Alembic migrations on startup by default. In local Docker Compose it also
 seeds MVP categories and stores. Override `RUN_MIGRATIONS` or `RUN_SEED` in the backend environment
 when a different startup mode is needed.
+The Telegram Bot service is behind the `telegram` Compose profile because it requires a real
+`TELEGRAM_BOT_TOKEN`.
 
 Runtime checks:
 

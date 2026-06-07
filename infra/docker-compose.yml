@@ -94,6 +94,8 @@ services:
   telegram-bot:
     build:
       context: ../telegram_bot
+    profiles:
+      - telegram
     env_file:
       - ../telegram_bot/.env.example
     environment:
