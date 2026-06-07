@@ -108,6 +108,16 @@ cd backend
 pytest tests/test_mvp_smoke.py
 ```
 
+Local database MVP smoke:
+
+```bash
+cd backend
+python scripts/smoke_mvp.py
+```
+
+The smoke script seeds demo data, imports demo offers, creates a demo user shopping request,
+confirms a watchlist, finds personalized deals, and generates notification records.
+
 Local WebApp demo token:
 
 ```bash
