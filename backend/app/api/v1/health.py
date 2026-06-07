@@ -39,6 +39,7 @@ async def healthcheck() -> HealthResponse:
 )
 async def readiness(response: Response) -> ReadinessResponse:
     dependencies = {
+        "configuration": check_configuration(),
         "database": await check_database(),
         "redis": await check_redis(),
     }
@@ -61,6 +62,13 @@ async def check_database() -> DependencyHealth:
     except Exception as exc:
         return DependencyHealth(status="error", message=str(exc))
 
+    return DependencyHealth(status="ok")
+
+
+def check_configuration() -> DependencyHealth:
+    issues = settings.validate_runtime_configuration()
+    if issues:
+        return DependencyHealth(status="error", message=" ".join(issues))
     return DependencyHealth(status="ok")
 
 

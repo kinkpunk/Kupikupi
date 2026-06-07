@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
 
+    @property
+    def is_production_like(self) -> bool:
+        return self.environment.lower() in {"production", "prod", "staging"}
+
+    def validate_runtime_configuration(self) -> list[str]:
+        issues = []
+        if self.is_production_like and self.jwt_secret_key == "change-me-in-production":
+            issues.append("JWT_SECRET_KEY must be changed for production-like environments.")
+        return issues
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 

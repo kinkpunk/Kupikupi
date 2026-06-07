@@ -78,8 +78,9 @@ curl http://localhost:8000/v1/health
 curl http://localhost:8000/v1/ready
 ```
 
-`/health` is a fast liveness check. `/ready` verifies PostgreSQL and Redis before dependent
-services proceed in Docker Compose.
+`/health` is a fast liveness check. `/ready` verifies runtime configuration, PostgreSQL, and Redis
+before dependent services proceed in Docker Compose. For `ENVIRONMENT=production` or `staging`,
+replace the default `JWT_SECRET_KEY`; otherwise readiness fails with `503`.
 
 Migrations and seed data:
 

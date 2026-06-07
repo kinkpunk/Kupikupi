@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.api.v1 import health
+from app.core.config import settings
 from app.main import create_app
 
 
@@ -33,6 +34,7 @@ def test_readiness_returns_ok_when_dependencies_are_available(monkeypatch) -> No
         "service": "kupikupi-backend",
         "version": "0.1.0",
         "dependencies": {
+            "configuration": {"status": "ok", "message": None},
             "database": {"status": "ok", "message": None},
             "redis": {"status": "ok", "message": None},
         },
@@ -58,10 +60,35 @@ def test_readiness_returns_503_when_dependency_fails(monkeypatch) -> None:
         "service": "kupikupi-backend",
         "version": "0.1.0",
         "dependencies": {
+            "configuration": {"status": "ok", "message": None},
             "database": {"status": "ok", "message": None},
             "redis": {"status": "error", "message": "redis unavailable"},
         },
     }
+
+
+def test_readiness_returns_503_for_default_secret_in_production(monkeypatch) -> None:
+    async def check_ok() -> health.DependencyHealth:
+        return health.DependencyHealth(status="ok")
+
+    original_environment = settings.environment
+    original_secret = settings.jwt_secret_key
+    settings.environment = "production"
+    settings.jwt_secret_key = "change-me-in-production"
+    monkeypatch.setattr(health, "check_database", check_ok)
+    monkeypatch.setattr(health, "check_redis", check_ok)
+    client = TestClient(create_app())
+
+    try:
+        response = client.get("/v1/ready")
+    finally:
+        settings.environment = original_environment
+        settings.jwt_secret_key = original_secret
+
+    assert response.status_code == 503
+    configuration = response.json()["dependencies"]["configuration"]
+    assert configuration["status"] == "error"
+    assert "JWT_SECRET_KEY must be changed" in configuration["message"]
 
 
 def test_cors_allows_webapp_origin() -> None:
