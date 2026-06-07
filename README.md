@@ -131,6 +131,8 @@ pytest
 python -m bot.main
 ```
 
+The bot requires `TELEGRAM_BOT_TOKEN` and an absolute `BACKEND_API_URL`.
+
 WebApp development:
 
 ```bash

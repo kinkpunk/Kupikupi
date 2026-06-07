@@ -1,4 +1,5 @@
 from functools import lru_cache
+from urllib.parse import urlparse
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,6 +11,15 @@ class BotSettings(BaseSettings):
     backend_access_token: str | None = None
     telegram_webapp_url: str | None = None
     bot_polling_timeout_seconds: int = Field(default=30, ge=1)
+
+    def validate_runtime_configuration(self) -> list[str]:
+        issues = []
+        if not self.telegram_bot_token.strip():
+            issues.append("TELEGRAM_BOT_TOKEN is required.")
+        parsed_backend_url = urlparse(self.backend_api_url)
+        if parsed_backend_url.scheme not in {"http", "https"} or not parsed_backend_url.netloc:
+            issues.append("BACKEND_API_URL must be an absolute http(s) URL.")
+        return issues
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

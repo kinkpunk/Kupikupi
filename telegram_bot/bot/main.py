@@ -10,8 +10,9 @@ from bot.router import build_router
 async def main() -> None:
     logging.basicConfig(level=logging.INFO)
     settings = get_settings()
-    if not settings.telegram_bot_token:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN is required.")
+    configuration_issues = settings.validate_runtime_configuration()
+    if configuration_issues:
+        raise RuntimeError(" ".join(configuration_issues))
 
     bot = Bot(token=settings.telegram_bot_token)
     dispatcher = Dispatcher()
