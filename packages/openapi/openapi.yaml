@@ -11,6 +11,7 @@ servers:
 security:
   - bearerAuth: []
 tags:
+  - name: Health
   - name: Auth
   - name: Users
   - name: Shopping Requests
@@ -25,7 +26,7 @@ paths:
   /health:
     get:
       security: []
-      tags: [Users]
+      tags: [Health]
       summary: Healthcheck
       responses:
         "200":
@@ -34,6 +35,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+
+  /ready:
+    get:
+      security: []
+      tags: [Health]
+      summary: Readiness check
+      responses:
+        "200":
+          description: Service dependencies are ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+        "503":
+          description: One or more service dependencies are unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
 
   /auth/telegram:
     post:
@@ -685,11 +705,46 @@ components:
   schemas:
     HealthResponse:
       type: object
-      required: [status]
+      required: [status, service, version]
       properties:
         status:
           type: string
           example: ok
+        service:
+          type: string
+          example: kupikupi-backend
+        version:
+          type: string
+          example: 0.1.0
+
+    DependencyHealth:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, error]
+        message:
+          type: string
+          nullable: true
+
+    ReadinessResponse:
+      type: object
+      required: [status, service, version, dependencies]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        service:
+          type: string
+          example: kupikupi-backend
+        version:
+          type: string
+          example: 0.1.0
+        dependencies:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/DependencyHealth"
 
     Error:
       type: object

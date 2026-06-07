@@ -71,6 +71,16 @@ The backend container runs Alembic migrations on startup by default. In local Do
 seeds MVP categories and stores. Override `RUN_MIGRATIONS` or `RUN_SEED` in the backend environment
 when a different startup mode is needed.
 
+Runtime checks:
+
+```bash
+curl http://localhost:8000/v1/health
+curl http://localhost:8000/v1/ready
+```
+
+`/health` is a fast liveness check. `/ready` verifies PostgreSQL and Redis before dependent
+services proceed in Docker Compose.
+
 Migrations and seed data:
 
 ```bash

@@ -43,6 +43,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/ready', timeout=2).read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   worker:
     build:
@@ -56,6 +67,8 @@ services:
       RUN_SEED: "0"
     command: ["celery", "-A", "app.core.celery_app.celery_app", "worker", "--loglevel=info"]
     depends_on:
+      backend:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
@@ -71,7 +84,7 @@ services:
       TELEGRAM_WEBAPP_URL: http://localhost:3000
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
 
   webapp:
     build:
@@ -84,7 +97,18 @@ services:
       - "3000:3000"
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
