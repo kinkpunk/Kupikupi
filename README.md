@@ -89,6 +89,13 @@ alembic upgrade head
 python scripts/seed.py
 ```
 
+MVP smoke test:
+
+```bash
+cd backend
+pytest tests/test_mvp_smoke.py
+```
+
 Celery tasks:
 
 ```bash
