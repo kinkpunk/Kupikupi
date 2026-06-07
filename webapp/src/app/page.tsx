@@ -8,6 +8,7 @@ import {
   getTelegramInitData,
   loadStoredTokens,
   notifyTelegramReady,
+  resolveInitialAuthSource,
   storeTokens,
 } from "../lib/telegram-webapp.mjs";
 import type {
@@ -72,24 +73,28 @@ export default function Home() {
       return;
     }
 
-    const storedTokens = loadStoredTokens();
-    if (storedTokens.accessToken) {
-      setAccessToken(storedTokens.accessToken);
-      setRefreshToken(storedTokens.refreshToken);
+    const authSource = resolveInitialAuthSource({
+      initData: getTelegramInitData(),
+      storedTokens: loadStoredTokens(),
+      demoAccessToken,
+    });
+
+    if (authSource.mode === "telegram") {
+      void authenticateWithTelegram(authSource.initData);
+      return;
+    }
+
+    if (authSource.mode === "stored") {
+      setAccessToken(authSource.accessToken);
+      setRefreshToken(authSource.refreshToken);
       setAuthMode("stored");
       setStatus("idle");
       return;
     }
 
-    const initData = getTelegramInitData();
-    if (initData) {
-      void authenticateWithTelegram(initData);
-      return;
-    }
-
-    if (demoAccessToken) {
-      setAccessToken(demoAccessToken);
-      setRefreshToken("");
+    if (authSource.mode === "demo") {
+      setAccessToken(authSource.accessToken);
+      setRefreshToken(authSource.refreshToken);
       setAuthMode("demo");
       setStatus("idle");
       return;

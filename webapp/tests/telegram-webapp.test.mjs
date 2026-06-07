@@ -6,6 +6,7 @@ import {
   getTelegramInitData,
   loadStoredTokens,
   notifyTelegramReady,
+  resolveInitialAuthSource,
   storeTokens,
 } from "../src/lib/telegram-webapp.mjs";
 
@@ -63,6 +64,56 @@ test("notifyTelegramReady calls Telegram ready hook", () => {
 
   assert.equal(readyCalled, true);
   delete global.window;
+});
+
+test("resolveInitialAuthSource prefers Telegram initData over stored tokens and demo token", () => {
+  const authSource = resolveInitialAuthSource({
+    initData: "query_id=abc",
+    storedTokens: {
+      accessToken: "stored-access-token",
+      refreshToken: "stored-refresh-token",
+    },
+    demoAccessToken: "demo-access-token",
+  });
+
+  assert.deepEqual(authSource, {
+    mode: "telegram",
+    initData: "query_id=abc",
+  });
+});
+
+test("resolveInitialAuthSource uses stored tokens before local demo token", () => {
+  const authSource = resolveInitialAuthSource({
+    initData: "",
+    storedTokens: {
+      accessToken: "stored-access-token",
+      refreshToken: "stored-refresh-token",
+    },
+    demoAccessToken: "demo-access-token",
+  });
+
+  assert.deepEqual(authSource, {
+    mode: "stored",
+    accessToken: "stored-access-token",
+    refreshToken: "stored-refresh-token",
+  });
+});
+
+test("resolveInitialAuthSource falls back to local demo token", () => {
+  const authSource = resolveInitialAuthSource({
+    initData: "",
+    storedTokens: {
+      accessToken: "",
+      refreshToken: "",
+    },
+    demoAccessToken: "demo-access-token",
+  });
+
+  assert.deepEqual(authSource, {
+    mode: "demo",
+    accessToken: "demo-access-token",
+    refreshToken: "",
+  });
 });
 
 function createMemoryStorage() {

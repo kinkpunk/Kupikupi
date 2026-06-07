@@ -15,6 +15,32 @@ export function notifyTelegramReady() {
   window.Telegram?.WebApp?.ready?.();
 }
 
+export function resolveInitialAuthSource({ initData, storedTokens, demoAccessToken }) {
+  if (initData) {
+    return {
+      mode: "telegram",
+      initData,
+    };
+  }
+  if (storedTokens?.accessToken) {
+    return {
+      mode: "stored",
+      accessToken: storedTokens.accessToken,
+      refreshToken: storedTokens.refreshToken || "",
+    };
+  }
+  if (demoAccessToken) {
+    return {
+      mode: "demo",
+      accessToken: demoAccessToken,
+      refreshToken: "",
+    };
+  }
+  return {
+    mode: "missing",
+  };
+}
+
 export function loadStoredTokens(storage = safeSessionStorage()) {
   if (!storage) {
     return { accessToken: "", refreshToken: "" };
