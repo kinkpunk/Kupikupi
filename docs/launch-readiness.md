@@ -25,6 +25,7 @@ Implemented and covered:
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Request ID propagation and JSON access logs for backend API requests.
 - In-process backend request metrics endpoint.
+- Sentry-compatible HTTP error reporting hook for unhandled backend exceptions.
 - PostgreSQL backup and restore procedure for staging.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
@@ -61,7 +62,7 @@ Blocking gaps:
 ## Recommended Next Iterations
 
 1. Configure one real Czech store feed through `http_csv` or `http_json`.
-2. Add error reporting hooks, tracing, and container health dashboard notes.
+2. Add tracing, alerting, and container health dashboard notes.
 3. Run the Docker Compose smoke runner on a machine with Docker available.
 
 ## Go/No-Go Summary

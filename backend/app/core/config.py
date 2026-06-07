@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     fx_rate_update_schedule_seconds: int = 43_200
     fx_rate_source_url: str = "https://api.exchangerate.host/latest?base=EUR&symbols=CZK"
     fx_rate_currencies: str = "CZK"
+    error_reporting_enabled: bool = False
+    error_reporting_endpoint_url: str | None = None
 
     @property
     def cors_origins(self) -> list[str]:

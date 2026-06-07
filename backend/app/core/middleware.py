@@ -8,6 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.error_reporting import ErrorReporter, build_error_reporter
 from app.core.metrics import metrics_registry
 
 REQUEST_ID_HEADER = "X-Request-ID"
@@ -16,6 +17,10 @@ logger = logging.getLogger("kupikupi.access")
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, *, error_reporter: ErrorReporter | None = None) -> None:
+        super().__init__(app)
+        self._error_reporter = error_reporter or build_error_reporter()
+
     async def dispatch(
         self,
         request: Request,
@@ -29,6 +34,18 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             status_code = response.status_code
             return response
+        except Exception as exc:
+            await self._error_reporter.report(
+                {
+                    "event": "unhandled_exception",
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                }
+            )
+            raise
         finally:
             duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
             if "response" in locals():

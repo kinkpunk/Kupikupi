@@ -63,6 +63,8 @@ Set these values for the backend API, worker, and scheduler unless noted otherwi
 | `FX_RATE_UPDATE_SCHEDULE_SECONDS` | no | yes | yes | `43200` |
 | `FX_RATE_SOURCE_URL` | no | yes | yes | HTTPS JSON rates URL with EUR base |
 | `FX_RATE_CURRENCIES` | no | yes | yes | `CZK` |
+| `ERROR_REPORTING_ENABLED` | yes | no | no | `1` when endpoint is configured |
+| `ERROR_REPORTING_ENDPOINT_URL` | yes | no | no | HTTPS error event collector URL |
 
 Readiness must return `200` before dependent services are considered healthy:
 
@@ -191,4 +193,4 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 
 - Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
-- Error reporting dashboards and tracing are not yet complete.
+- Error reporting dashboard setup and tracing are not yet complete.
