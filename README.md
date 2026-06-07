@@ -31,6 +31,7 @@ CI validates backend lint/tests/migrations, Telegram Bot lint/tests, and WebApp 
 
 - [Architecture](docs/architecture.md)
 - [Launch readiness](docs/launch-readiness.md)
+- [PostgreSQL backup and restore](docs/postgres-backup-restore.md)
 - [Staging deployment](docs/staging-deployment.md)
 - [OpenAPI draft](packages/openapi/openapi.yaml)
 

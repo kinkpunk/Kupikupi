@@ -24,6 +24,7 @@ Implemented and covered:
 - Live FX-rate updater job for configured currencies.
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Request ID propagation and JSON access logs for backend API requests.
+- PostgreSQL backup and restore procedure for staging.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
@@ -53,15 +54,13 @@ Blocking gaps:
 - Product matching is basic deterministic matching by category/product data, not robust
   cross-store normalization.
 - No full observability stack yet: metrics, tracing, alerting, or error reporting dashboards.
-- No backup/restore procedure for PostgreSQL.
 - No privacy policy, terms, or user-facing data retention controls.
 
 ## Recommended Next Iterations
 
 1. Configure one real Czech store feed through `http_csv` or `http_json`.
 2. Add metrics, error reporting hooks, and container health dashboard notes.
-3. Add backup/restore instructions for PostgreSQL.
-4. Run end-to-end Docker Compose smoke on a machine with Docker available.
+3. Run end-to-end Docker Compose smoke on a machine with Docker available.
 
 ## Go/No-Go Summary
 
