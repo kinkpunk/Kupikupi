@@ -16,6 +16,7 @@ def start_reply(settings: BotSettings) -> BotReply:
         "Напиши, что хочешь купить: например, "
         '"Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро."\n\n'
         "Пока бот в MVP-режиме: я помогу открыть WebApp и подготовить запрос."
+        f"{_support_privacy_footer(settings)}"
     )
     return BotReply(text=text, webapp_url=settings.telegram_webapp_url)
 
@@ -26,10 +27,24 @@ def help_reply(settings: BotSettings) -> BotReply:
         "- принять описание покупки обычным текстом;\n"
         "- передать запрос в Kupikupi WebApp;\n"
         "- позже присылать уведомления о хороших предложениях.\n\n"
-        "Команды: /start, /help, /requests, /watchlists, "
+        "Команды: /start, /help, /privacy, /requests, /watchlists, "
         "/pause <id>, /resume <id>, /archive <id>."
+        f"{_support_privacy_footer(settings)}"
     )
     return BotReply(text=text, webapp_url=settings.telegram_webapp_url)
+
+
+def privacy_reply(settings: BotSettings) -> BotReply:
+    lines = [
+        "Kupikupi хранит Telegram-профиль, shopping requests, watchlists и историю уведомлений, "
+        "чтобы подбирать предложения и присылать сигналы.",
+        "Покупки и платежи не проходят через Kupikupi.",
+    ]
+    if settings.privacy_policy_url:
+        lines.append(f"Privacy: {settings.privacy_policy_url}")
+    if settings.support_contact_url:
+        lines.append(f"Поддержка: {settings.support_contact_url}")
+    return BotReply(text="\n\n".join(lines), webapp_url=settings.telegram_webapp_url)
 
 
 def shopping_text_reply(settings: BotSettings, text: str) -> BotReply:
@@ -187,3 +202,14 @@ def _watchlist_details(watchlist: WatchlistSummary) -> str:
     if not details:
         return ""
     return f" ({', '.join(details)})"
+
+
+def _support_privacy_footer(settings: BotSettings) -> str:
+    lines = []
+    if settings.support_contact_url:
+        lines.append(f"Поддержка: {settings.support_contact_url}")
+    if settings.privacy_policy_url:
+        lines.append(f"Privacy: {settings.privacy_policy_url}")
+    if not lines:
+        return ""
+    return "\n\n" + "\n".join(lines)

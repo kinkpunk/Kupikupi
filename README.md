@@ -199,7 +199,8 @@ npm run build
 
 For production-like WebApp builds, set `NEXT_PUBLIC_APP_ENV=production` or `staging` and use a
 non-localhost `NEXT_PUBLIC_API_BASE_URL`. Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` outside local
-testing.
+testing. Set `NEXT_PUBLIC_SUPPORT_CONTACT_URL` and `NEXT_PUBLIC_PRIVACY_POLICY_URL` to show support
+and privacy links in the WebApp.
 
 ## Planned Stack
 

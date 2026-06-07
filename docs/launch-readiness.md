@@ -30,6 +30,7 @@ Implemented and covered:
 - Privacy and data retention draft for closed testing.
 - Scheduled retention cleanup for expired sessions, notifications, and source sync logs.
 - Operator commands for user data export and account deletion by Telegram ID.
+- Visible support and privacy entry points in Telegram Bot and WebApp.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
@@ -60,7 +61,7 @@ Blocking gaps:
 - Product matching is basic deterministic matching by category/product data, not robust
   cross-store normalization.
 - No full observability stack yet: tracing, alerting, or error reporting dashboards.
-- Privacy and terms still require legal review before public beta.
+- Privacy and terms still require legal review and final hosted URLs before public beta.
 
 ## Recommended Next Iterations
 

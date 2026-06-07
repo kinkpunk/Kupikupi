@@ -82,7 +82,9 @@ Before closed user testing, support these operator workflows:
    and price history records are retained because they are shared service data.
 3. Notification opt-out: pause/archive watchlists or disable notifications when notification
    preferences are implemented.
-4. Support contact: publish a support contact in the Telegram Bot description or WebApp footer.
+4. Support contact: configure `SUPPORT_CONTACT_URL`, `PRIVACY_POLICY_URL`,
+   `NEXT_PUBLIC_SUPPORT_CONTACT_URL`, and `NEXT_PUBLIC_PRIVACY_POLICY_URL` for the Telegram Bot and
+   WebApp entry points.
 
 Before public beta, validate these commands on staging restore data and decide whether admin tooling
 is needed.
@@ -115,4 +117,4 @@ Before public beta:
 - verify retention cleanup jobs in staging;
 - validate data export/deletion operator procedures on staging restore data;
 - verify backup deletion aligns with retention policy;
-- add a visible privacy/terms link in the WebApp or Telegram Bot entry point.
+- replace draft privacy text with legally reviewed privacy policy and terms.

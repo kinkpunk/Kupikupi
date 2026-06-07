@@ -14,6 +14,8 @@ test("getWebAppConfig returns local defaults", () => {
     appEnv: "local",
     apiBaseUrl: "http://localhost:8000/v1",
     demoAccessToken: "",
+    supportContactUrl: "",
+    privacyPolicyUrl: "",
   });
 });
 
@@ -22,6 +24,8 @@ test("validateWebAppConfig accepts local localhost API", () => {
     appEnv: "local",
     apiBaseUrl: "http://localhost:8000/v1",
     demoAccessToken: "demo-token",
+    supportContactUrl: "mailto:support@example.test",
+    privacyPolicyUrl: "https://app.example.test/privacy",
   });
 
   assert.deepEqual(issues, []);
@@ -32,6 +36,8 @@ test("validateWebAppConfig rejects invalid API URL", () => {
     appEnv: "local",
     apiBaseUrl: "/v1",
     demoAccessToken: "",
+    supportContactUrl: "",
+    privacyPolicyUrl: "",
   });
 
   assert.deepEqual(issues, ["NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL."]);
@@ -42,6 +48,8 @@ test("validateWebAppConfig rejects localhost API in production-like env", () => 
     appEnv: "production",
     apiBaseUrl: "http://localhost:8000/v1",
     demoAccessToken: "",
+    supportContactUrl: "",
+    privacyPolicyUrl: "",
   });
 
   assert.deepEqual(issues, [
@@ -54,10 +62,27 @@ test("validateWebAppConfig rejects demo token in production-like env", () => {
     appEnv: "staging",
     apiBaseUrl: "https://api.example.test/v1",
     demoAccessToken: "demo-token",
+    supportContactUrl: "",
+    privacyPolicyUrl: "",
   });
 
   assert.deepEqual(issues, [
     "NEXT_PUBLIC_DEMO_ACCESS_TOKEN must not be set in production-like environments.",
+  ]);
+});
+
+test("validateWebAppConfig rejects invalid public contact URLs", () => {
+  const issues = validateWebAppConfig({
+    appEnv: "local",
+    apiBaseUrl: "http://localhost:8000/v1",
+    demoAccessToken: "",
+    supportContactUrl: "telegram-user",
+    privacyPolicyUrl: "/privacy",
+  });
+
+  assert.deepEqual(issues, [
+    "NEXT_PUBLIC_SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.",
+    "NEXT_PUBLIC_PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.",
   ]);
 });
 

@@ -36,6 +36,8 @@ const exampleText =
   "Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.";
 const webAppConfig = getWebAppConfig();
 const apiBaseUrl = webAppConfig.apiBaseUrl;
+const supportContactUrl = webAppConfig.supportContactUrl;
+const privacyPolicyUrl = webAppConfig.privacyPolicyUrl;
 
 export default function Home() {
   const [text, setText] = useState(exampleText);
@@ -323,6 +325,22 @@ export default function Home() {
         </form>
 
         {error ? <p className="error-text">{error}</p> : null}
+
+        <footer className="trust-footer">
+          <span>Закрытый тест Kupikupi</span>
+          <div>
+            {supportContactUrl ? (
+              <a href={supportContactUrl} rel="noreferrer" target="_blank">
+                Поддержка
+              </a>
+            ) : null}
+            {privacyPolicyUrl ? (
+              <a href={privacyPolicyUrl} rel="noreferrer" target="_blank">
+                Privacy
+              </a>
+            ) : null}
+          </div>
+        </footer>
       </section>
 
       <section className="result-panel">

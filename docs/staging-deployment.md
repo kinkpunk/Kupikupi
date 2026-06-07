@@ -88,6 +88,8 @@ Docker build args or build-time environment variables:
 | `NEXT_PUBLIC_APP_ENV` | yes | optional | `staging` |
 | `NEXT_PUBLIC_API_BASE_URL` | yes | optional | `https://api.staging.kupikupi.example/v1` |
 | `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` | yes | optional | empty |
+| `NEXT_PUBLIC_SUPPORT_CONTACT_URL` | yes | optional | support contact URL |
+| `NEXT_PUBLIC_PRIVACY_POLICY_URL` | yes | optional | privacy policy URL |
 
 Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 
@@ -99,6 +101,8 @@ Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 | `BACKEND_API_URL` | yes | `https://api.staging.kupikupi.example/v1` |
 | `BACKEND_ACCESS_TOKEN` | no | empty for per-user auth |
 | `TELEGRAM_WEBAPP_URL` | yes | `https://app.staging.kupikupi.example` |
+| `SUPPORT_CONTACT_URL` | yes | support contact URL |
+| `PRIVACY_POLICY_URL` | yes | privacy policy URL |
 | `BOT_POLLING_TIMEOUT_SECONDS` | yes | `30` |
 
 If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender through
@@ -196,6 +200,7 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 - `TELEGRAM_BOT_TOKEN` stored as a secret, not committed.
 - PostgreSQL and Redis credentials stored as secrets.
 - No demo access token in WebApp build args.
+- Support contact and privacy policy URLs configured for WebApp and Telegram Bot.
 - No localhost URLs in staging runtime config.
 
 ## Known Staging Limitations

@@ -14,6 +14,7 @@ from bot.messages import (
     BotReply,
     backend_unavailable_reply,
     help_reply,
+    privacy_reply,
     shopping_request_created_reply,
     shopping_request_failed_reply,
     shopping_requests_reply,
@@ -37,6 +38,11 @@ def build_router(settings: BotSettings) -> Router:
     @router.message(Command("help"))
     async def handle_help(message: Message) -> None:
         reply = help_reply(settings)
+        await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
+
+    @router.message(Command("privacy"))
+    async def handle_privacy(message: Message) -> None:
+        reply = privacy_reply(settings)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(Command("requests"))

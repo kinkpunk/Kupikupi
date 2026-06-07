@@ -6,6 +6,8 @@ export function getWebAppConfig(env = process.env) {
     appEnv,
     apiBaseUrl: env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL,
     demoAccessToken: env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN || "",
+    supportContactUrl: env.NEXT_PUBLIC_SUPPORT_CONTACT_URL || "",
+    privacyPolicyUrl: env.NEXT_PUBLIC_PRIVACY_POLICY_URL || "",
   };
 }
 
@@ -24,6 +26,12 @@ export function validateWebAppConfig(config) {
   ) {
     issues.push("NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL.");
   }
+  if (config.supportContactUrl && !isAllowedPublicUrl(config.supportContactUrl)) {
+    issues.push("NEXT_PUBLIC_SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.");
+  }
+  if (config.privacyPolicyUrl && !isAllowedPublicUrl(config.privacyPolicyUrl)) {
+    issues.push("NEXT_PUBLIC_PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.");
+  }
 
   if (isProductionLike(config.appEnv)) {
     const hostname = parsedApiUrl?.hostname;
@@ -40,4 +48,13 @@ export function validateWebAppConfig(config) {
 
 export function isProductionLike(appEnv) {
   return ["production", "prod", "staging"].includes(String(appEnv).toLowerCase());
+}
+
+function isAllowedPublicUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return ["http:", "https:", "mailto:"].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
 }
