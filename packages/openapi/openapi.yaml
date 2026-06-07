@@ -108,23 +108,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-    patch:
-      tags: [Users]
-      summary: Update current user settings
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserUpdate"
-      responses:
-        "200":
-          description: Updated user
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-
   /shopping-requests:
     get:
       tags: [Shopping Requests]
@@ -292,19 +275,47 @@ paths:
               schema:
                 $ref: "#/components/schemas/Watchlist"
 
-  /watchlists/{watchlist_id}/matches:
-    get:
+  /watchlists/{watchlist_id}/archive:
+    post:
       tags: [Watchlists]
-      summary: List current offers matching a watchlist
+      summary: Archive watchlist
       parameters:
         - $ref: "#/components/parameters/WatchlistId"
       responses:
         "200":
-          description: Matching offers
+          description: Archived watchlist
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OfferList"
+                $ref: "#/components/schemas/Watchlist"
+
+  /categories:
+    get:
+      tags: [Products]
+      summary: List categories
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /brands:
+    get:
+      tags: [Products]
+      summary: List brands
+      responses:
+        "200":
+          description: Brands
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
 
   /products:
     get:
@@ -448,6 +459,141 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationList"
+
+  /admin/brands:
+    post:
+      tags: [Admin]
+      summary: Create brand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created brand
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /admin/categories:
+    post:
+      tags: [Admin]
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /admin/products:
+    post:
+      tags: [Admin]
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /admin/offers:
+    post:
+      tags: [Admin]
+      summary: Create offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created offer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /admin/offers/{offer_id}:
+    patch:
+      tags: [Admin]
+      summary: Update offer
+      parameters:
+        - name: offer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Updated offer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offer"
+
+  /admin/price-analytics/{product_id}/recompute:
+    post:
+      tags: [Admin]
+      summary: Recompute product price analytics
+      parameters:
+        - $ref: "#/components/parameters/ProductId"
+      responses:
+        "200":
+          description: Recomputed analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceAnalytics"
+
+  /admin/notifications/generate:
+    post:
+      tags: [Admin]
+      summary: Generate notifications
+      responses:
+        "200":
+          description: Notification generation result
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /admin/notifications/dispatch:
+    post:
+      tags: [Admin]
+      summary: Dispatch notifications
+      responses:
+        "200":
+          description: Notification dispatch result
+          content:
+            application/json:
+              schema:
+                type: object
 
   /admin/stores:
     get:
