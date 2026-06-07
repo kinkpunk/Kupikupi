@@ -160,6 +160,17 @@ celery -A app.core.celery_app.celery_app call sync.run_source_config --args='["S
 celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
 ```
 
+User data operator commands:
+
+```bash
+cd backend
+python scripts/user_data.py export --telegram-id 123456 --output /tmp/kupikupi-user-123456.json
+python scripts/user_data.py delete --telegram-id 123456
+python scripts/user_data.py delete --telegram-id 123456 --confirm
+```
+
+Deletion runs as a dry run unless `--confirm` is provided.
+
 Telegram Bot development:
 
 ```bash

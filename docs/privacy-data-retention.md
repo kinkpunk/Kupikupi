@@ -59,17 +59,33 @@ export/deletion and archived user data handling.
 
 ## User Rights Workflow
 
-Before closed user testing, support these manual operator workflows:
+Before closed user testing, support these operator workflows:
 
-1. Data export: identify user by Telegram ID and export profile, shopping requests, watchlists, and
-   notifications from PostgreSQL.
-2. Account deletion: delete or anonymize the user and cascade owned sessions, shopping requests,
-   watchlists, and notifications.
+1. Data export: identify user by Telegram ID and export profile, session metadata, shopping
+   requests, watchlists, and notifications:
+
+   ```bash
+   cd backend
+   python scripts/user_data.py export --telegram-id 123456 --output /tmp/kupikupi-user-123456.json
+   ```
+
+2. Account deletion: dry-run deletion first, then repeat with `--confirm`:
+
+   ```bash
+   cd backend
+   python scripts/user_data.py delete --telegram-id 123456
+   python scripts/user_data.py delete --telegram-id 123456 --confirm
+   ```
+
+   The deletion command removes user-owned sessions, shopping requests, request constraints,
+   recommendations, watchlists, notifications, and the user record. Catalog, product, store, offer,
+   and price history records are retained because they are shared service data.
 3. Notification opt-out: pause/archive watchlists or disable notifications when notification
    preferences are implemented.
 4. Support contact: publish a support contact in the Telegram Bot description or WebApp footer.
 
-Before public beta, replace manual workflows with admin tooling or documented operator runbooks.
+Before public beta, validate these commands on staging restore data and decide whether admin tooling
+is needed.
 
 ## User-Facing Notice Draft
 
@@ -97,6 +113,6 @@ Before public beta:
 - complete legal review for privacy policy and terms;
 - define controller/operator identity and support contact;
 - verify retention cleanup jobs in staging;
-- document data export/deletion operator procedures;
+- validate data export/deletion operator procedures on staging restore data;
 - verify backup deletion aligns with retention policy;
 - add a visible privacy/terms link in the WebApp or Telegram Bot entry point.

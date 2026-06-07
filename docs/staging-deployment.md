@@ -126,6 +126,8 @@ For closed user testing, use the privacy and retention draft in
 `docs/privacy-data-retention.md` as the operator baseline.
 The scheduler runs `retention.cleanup` daily by default to remove expired refresh token sessions,
 old notification records, and old source sync logs.
+Validate user export and deletion commands against a restored staging backup before enabling
+external testers.
 
 ## Staging Smoke Checks
 
