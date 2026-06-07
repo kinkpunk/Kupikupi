@@ -60,6 +60,9 @@ Set these values for the backend API, worker, and scheduler unless noted otherwi
 | `NOTIFICATIONS_GENERATE_SCHEDULE_SECONDS` | no | yes | yes | `300` |
 | `NOTIFICATIONS_DISPATCH_SCHEDULE_SECONDS` | no | yes | yes | `120` |
 | `ANALYTICS_RECOMPUTE_SCHEDULE_SECONDS` | no | yes | yes | `3600` |
+| `FX_RATE_UPDATE_SCHEDULE_SECONDS` | no | yes | yes | `43200` |
+| `FX_RATE_SOURCE_URL` | no | yes | yes | HTTPS JSON rates URL with EUR base |
+| `FX_RATE_CURRENCIES` | no | yes | yes | `CZK` |
 
 Readiness must return `200` before dependent services are considered healthy:
 
@@ -138,5 +141,5 @@ Use a real Telegram account allowed to access the staging bot:
 ## Known Staging Limitations
 
 - Store data is still demo/static unless a real source config is added.
-- FX rates are still seeded demo values unless a live updater is added.
+- FX-rate freshness depends on the configured HTTP source availability.
 - Observability and backup/restore procedures are not yet complete.

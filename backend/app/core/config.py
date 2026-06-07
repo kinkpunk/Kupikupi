@@ -30,10 +30,21 @@ class Settings(BaseSettings):
     notifications_generate_schedule_seconds: int = 300
     notifications_dispatch_schedule_seconds: int = 120
     analytics_recompute_schedule_seconds: int = 3600
+    fx_rate_update_schedule_seconds: int = 43_200
+    fx_rate_source_url: str = "https://api.exchangerate.host/latest?base=EUR&symbols=CZK"
+    fx_rate_currencies: str = "CZK"
 
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
+
+    @property
+    def fx_currencies(self) -> list[str]:
+        return [
+            currency.strip().upper()
+            for currency in self.fx_rate_currencies.split(",")
+            if currency.strip()
+        ]
 
     @property
     def is_production_like(self) -> bool:

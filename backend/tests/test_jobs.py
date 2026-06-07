@@ -14,6 +14,7 @@ def test_celery_registers_core_tasks() -> None:
     assert "notifications.dispatch" in celery_app.tasks
     assert "analytics.recompute_product" in celery_app.tasks
     assert "analytics.recompute_all" in celery_app.tasks
+    assert "fx.update_rates" in celery_app.tasks
     assert "seed.mvp_data" in celery_app.tasks
     assert "sync.run_fake" in celery_app.tasks
     assert "sync.run_source_config" in celery_app.tasks
@@ -27,7 +28,9 @@ def test_celery_registers_periodic_schedule() -> None:
     assert schedule["generate-notifications"]["task"] == "notifications.generate"
     assert schedule["dispatch-notifications"]["task"] == "notifications.dispatch"
     assert schedule["recompute-price-analytics"]["task"] == "analytics.recompute_all"
+    assert schedule["update-fx-rates"]["task"] == "fx.update_rates"
     assert schedule["sync-due-source-configs"]["schedule"] == settings.source_sync_schedule_seconds
+    assert schedule["update-fx-rates"]["schedule"] == settings.fx_rate_update_schedule_seconds
 
 
 def test_dispatch_task_skips_when_telegram_token_missing() -> None:

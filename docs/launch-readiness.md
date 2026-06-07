@@ -21,6 +21,7 @@ Implemented and covered:
 - WebApp authentication prefers fresh Telegram `initData` over stored or demo tokens.
 - Docker Compose for local backend, worker, scheduler, WebApp, optional Telegram Bot profile.
 - Staging deployment guide with environment matrix and smoke checklist.
+- Live FX-rate updater job for configured currencies.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
@@ -50,7 +51,6 @@ Blocking gaps:
   configured.
 - Product matching is basic deterministic matching by category/product data, not robust
   cross-store normalization.
-- FX rates are seeded demo data; no live FX updater is configured.
 - No observability stack yet: structured request logs, metrics, tracing, alerting, or error
   reporting dashboards.
 - No backup/restore procedure for PostgreSQL.
@@ -60,11 +60,10 @@ Blocking gaps:
 
 1. Add one real store source config path, preferably a stable affiliate/XML/JSON feed before
    scrapers.
-2. Add live FX-rate updater job and migration-safe seed/fallback behavior.
-3. Add basic observability: JSON logs, request IDs, Sentry-compatible error hooks, and container
+2. Add basic observability: JSON logs, request IDs, Sentry-compatible error hooks, and container
    health dashboard notes.
-4. Add backup/restore instructions for PostgreSQL.
-5. Run end-to-end Docker Compose smoke on a machine with Docker available.
+3. Add backup/restore instructions for PostgreSQL.
+4. Run end-to-end Docker Compose smoke on a machine with Docker available.
 
 ## Go/No-Go Summary
 

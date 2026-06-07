@@ -10,6 +10,7 @@ celery_app = Celery(
     backend=settings.redis_url,
     include=[
         "app.jobs.analytics",
+        "app.jobs.fx",
         "app.jobs.notifications",
         "app.jobs.seed",
         "app.jobs.sync",
@@ -37,6 +38,10 @@ celery_app.conf.beat_schedule = {
     "recompute-price-analytics": {
         "task": "analytics.recompute_all",
         "schedule": settings.analytics_recompute_schedule_seconds,
+    },
+    "update-fx-rates": {
+        "task": "fx.update_rates",
+        "schedule": settings.fx_rate_update_schedule_seconds,
     },
 }
 
