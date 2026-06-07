@@ -178,7 +178,7 @@ export default function Home() {
     const offersEntries = await Promise.all(
       items.map(async (item) => {
         const response = (await withAuthRetry((client) =>
-          client.listProductOffers(item.product.id, { size }),
+          client.listProductOffers(item.product.id, { size: size ?? undefined }),
         )) as PaginatedResponse<Offer>;
         return [item.product.id, response.items] as const;
       }),

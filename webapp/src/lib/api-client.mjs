@@ -6,6 +6,17 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * @typedef {object} ApiClientOptions
+ * @property {string} baseUrl
+ * @property {string} [accessToken]
+ * @property {() => string} [getAccessToken]
+ * @property {typeof fetch} [fetchImpl]
+ */
+
+/**
+ * @param {ApiClientOptions} options
+ */
 export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImpl = fetch }) {
   const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
 
@@ -72,6 +83,10 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
     listRecommendations(requestId) {
       return request(`/shopping-requests/${requestId}/recommendations`);
     },
+    /**
+     * @param {string} productId
+     * @param {{ size?: string; inStock?: boolean }} [options]
+     */
     listProductOffers(productId, { size, inStock = true } = {}) {
       const params = new URLSearchParams();
       if (size) {
