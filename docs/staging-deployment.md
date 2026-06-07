@@ -119,6 +119,12 @@ procedure in `docs/postgres-backup-restore.md`.
 
 ## Staging Smoke Checks
 
+Before a remote staging smoke, run the local Docker smoke runner on a machine with Docker:
+
+```bash
+scripts/docker-smoke.sh --down
+```
+
 Use a real Telegram account allowed to access the staging bot:
 
 1. Open `/start` in the staging Telegram Bot.

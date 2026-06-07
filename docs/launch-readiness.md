@@ -25,6 +25,7 @@ Implemented and covered:
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Request ID propagation and JSON access logs for backend API requests.
 - PostgreSQL backup and restore procedure for staging.
+- Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
@@ -60,7 +61,7 @@ Blocking gaps:
 
 1. Configure one real Czech store feed through `http_csv` or `http_json`.
 2. Add metrics, error reporting hooks, and container health dashboard notes.
-3. Run end-to-end Docker Compose smoke on a machine with Docker available.
+3. Run the Docker Compose smoke runner on a machine with Docker available.
 
 ## Go/No-Go Summary
 

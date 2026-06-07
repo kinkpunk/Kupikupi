@@ -70,6 +70,14 @@ Backend with Telegram Bot and WebApp:
 docker compose --profile telegram -f infra/docker-compose.yml up backend worker scheduler telegram-bot webapp
 ```
 
+Docker smoke:
+
+```bash
+scripts/docker-smoke.sh
+```
+
+Use `scripts/docker-smoke.sh --down` to stop the stack automatically after the smoke scenario.
+
 The backend container runs Alembic migrations on startup by default. In local Docker Compose it also
 seeds MVP categories and stores. Override `RUN_MIGRATIONS` or `RUN_SEED` in the backend environment
 when a different startup mode is needed.
