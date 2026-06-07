@@ -119,6 +119,8 @@ Basic in-process request counters are available at `/v1/metrics`.
 
 Before deploying migrations or opening staging to testers, follow the PostgreSQL backup and restore
 procedure in `docs/postgres-backup-restore.md`.
+For closed user testing, use the privacy and retention draft in
+`docs/privacy-data-retention.md` as the operator baseline.
 
 ## Staging Smoke Checks
 

@@ -27,6 +27,7 @@ Implemented and covered:
 - In-process backend request metrics endpoint.
 - Sentry-compatible HTTP error reporting hook for unhandled backend exceptions.
 - PostgreSQL backup and restore procedure for staging.
+- Privacy and data retention draft for closed testing.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
@@ -57,7 +58,7 @@ Blocking gaps:
 - Product matching is basic deterministic matching by category/product data, not robust
   cross-store normalization.
 - No full observability stack yet: tracing, alerting, or error reporting dashboards.
-- No privacy policy, terms, or user-facing data retention controls.
+- Privacy and terms still require legal review before public beta.
 
 ## Recommended Next Iterations
 
@@ -71,5 +72,5 @@ Blocking gaps:
 - Internal technical demo with demo data: go.
 - Closed user test with real Telegram users: no-go until staging HTTPS and real Telegram Bot launch
   settings are in place.
-- Public beta: no-go until real store data, privacy/legal basics, observability, and backup/restore
+- Public beta: no-go until real store data, legal review, observability, and retention cleanup jobs
   are in place.
