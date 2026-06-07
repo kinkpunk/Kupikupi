@@ -162,6 +162,7 @@ cd webapp
 npm ci
 npm run dev
 npm test
+npm run typecheck
 npm run build
 ```
 
