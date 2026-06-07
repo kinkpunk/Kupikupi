@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createApiClient } from "../lib/api-client.mjs";
+import { getWebAppConfig, validateWebAppConfig } from "../lib/runtime-config.mjs";
 import {
   clearStoredTokens,
   getTelegramInitData,
@@ -32,7 +33,8 @@ type Status =
 
 const exampleText =
   "Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.";
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/v1";
+const webAppConfig = getWebAppConfig();
+const apiBaseUrl = webAppConfig.apiBaseUrl;
 
 export default function Home() {
   const [text, setText] = useState(exampleText);
@@ -50,7 +52,7 @@ export default function Home() {
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const demoAccessToken = process.env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN ?? "";
+  const demoAccessToken = webAppConfig.demoAccessToken;
   const api = useMemo(
     () =>
       createApiClient({
@@ -62,6 +64,14 @@ export default function Home() {
 
   useEffect(() => {
     notifyTelegramReady();
+    const configurationIssues = validateWebAppConfig(webAppConfig);
+    if (configurationIssues.length > 0) {
+      setAuthMode("missing");
+      setError(configurationIssues.join(" "));
+      setStatus("error");
+      return;
+    }
+
     const storedTokens = loadStoredTokens();
     if (storedTokens.accessToken) {
       setAccessToken(storedTokens.accessToken);
