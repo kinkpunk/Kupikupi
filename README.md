@@ -12,10 +12,12 @@ Example request:
 
 ## Current Status
 
-Backend foundation is in progress. Telegram Bot foundation is in progress. WebApp foundation is in progress.
+Backend, Telegram Bot, and WebApp MVP foundations are implemented.
 Implemented backend modules include users/auth, catalog, shopping requests, watchlists, offers,
-price analytics, deals, notifications, Telegram delivery, Celery jobs, and the initial source sync
-foundation with FX normalization.
+price analytics, deals, notifications, Telegram delivery, Celery jobs, and source sync with FX
+normalization.
+
+CI validates backend lint/tests/migrations, Telegram Bot lint/tests, and WebApp tests/build.
 
 ## MVP Decisions
 
@@ -65,6 +67,10 @@ Backend with Telegram Bot and WebApp:
 docker compose -f infra/docker-compose.yml up backend worker telegram-bot webapp
 ```
 
+The backend container runs Alembic migrations on startup by default. In local Docker Compose it also
+seeds MVP categories and stores. Override `RUN_MIGRATIONS` or `RUN_SEED` in the backend environment
+when a different startup mode is needed.
+
 Migrations and seed data:
 
 ```bash
@@ -101,9 +107,10 @@ WebApp development:
 
 ```bash
 cd webapp
-npm install
+npm ci
 npm run dev
 npm test
+npm run build
 ```
 
 ## Planned Stack
