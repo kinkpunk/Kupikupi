@@ -1,7 +1,10 @@
 from functools import lru_cache
+from urllib.parse import urlparse
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+LOCAL_HOSTNAMES = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 
 
 class Settings(BaseSettings):
@@ -38,11 +41,34 @@ class Settings(BaseSettings):
 
     def validate_runtime_configuration(self) -> list[str]:
         issues = []
-        if self.is_production_like and self.jwt_secret_key == "change-me-in-production":
+        if not self.is_production_like:
+            return issues
+
+        if self.jwt_secret_key == "change-me-in-production":
             issues.append("JWT_SECRET_KEY must be changed for production-like environments.")
+        if _has_local_hostname(self.database_url):
+            issues.append(
+                "DATABASE_URL must not point to localhost in production-like environments."
+            )
+        if _has_local_hostname(self.redis_url):
+            issues.append("REDIS_URL must not point to localhost in production-like environments.")
+        if "*" in self.cors_origins:
+            issues.append(
+                "CORS_ALLOWED_ORIGINS must not contain '*' in production-like environments."
+            )
+        if any(_has_local_hostname(origin) for origin in self.cors_origins):
+            issues.append(
+                "CORS_ALLOWED_ORIGINS must not contain localhost origins "
+                "in production-like environments."
+            )
         return issues
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+
+def _has_local_hostname(value: str) -> bool:
+    hostname = urlparse(value).hostname
+    return hostname in LOCAL_HOSTNAMES
 
 
 @lru_cache
