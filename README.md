@@ -89,6 +89,15 @@ alembic upgrade head
 python scripts/seed.py
 ```
 
+The seed command creates MVP categories, Czech stores, a demo CZK FX rate, and a Footshop
+`static_json` source config with sample running-shoe offers. After seeding, run source sync to import
+demo products and offers:
+
+```bash
+cd backend
+celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
+```
+
 MVP smoke test:
 
 ```bash
