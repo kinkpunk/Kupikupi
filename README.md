@@ -106,6 +106,16 @@ cd backend
 pytest tests/test_mvp_smoke.py
 ```
 
+Local WebApp demo token:
+
+```bash
+cd backend
+python scripts/demo_token.py
+```
+
+The command creates an idempotent demo user and prints `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` for local
+WebApp development. Use `--admin` to issue a token for an admin demo user.
+
 Celery tasks:
 
 ```bash
