@@ -66,6 +66,44 @@ def test_refresh_token_rotates_token_pair(client: TestClient) -> None:
     assert old_token_response.status_code == 401
 
 
+def test_telegram_bot_user_auth_creates_user_and_token(client: TestClient) -> None:
+    auth_response = client.post(
+        "/v1/auth/telegram-bot-user",
+        headers={"X-Telegram-Bot-Token": "test-bot-token"},
+        json={
+            "telegram_id": 444,
+            "username": "botuser",
+            "first_name": "Bot",
+            "last_name": "User",
+            "language": "ru",
+        },
+    )
+
+    assert auth_response.status_code == 200
+    auth_body = auth_response.json()
+    assert auth_body["user"]["telegram_id"] == 444
+    assert auth_body["user"]["username"] == "botuser"
+    assert auth_body["tokens"]["access_token"]
+
+    me_response = client.get(
+        "/v1/me",
+        headers={"Authorization": f"Bearer {auth_body['tokens']['access_token']}"},
+    )
+
+    assert me_response.status_code == 200
+    assert me_response.json()["telegram_id"] == 444
+
+
+def test_telegram_bot_user_auth_rejects_wrong_bot_token(client: TestClient) -> None:
+    response = client.post(
+        "/v1/auth/telegram-bot-user",
+        headers={"X-Telegram-Bot-Token": "wrong-token"},
+        json={"telegram_id": 555, "first_name": "Nope"},
+    )
+
+    assert response.status_code == 401
+
+
 def test_telegram_auth_rejects_invalid_hash(client: TestClient) -> None:
     init_data = build_init_data("wrong-token", {"id": 333, "first_name": "Nope"})
 

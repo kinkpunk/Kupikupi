@@ -76,6 +76,33 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /auth/telegram-bot-user:
+    post:
+      security: []
+      tags: [Auth]
+      summary: Authenticate a Telegram Bot message user
+      parameters:
+        - name: X-Telegram-Bot-Token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelegramBotUserAuthRequest"
+      responses:
+        "200":
+          description: Authenticated Telegram Bot user and JWT tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /auth/refresh:
     post:
       security: []
@@ -911,6 +938,26 @@ components:
         init_data:
           type: string
           description: Raw Telegram WebApp init data.
+
+    TelegramBotUserAuthRequest:
+      type: object
+      required: [telegram_id]
+      properties:
+        telegram_id:
+          type: integer
+          format: int64
+        username:
+          type: string
+          nullable: true
+        first_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
 
     RefreshTokenRequest:
       type: object

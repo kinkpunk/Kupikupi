@@ -7,6 +7,14 @@ class TelegramAuthRequest(BaseModel):
     init_data: str
 
 
+class TelegramBotUserAuthRequest(BaseModel):
+    telegram_id: int
+    username: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    language: str | None = None
+
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
@@ -21,4 +29,3 @@ class TokenPair(BaseModel):
 class AuthResponse(BaseModel):
     user: UserRead
     tokens: TokenPair
-

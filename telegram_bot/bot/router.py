@@ -2,7 +2,12 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 
-from bot.backend_client import BackendClient, BackendClientError, WatchlistSummary
+from bot.backend_client import (
+    BackendClient,
+    BackendClientError,
+    TelegramUserIdentity,
+    WatchlistSummary,
+)
 from bot.config import BotSettings
 from bot.keyboards import webapp_keyboard
 from bot.messages import (
@@ -23,10 +28,6 @@ from bot.messages import (
 
 def build_router(settings: BotSettings) -> Router:
     router = Router()
-    backend_client = BackendClient(
-        base_url=settings.backend_api_url,
-        access_token=settings.backend_access_token,
-    )
 
     @router.message(Command("start"))
     async def handle_start(message: Message) -> None:
@@ -41,6 +42,7 @@ def build_router(settings: BotSettings) -> Router:
     @router.message(Command("requests"))
     async def handle_requests(message: Message) -> None:
         try:
+            backend_client = await _backend_client_for_message(settings, message)
             requests = await backend_client.list_shopping_requests()
             reply = shopping_requests_reply(settings, requests)
         except BackendClientError:
@@ -50,6 +52,7 @@ def build_router(settings: BotSettings) -> Router:
     @router.message(Command("watchlists"))
     async def handle_watchlists(message: Message) -> None:
         try:
+            backend_client = await _backend_client_for_message(settings, message)
             watchlists = await backend_client.list_watchlists()
             reply = watchlists_reply(settings, watchlists)
         except BackendClientError:
@@ -58,38 +61,51 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(Command("pause"))
     async def handle_pause(message: Message, command: CommandObject) -> None:
-        reply = await _handle_watchlist_action(
-            settings=settings,
-            backend_client=backend_client,
-            command_name="pause",
-            lookup=(command.args or "").strip(),
-        )
+        try:
+            backend_client = await _backend_client_for_message(settings, message)
+            reply = await _handle_watchlist_action(
+                settings=settings,
+                backend_client=backend_client,
+                command_name="pause",
+                lookup=(command.args or "").strip(),
+            )
+        except BackendClientError:
+            reply = backend_unavailable_reply(settings)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(Command("resume"))
     async def handle_resume(message: Message, command: CommandObject) -> None:
-        reply = await _handle_watchlist_action(
-            settings=settings,
-            backend_client=backend_client,
-            command_name="resume",
-            lookup=(command.args or "").strip(),
-        )
+        try:
+            backend_client = await _backend_client_for_message(settings, message)
+            reply = await _handle_watchlist_action(
+                settings=settings,
+                backend_client=backend_client,
+                command_name="resume",
+                lookup=(command.args or "").strip(),
+            )
+        except BackendClientError:
+            reply = backend_unavailable_reply(settings)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(Command("archive"))
     async def handle_archive(message: Message, command: CommandObject) -> None:
-        reply = await _handle_watchlist_action(
-            settings=settings,
-            backend_client=backend_client,
-            command_name="archive",
-            lookup=(command.args or "").strip(),
-        )
+        try:
+            backend_client = await _backend_client_for_message(settings, message)
+            reply = await _handle_watchlist_action(
+                settings=settings,
+                backend_client=backend_client,
+                command_name="archive",
+                lookup=(command.args or "").strip(),
+            )
+        except BackendClientError:
+            reply = backend_unavailable_reply(settings)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(F.text)
     async def handle_text(message: Message) -> None:
         text = message.text or ""
         try:
+            backend_client = await _backend_client_for_message(settings, message)
             result = await backend_client.create_shopping_request(text)
             reply = shopping_request_created_reply(settings, result)
         except BackendClientError:
@@ -97,6 +113,30 @@ def build_router(settings: BotSettings) -> Router:
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     return router
+
+
+async def _backend_client_for_message(settings: BotSettings, message: Message) -> BackendClient:
+    if settings.backend_access_token:
+        return BackendClient(
+            base_url=settings.backend_api_url,
+            access_token=settings.backend_access_token,
+        )
+
+    if message.from_user is None:
+        raise BackendClientError("Telegram message user is missing.")
+
+    auth_client = BackendClient(base_url=settings.backend_api_url, access_token=None)
+    access_token = await auth_client.authenticate_telegram_bot_user(
+        bot_token=settings.telegram_bot_token,
+        user=TelegramUserIdentity(
+            telegram_id=message.from_user.id,
+            username=message.from_user.username,
+            first_name=message.from_user.first_name,
+            last_name=message.from_user.last_name,
+            language=message.from_user.language_code,
+        ),
+    )
+    return BackendClient(base_url=settings.backend_api_url, access_token=access_token)
 
 
 async def _handle_watchlist_action(

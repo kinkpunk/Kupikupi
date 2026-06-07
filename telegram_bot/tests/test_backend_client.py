@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from bot.backend_client import BackendClient, BackendClientError
+from bot.backend_client import BackendClient, BackendClientError, TelegramUserIdentity
 
 
 @pytest.mark.asyncio
@@ -37,6 +37,49 @@ async def test_backend_client_creates_shopping_request() -> None:
     assert result.size_value == "41"
     assert result.budget_amount == 150
     assert result.display_currency == "EUR"
+
+
+@pytest.mark.asyncio
+async def test_backend_client_authenticates_telegram_bot_user() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/v1/auth/telegram-bot-user"
+        assert request.headers["X-Telegram-Bot-Token"] == "bot-token"
+        assert request.content == (
+            b'{"telegram_id":123,"username":"runner","first_name":"Run",'
+            b'"last_name":"Tester","language":"ru"}'
+        )
+        return httpx.Response(
+            200,
+            json={
+                "user": {"id": "user-1", "telegram_id": 123},
+                "tokens": {
+                    "access_token": "user-access-token",
+                    "refresh_token": "refresh-token",
+                    "token_type": "bearer",
+                    "expires_in": 900,
+                },
+            },
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        client = BackendClient(
+            base_url="https://api.example.test/v1",
+            access_token=None,
+            client=http_client,
+        )
+        access_token = await client.authenticate_telegram_bot_user(
+            bot_token="bot-token",
+            user=TelegramUserIdentity(
+                telegram_id=123,
+                username="runner",
+                first_name="Run",
+                last_name="Tester",
+                language="ru",
+            ),
+        )
+
+    assert access_token == "user-access-token"
 
 
 @pytest.mark.asyncio

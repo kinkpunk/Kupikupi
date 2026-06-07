@@ -41,6 +41,15 @@ class WatchlistSummary:
     target_price_currency: str | None
 
 
+@dataclass(frozen=True)
+class TelegramUserIdentity:
+    telegram_id: int
+    username: str | None
+    first_name: str | None
+    last_name: str | None
+    language: str | None
+
+
 class BackendClient:
     def __init__(
         self,
@@ -52,6 +61,25 @@ class BackendClient:
         self._base_url = base_url.rstrip("/")
         self._access_token = access_token
         self._client = client
+
+    async def authenticate_telegram_bot_user(
+        self,
+        *,
+        bot_token: str,
+        user: TelegramUserIdentity,
+    ) -> str:
+        if self._client is None:
+            async with httpx.AsyncClient(timeout=10) as client:
+                return await self._authenticate_telegram_bot_user(
+                    client,
+                    bot_token=bot_token,
+                    user=user,
+                )
+        return await self._authenticate_telegram_bot_user(
+            self._client,
+            bot_token=bot_token,
+            user=user,
+        )
 
     async def create_shopping_request(self, text: str) -> ShoppingRequestResult:
         if not self._access_token:
@@ -100,6 +128,28 @@ class BackendClient:
     def _ensure_access_token(self) -> None:
         if not self._access_token:
             raise BackendClientError("Backend access token is not configured.")
+
+    async def _authenticate_telegram_bot_user(
+        self,
+        client: httpx.AsyncClient,
+        *,
+        bot_token: str,
+        user: TelegramUserIdentity,
+    ) -> str:
+        response = await client.post(
+            f"{self._base_url}/auth/telegram-bot-user",
+            headers={"X-Telegram-Bot-Token": bot_token},
+            json={
+                "telegram_id": user.telegram_id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "language": user.language,
+            },
+        )
+        if response.status_code >= 400:
+            raise BackendClientError(f"Backend returned {response.status_code}.")
+        return str(response.json()["tokens"]["access_token"])
 
     async def _create_shopping_request(
         self,
