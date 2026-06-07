@@ -52,19 +52,19 @@ docker compose -f infra/docker-compose.yml up postgres redis
 Backend with worker:
 
 ```bash
-docker compose -f infra/docker-compose.yml up backend worker
+docker compose -f infra/docker-compose.yml up backend worker scheduler
 ```
 
 Backend with Telegram Bot:
 
 ```bash
-docker compose -f infra/docker-compose.yml up backend worker telegram-bot
+docker compose -f infra/docker-compose.yml up backend worker scheduler telegram-bot
 ```
 
 Backend with Telegram Bot and WebApp:
 
 ```bash
-docker compose -f infra/docker-compose.yml up backend worker telegram-bot webapp
+docker compose -f infra/docker-compose.yml up backend worker scheduler telegram-bot webapp
 ```
 
 The backend container runs Alembic migrations on startup by default. In local Docker Compose it also
@@ -110,6 +110,7 @@ Celery tasks:
 ```bash
 cd backend
 celery -A app.core.celery_app.celery_app worker --loglevel=info
+celery -A app.core.celery_app.celery_app beat --loglevel=info
 celery -A app.core.celery_app.celery_app call notifications.generate
 celery -A app.core.celery_app.celery_app call notifications.dispatch
 celery -A app.core.celery_app.celery_app call analytics.recompute_all

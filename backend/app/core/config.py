@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     telegram_bot_token: str | None = None
     cors_allowed_origins: str = "http://localhost:3000"
 
+    source_sync_schedule_seconds: int = 300
+    notifications_generate_schedule_seconds: int = 300
+    notifications_dispatch_schedule_seconds: int = 120
+    analytics_recompute_schedule_seconds: int = 3600
+
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]

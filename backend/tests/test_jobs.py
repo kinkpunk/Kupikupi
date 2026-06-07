@@ -20,6 +20,16 @@ def test_celery_registers_core_tasks() -> None:
     assert "sync.run_due_source_configs" in celery_app.tasks
 
 
+def test_celery_registers_periodic_schedule() -> None:
+    schedule = celery_app.conf.beat_schedule
+
+    assert schedule["sync-due-source-configs"]["task"] == "sync.run_due_source_configs"
+    assert schedule["generate-notifications"]["task"] == "notifications.generate"
+    assert schedule["dispatch-notifications"]["task"] == "notifications.dispatch"
+    assert schedule["recompute-price-analytics"]["task"] == "analytics.recompute_all"
+    assert schedule["sync-due-source-configs"]["schedule"] == settings.source_sync_schedule_seconds
+
+
 def test_dispatch_task_skips_when_telegram_token_missing() -> None:
     original_token = settings.telegram_bot_token
     settings.telegram_bot_token = None

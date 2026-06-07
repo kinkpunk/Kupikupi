@@ -74,6 +74,23 @@ services:
       redis:
         condition: service_healthy
 
+  scheduler:
+    build:
+      context: ../backend
+    env_file:
+      - ../backend/.env.example
+    environment:
+      DATABASE_URL: postgresql+asyncpg://kupikupi:kupikupi@postgres:5432/kupikupi
+      REDIS_URL: redis://redis:6379/0
+      RUN_MIGRATIONS: "0"
+      RUN_SEED: "0"
+    command: ["celery", "-A", "app.core.celery_app.celery_app", "beat", "--loglevel=info"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   telegram-bot:
     build:
       context: ../telegram_bot
