@@ -72,6 +72,8 @@ seeds MVP categories and stores. Override `RUN_MIGRATIONS` or `RUN_SEED` in the 
 when a different startup mode is needed.
 The Telegram Bot service is behind the `telegram` Compose profile because it requires a real
 `TELEGRAM_BOT_TOKEN`.
+The WebApp Docker image receives `NEXT_PUBLIC_*` values as build args because Next.js embeds public
+environment values during `next build`.
 
 Runtime checks:
 

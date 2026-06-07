@@ -108,6 +108,10 @@ services:
   webapp:
     build:
       context: ../webapp
+      args:
+        NEXT_PUBLIC_APP_ENV: local
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/v1
+        NEXT_PUBLIC_DEMO_ACCESS_TOKEN: ""
     env_file:
       - ../webapp/.env.example
     environment:
