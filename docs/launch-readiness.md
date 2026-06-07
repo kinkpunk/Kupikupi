@@ -20,6 +20,7 @@ Implemented and covered:
 - Next.js Telegram WebApp MVP flow.
 - WebApp authentication prefers fresh Telegram `initData` over stored or demo tokens.
 - Docker Compose for local backend, worker, scheduler, WebApp, optional Telegram Bot profile.
+- Staging deployment guide with environment matrix and smoke checklist.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
@@ -57,14 +58,13 @@ Blocking gaps:
 
 ## Recommended Next Iterations
 
-1. Create a staging deployment guide with required environment variables and domain assumptions.
-2. Add one real store source config path, preferably a stable affiliate/XML/JSON feed before
+1. Add one real store source config path, preferably a stable affiliate/XML/JSON feed before
    scrapers.
-3. Add live FX-rate updater job and migration-safe seed/fallback behavior.
-4. Add basic observability: JSON logs, request IDs, Sentry-compatible error hooks, and container
+2. Add live FX-rate updater job and migration-safe seed/fallback behavior.
+3. Add basic observability: JSON logs, request IDs, Sentry-compatible error hooks, and container
    health dashboard notes.
-5. Add backup/restore instructions for PostgreSQL.
-6. Run end-to-end Docker Compose smoke on a machine with Docker available.
+4. Add backup/restore instructions for PostgreSQL.
+5. Run end-to-end Docker Compose smoke on a machine with Docker available.
 
 ## Go/No-Go Summary
 
