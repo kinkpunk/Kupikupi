@@ -161,6 +161,13 @@ Use a real Telegram account allowed to access the staging bot:
 ## First Store Feed Configuration
 
 For the first real store feed, prefer `http_csv` or `http_json` source configs before scrapers.
+Use the backend operator command to print a template and apply the final config:
+
+```bash
+cd backend
+python scripts/store_feed.py --print-template
+python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
+```
 
 Example `http_csv` source config settings:
 

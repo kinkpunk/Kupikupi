@@ -171,6 +171,17 @@ python scripts/user_data.py delete --telegram-id 123456 --confirm
 
 Deletion runs as a dry run unless `--confirm` is provided.
 
+Store feed operator commands:
+
+```bash
+cd backend
+python scripts/store_feed.py --print-template
+python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
+celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
+```
+
+The feed config command creates or updates a store and its `http_csv`/`http_json` source config.
+
 Telegram Bot development:
 
 ```bash

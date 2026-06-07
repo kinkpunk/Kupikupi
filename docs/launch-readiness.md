@@ -23,6 +23,7 @@ Implemented and covered:
 - Staging deployment guide with environment matrix and smoke checklist.
 - Live FX-rate updater job for configured currencies.
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
+- Operator command for creating or updating `http_csv`/`http_json` store feed configs.
 - Request ID propagation and JSON access logs for backend API requests.
 - In-process backend request metrics endpoint.
 - Sentry-compatible HTTP error reporting hook for unhandled backend exceptions.
@@ -65,7 +66,7 @@ Blocking gaps:
 
 ## Recommended Next Iterations
 
-1. Configure one real Czech store feed through `http_csv` or `http_json`.
+1. Configure one real Czech store feed through `scripts/store_feed.py`.
 2. Validate data export/deletion commands on staging restore data.
 3. Add tracing, alerting, and container health dashboard notes.
 4. Run the Docker Compose smoke runner on a machine with Docker available.
