@@ -61,6 +61,9 @@ Set these values for the backend API, worker, and scheduler unless noted otherwi
 | `NOTIFICATIONS_DISPATCH_SCHEDULE_SECONDS` | no | yes | yes | `120` |
 | `ANALYTICS_RECOMPUTE_SCHEDULE_SECONDS` | no | yes | yes | `3600` |
 | `FX_RATE_UPDATE_SCHEDULE_SECONDS` | no | yes | yes | `43200` |
+| `RETENTION_CLEANUP_SCHEDULE_SECONDS` | no | yes | yes | `86400` |
+| `NOTIFICATION_RETENTION_DAYS` | no | yes | yes | `180` |
+| `SOURCE_SYNC_RETENTION_DAYS` | no | yes | yes | `90` |
 | `FX_RATE_SOURCE_URL` | no | yes | yes | HTTPS JSON rates URL with EUR base |
 | `FX_RATE_CURRENCIES` | no | yes | yes | `CZK` |
 | `ERROR_REPORTING_ENABLED` | yes | no | no | `1` when endpoint is configured |
@@ -121,6 +124,8 @@ Before deploying migrations or opening staging to testers, follow the PostgreSQL
 procedure in `docs/postgres-backup-restore.md`.
 For closed user testing, use the privacy and retention draft in
 `docs/privacy-data-retention.md` as the operator baseline.
+The scheduler runs `retention.cleanup` daily by default to remove expired refresh token sessions,
+old notification records, and old source sync logs.
 
 ## Staging Smoke Checks
 

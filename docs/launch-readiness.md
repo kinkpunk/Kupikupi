@@ -28,6 +28,7 @@ Implemented and covered:
 - Sentry-compatible HTTP error reporting hook for unhandled backend exceptions.
 - PostgreSQL backup and restore procedure for staging.
 - Privacy and data retention draft for closed testing.
+- Scheduled retention cleanup for expired sessions, notifications, and source sync logs.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
@@ -63,8 +64,9 @@ Blocking gaps:
 ## Recommended Next Iterations
 
 1. Configure one real Czech store feed through `http_csv` or `http_json`.
-2. Add tracing, alerting, and container health dashboard notes.
-3. Run the Docker Compose smoke runner on a machine with Docker available.
+2. Add data export/deletion operator runbooks.
+3. Add tracing, alerting, and container health dashboard notes.
+4. Run the Docker Compose smoke runner on a machine with Docker available.
 
 ## Go/No-Go Summary
 
@@ -72,5 +74,5 @@ Blocking gaps:
 - Internal technical demo with demo data: go.
 - Closed user test with real Telegram users: no-go until staging HTTPS and real Telegram Bot launch
   settings are in place.
-- Public beta: no-go until real store data, legal review, observability, and retention cleanup jobs
-  are in place.
+- Public beta: no-go until real store data, legal review, observability, and data export/deletion
+  procedures are in place.

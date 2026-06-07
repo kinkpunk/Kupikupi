@@ -53,8 +53,9 @@ Recommended defaults before public beta:
 | Metrics counters | Environment-dependent, no personal payloads |
 | Backups | Follow `docs/postgres-backup-restore.md` |
 
-Retention cleanup jobs are not implemented yet. Before public beta, add scheduled cleanup tasks for
-expired operational records, archived user data, and old sessions.
+Retention cleanup jobs are implemented for expired refresh token sessions, old notification records,
+and old source sync runs/items. Before public beta, add operator runbooks or tooling for account
+export/deletion and archived user data handling.
 
 ## User Rights Workflow
 
@@ -95,7 +96,7 @@ Before public beta:
 
 - complete legal review for privacy policy and terms;
 - define controller/operator identity and support contact;
-- add retention cleanup jobs;
+- verify retention cleanup jobs in staging;
 - document data export/deletion operator procedures;
 - verify backup deletion aligns with retention policy;
 - add a visible privacy/terms link in the WebApp or Telegram Bot entry point.

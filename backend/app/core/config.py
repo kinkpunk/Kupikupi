@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     notifications_dispatch_schedule_seconds: int = 120
     analytics_recompute_schedule_seconds: int = 3600
     fx_rate_update_schedule_seconds: int = 43_200
+    retention_cleanup_schedule_seconds: int = 86_400
+    notification_retention_days: int = 180
+    source_sync_retention_days: int = 90
     fx_rate_source_url: str = "https://api.exchangerate.host/latest?base=EUR&symbols=CZK"
     fx_rate_currencies: str = "CZK"
     error_reporting_enabled: bool = False

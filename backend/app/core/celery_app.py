@@ -12,6 +12,7 @@ celery_app = Celery(
         "app.jobs.analytics",
         "app.jobs.fx",
         "app.jobs.notifications",
+        "app.jobs.retention",
         "app.jobs.seed",
         "app.jobs.sync",
     ],
@@ -42,6 +43,10 @@ celery_app.conf.beat_schedule = {
     "update-fx-rates": {
         "task": "fx.update_rates",
         "schedule": settings.fx_rate_update_schedule_seconds,
+    },
+    "cleanup-retention": {
+        "task": "retention.cleanup",
+        "schedule": settings.retention_cleanup_schedule_seconds,
     },
 }
 

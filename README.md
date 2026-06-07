@@ -15,7 +15,8 @@ Example request:
 Backend, Telegram Bot, and WebApp MVP foundations are implemented.
 Implemented backend modules include users/auth, catalog, shopping requests, watchlists, offers,
 price analytics, deals, notifications, Telegram delivery, Celery jobs, and source sync with FX
-normalization.
+normalization. Scheduled retention cleanup covers expired sessions, notification history, and source
+sync logs.
 
 CI validates backend lint/tests/migrations, Telegram Bot lint/tests, and WebApp tests/build.
 
@@ -153,6 +154,7 @@ celery -A app.core.celery_app.celery_app call notifications.generate
 celery -A app.core.celery_app.celery_app call notifications.dispatch
 celery -A app.core.celery_app.celery_app call analytics.recompute_all
 celery -A app.core.celery_app.celery_app call fx.update_rates
+celery -A app.core.celery_app.celery_app call retention.cleanup
 celery -A app.core.celery_app.celery_app call sync.run_fake
 celery -A app.core.celery_app.celery_app call sync.run_source_config --args='["SOURCE_CONFIG_ID"]'
 celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
