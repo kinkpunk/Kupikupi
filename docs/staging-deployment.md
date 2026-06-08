@@ -239,12 +239,15 @@ cd backend
 python scripts/store_feed.py --print-template
 python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3 --min-offers 1
 python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
+python scripts/source_sync.py --due --limit 10
 ```
 
 The dry run validates the JSON config, downloads the feed through the configured adapter, and prints
 `offers_seen`, quality counters, warnings, and a small sample without writing to the database. It
 fails if the feed returns fewer than `--min-offers` offers. Apply the config only after the sample
 has plausible product URLs, prices, currencies, category values, and sizes.
+The sync command prints a JSON summary and returns a non-zero exit code if any run fails or partially
+fails.
 
 Example `http_csv` source config settings:
 

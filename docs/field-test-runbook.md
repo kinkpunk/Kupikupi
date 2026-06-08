@@ -104,8 +104,11 @@ Run sync:
 
 ```bash
 cd backend
-celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
+python scripts/source_sync.py --due --limit 10
 ```
+
+The sync report must show `failed=0` and `partially_failed=0`. For a single known config, use
+`python scripts/source_sync.py --source-config-id SOURCE_CONFIG_UUID`.
 
 Review potential duplicate products after the sync:
 
