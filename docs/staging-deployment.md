@@ -152,7 +152,17 @@ For closed user testing, use the privacy and retention draft in
 The scheduler runs `retention.cleanup` daily by default to remove expired refresh token sessions,
 old notification records, and old source sync logs.
 Validate user export and deletion commands against a restored staging backup before enabling
-external testers.
+external testers:
+
+```bash
+cd backend
+python scripts/user_data_smoke.py \
+  --telegram-id 123456 \
+  --export-output /tmp/kupikupi-user-123456.json \
+  --confirm-delete
+```
+
+Run this only against restored staging data or a staging-only test user.
 
 ## Staging Smoke Checks
 

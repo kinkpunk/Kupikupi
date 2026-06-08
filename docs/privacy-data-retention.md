@@ -87,7 +87,18 @@ Before closed user testing, support these operator workflows:
    WebApp entry points.
 
 Before public beta, validate these commands on staging restore data and decide whether admin tooling
-is needed.
+is needed. Use the smoke wrapper for the restore-data validation:
+
+```bash
+cd backend
+python scripts/user_data_smoke.py \
+  --telegram-id 123456 \
+  --export-output /tmp/kupikupi-user-123456.json \
+  --confirm-delete
+```
+
+The smoke exports the selected user, performs a dry-run count, deletes the user-owned data, and
+verifies the user can no longer be exported.
 
 ## User-Facing Notice Draft
 
@@ -115,6 +126,6 @@ Before public beta:
 - complete legal review for privacy policy and terms;
 - define controller/operator identity and support contact;
 - verify retention cleanup jobs in staging;
-- validate data export/deletion operator procedures on staging restore data;
+- run `scripts/user_data_smoke.py` against staging restore data;
 - verify backup deletion aligns with retention policy;
 - replace draft privacy text with legally reviewed privacy policy and terms.

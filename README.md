@@ -202,6 +202,18 @@ python scripts/user_data.py delete --telegram-id 123456 --confirm
 
 Deletion runs as a dry run unless `--confirm` is provided.
 
+Restore-data validation before field testing:
+
+```bash
+cd backend
+python scripts/user_data_smoke.py \
+  --telegram-id 123456 \
+  --export-output /tmp/kupikupi-user-123456.json \
+  --confirm-delete
+```
+
+Run the smoke only against restored staging data or a staging-only test user.
+
 Store feed operator commands:
 
 ```bash

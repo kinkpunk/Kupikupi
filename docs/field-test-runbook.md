@@ -153,11 +153,14 @@ Before inviting external testers:
 
   ```bash
   cd backend
-  python scripts/user_data.py export --telegram-id 123456 --output /tmp/kupikupi-user-123456.json
-  python scripts/user_data.py delete --telegram-id 123456
+  python scripts/user_data_smoke.py \
+    --telegram-id 123456 \
+    --export-output /tmp/kupikupi-user-123456.json \
+    --confirm-delete
   ```
 
-Use `--confirm` only for an intentional deletion test.
+Use only a restored staging backup or a staging-only test user because this smoke performs an
+intentional deletion after the export and dry run.
 
 ## No-Go Conditions
 
