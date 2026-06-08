@@ -33,7 +33,11 @@ python scripts/staging_preflight.py \
   --bot-env /tmp/kupikupi-staging-env/kupikupi-bot.env \
   --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env \
   --operator-env /tmp/kupikupi-staging-env/kupikupi-operator.env
+python scripts/field_test_checklist.py --env-dir /tmp/kupikupi-staging-env
 ```
+
+The checklist is local-only: it validates env files, runs preflight, flags missing smoke tokens, and
+prints the next operator commands.
 
 Backend API, worker, and scheduler:
 

@@ -1,6 +1,6 @@
 # Kupikupi Launch Readiness
 
-Status date: 2026-06-07
+Status date: 2026-06-08
 
 ## Current Readiness
 
@@ -25,8 +25,8 @@ Implemented and covered:
 - Backend Telegram auth allowlist for closed field testing.
 - Backend readiness validates Telegram Bot token in staging/production.
 - Backend readiness validates error reporting endpoint when reporting is enabled.
-- Staging environment preflight script for backend, bot, and WebApp config.
-- Staging environment template generator for backend, bot, and WebApp.
+- Staging environment preflight script for backend, bot, WebApp, and operator smoke config.
+- Staging environment template generator for backend, bot, WebApp, and operator env files.
 - Operator helper for building Telegram closed-test allowlist env values.
 - Telegram Bot per-user backend authentication via bot-token protected exchange.
 - Telegram notification delivery integration.
@@ -39,8 +39,10 @@ Implemented and covered:
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Operator command for creating or updating `http_csv`/`http_json` store feed configs.
 - Store feed dry-run validation before database writes.
+- Operator source sync script with JSON summary and non-zero failure exit codes.
 - Operator endpoint for reviewing potential product duplicate candidates.
 - Operator endpoint for merging confirmed duplicate products.
+- Operator script for listing and merging product duplicate candidates through staging API.
 - Request ID propagation and JSON access logs for backend API requests.
 - W3C `traceparent` propagation for API responses, logs, and error reports.
 - In-process backend request metrics endpoint.
@@ -54,7 +56,8 @@ Implemented and covered:
 - Visible support, privacy, and terms entry points in Telegram Bot and WebApp.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - Remote staging smoke script for HTTPS API/WebApp and optional authenticated shopping flow.
-- Remote staging smoke checks for support, privacy, and terms URLs.
+- Remote staging smoke checks for support, privacy, terms, and optional admin endpoints.
+- Closed field-test checklist script for local env/preflight/smoke-token readiness.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
@@ -81,17 +84,18 @@ Blocking gaps:
 - No HTTPS public domain for WebApp/API.
 - No real Telegram Bot token or deployed public bot runtime.
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
-- Product matching has deterministic cross-store reuse, duplicate candidate review, and manual
-  duplicate merge, but still needs robust normalization and bulk review tooling.
+- Product matching has deterministic cross-store reuse, duplicate candidate review, manual duplicate
+  merge, and operator duplicate scripts, but still needs robust normalization and bulk review UI.
 - No full observability stack yet: tracing provider and real alerting/dashboard infrastructure still
   need setup.
 - Privacy and terms still require legal review and final hosted URLs before public beta.
 
 ## Recommended Next Iterations
 
-1. Configure one real Czech store feed through `scripts/store_feed.py` after dry-run validation.
-2. Add tracing provider and deploy real alerting/dashboard infrastructure.
-3. Run the closed field test runbook on deployed staging, including `scripts/user_data_smoke.py`.
+1. Run `scripts/field_test_checklist.py` against real staging env files.
+2. Configure one real Czech store feed through `scripts/store_feed.py` after dry-run validation.
+3. Add tracing provider and deploy real alerting/dashboard infrastructure.
+4. Run the closed field test runbook on deployed staging, including `scripts/user_data_smoke.py`.
 
 ## Go/No-Go Summary
 
