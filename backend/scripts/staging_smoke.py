@@ -20,6 +20,7 @@ class StagingSmokeConfig:
     privacy_url: str | None = None
     terms_url: str | None = None
     access_token: str | None = None
+    admin_access_token: str | None = None
     request_text: str = DEFAULT_REQUEST_TEXT
     confirm_watchlist: bool = False
 
@@ -88,6 +89,11 @@ def run_staging_smoke(config: StagingSmokeConfig, client: HttpClient) -> list[Sm
     else:
         steps.append(SmokeStep("authenticated-flow", "skipped", "KUPIKUPI_ACCESS_TOKEN is empty."))
 
+    if config.admin_access_token:
+        steps.extend(_run_admin_flow(config, client))
+    else:
+        steps.append(SmokeStep("admin-flow", "skipped", "KUPIKUPI_ADMIN_ACCESS_TOKEN is empty."))
+
     return steps
 
 
@@ -115,6 +121,7 @@ def config_from_env() -> StagingSmokeConfig:
         privacy_url=os.environ.get("KUPIKUPI_PRIVACY_URL") or None,
         terms_url=os.environ.get("KUPIKUPI_TERMS_URL") or None,
         access_token=os.environ.get("KUPIKUPI_ACCESS_TOKEN") or None,
+        admin_access_token=os.environ.get("KUPIKUPI_ADMIN_ACCESS_TOKEN") or None,
         request_text=os.environ.get("KUPIKUPI_SMOKE_REQUEST_TEXT", DEFAULT_REQUEST_TEXT),
         confirm_watchlist=os.environ.get("KUPIKUPI_CONFIRM_WATCHLIST") == "1",
     )
@@ -128,6 +135,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--privacy-url", default=os.environ.get("KUPIKUPI_PRIVACY_URL"))
     parser.add_argument("--terms-url", default=os.environ.get("KUPIKUPI_TERMS_URL"))
     parser.add_argument("--access-token", default=os.environ.get("KUPIKUPI_ACCESS_TOKEN"))
+    parser.add_argument(
+        "--admin-access-token",
+        default=os.environ.get("KUPIKUPI_ADMIN_ACCESS_TOKEN"),
+    )
     parser.add_argument(
         "--request-text",
         default=os.environ.get("KUPIKUPI_SMOKE_REQUEST_TEXT", DEFAULT_REQUEST_TEXT),
@@ -149,6 +160,7 @@ def main() -> None:
         privacy_url=args.privacy_url or None,
         terms_url=args.terms_url or None,
         access_token=args.access_token or None,
+        admin_access_token=args.admin_access_token or None,
         request_text=args.request_text,
         confirm_watchlist=args.confirm_watchlist,
     )
@@ -257,6 +269,43 @@ def _run_authenticated_flow(config: StagingSmokeConfig, client: HttpClient) -> l
         steps.append(SmokeStep("watchlist-confirmation", "ok", f"watchlist {watchlist['id']}"))
     else:
         steps.append(SmokeStep("watchlist-confirmation", "failed", f"HTTP {status}: {watchlist}"))
+    return steps
+
+
+def _run_admin_flow(config: StagingSmokeConfig, client: HttpClient) -> list[SmokeStep]:
+    steps = []
+    status, sync_runs = client.request(
+        "GET",
+        _api_url(config, "/admin/sync-runs"),
+        access_token=config.admin_access_token,
+    )
+    if status == 200 and isinstance(sync_runs, dict) and "items" in sync_runs:
+        steps.append(SmokeStep("admin-sync-runs", "ok", f"{len(sync_runs['items'])} runs"))
+    else:
+        steps.append(SmokeStep("admin-sync-runs", "failed", f"HTTP {status}: {sync_runs}"))
+        return steps
+
+    status, candidates = client.request(
+        "GET",
+        _api_url(config, "/admin/product-duplicate-candidates"),
+        access_token=config.admin_access_token,
+    )
+    if status == 200 and isinstance(candidates, dict) and "items" in candidates:
+        steps.append(
+            SmokeStep(
+                "admin-duplicate-candidates",
+                "ok",
+                f"{len(candidates['items'])} groups",
+            )
+        )
+    else:
+        steps.append(
+            SmokeStep(
+                "admin-duplicate-candidates",
+                "failed",
+                f"HTTP {status}: {candidates}",
+            )
+        )
     return steps
 
 

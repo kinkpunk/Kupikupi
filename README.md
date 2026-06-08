@@ -152,6 +152,8 @@ python scripts/staging_smoke.py \
 ```
 
 Add `--access-token TOKEN --confirm-watchlist` to run the authenticated shopping request flow.
+Add `--admin-access-token ADMIN_TOKEN` to verify staging operator endpoints for sync runs and
+duplicate candidates.
 
 Staging env preflight:
 

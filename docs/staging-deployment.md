@@ -206,11 +206,13 @@ python scripts/staging_smoke.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
   --webapp-url https://app.staging.kupikupi.example \
   --access-token "$KUPIKUPI_ACCESS_TOKEN" \
+  --admin-access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
   --confirm-watchlist
 ```
 
 The authenticated smoke creates a shopping request and, with `--confirm-watchlist`, confirms a
-watchlist. Use a staging-only test user token.
+watchlist. The admin smoke verifies operator access to sync runs and duplicate candidate review.
+Use staging-only user and admin tokens.
 
 Use a real Telegram account allowed to access the staging bot:
 

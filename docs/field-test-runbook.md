@@ -156,8 +156,12 @@ python scripts/staging_smoke.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
   --webapp-url https://app.staging.kupikupi.example \
   --access-token "$KUPIKUPI_ACCESS_TOKEN" \
+  --admin-access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
   --confirm-watchlist
 ```
+
+The smoke report must show `admin-sync-runs=ok` and `admin-duplicate-candidates=ok` when an admin
+token is supplied.
 
 ## Manual Telegram Scenario
 
