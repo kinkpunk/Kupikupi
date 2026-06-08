@@ -17,7 +17,7 @@ from app.domains.stores.models import (
 from app.domains.stores.service import list_due_source_configs, mark_source_config_synced
 from app.domains.stores.sync import run_source_sync
 from app.domains.users.models import User
-from app.integrations.stores.base import SourceOfferRecord
+from app.integrations.stores.base import SourceOfferRecord, SourceProductRecord
 from app.integrations.stores.fake import FakeStoreSourceAdapter
 
 
@@ -508,6 +508,67 @@ async def test_static_json_sync_creates_product_and_mapping_from_source_data(
         assert snapshot_count == 2
 
 
+async def test_source_sync_reuses_product_by_normalized_brand_category_and_model(
+    db_session_factory,
+) -> None:
+    async with db_session_factory() as session:
+        category = Category(slug="running-shoes", name="Running Shoes")
+        first_store = Store(name="First Store", country="CZ", url="https://first.example.test")
+        second_store = Store(name="Second Store", country="CZ", url="https://second.example.test")
+        first_source = SourceConfig(
+            store=first_store,
+            source_type="static_json",
+            active=True,
+            settings={},
+        )
+        second_source = SourceConfig(
+            store=second_store,
+            source_type="static_json",
+            active=True,
+            settings={},
+        )
+        session.add_all([category, first_store, second_store, first_source, second_source])
+        await session.flush()
+
+        first_run = await run_source_sync(
+            session,
+            adapter=FakeStoreSourceAdapter(
+                [
+                    _source_record_with_product_data(
+                        external_id="first-asics-offer",
+                        external_product_id="first-asics-gt-2000",
+                    )
+                ]
+            ),
+            store_id=first_store.id,
+            source_config_id=first_source.id,
+        )
+        second_run = await run_source_sync(
+            session,
+            adapter=FakeStoreSourceAdapter(
+                [
+                    _source_record_with_product_data(
+                        external_id="second-asics-offer",
+                        external_product_id="second-asics-gt-2000",
+                    )
+                ]
+            ),
+            store_id=second_store.id,
+            source_config_id=second_source.id,
+        )
+        await session.commit()
+
+        product_count = await session.scalar(select(func.count(Product.id)))
+        mapping_count = await session.scalar(select(func.count(SourceProductMapping.id)))
+        offer_count = await session.scalar(select(func.count(Offer.id)))
+
+    assert first_run.status == "succeeded"
+    assert second_run.status == "succeeded"
+    assert product_count == 1
+    assert mapping_count == 2
+    assert offer_count == 2
+
+
 async def test_source_sync_records_item_errors_and_continues(db_session_factory) -> None:
     _admin, product, store = await create_sync_fixture(db_session_factory)
     valid_record = make_source_record(product, eur_price=139.60)
@@ -600,3 +661,31 @@ async def test_admin_rejects_inactive_source_config_sync(
     )
 
     assert response.status_code == 400
+
+
+def _source_record_with_product_data(
+    *,
+    external_id: str,
+    external_product_id: str,
+) -> SourceOfferRecord:
+    return SourceOfferRecord(
+        external_id=external_id,
+        product_id=None,
+        product_url=f"https://shop.example.test/{external_id}",
+        source_price=2990,
+        source_old_price=None,
+        source_currency="CZK",
+        eur_price=119.60,
+        eur_old_price=None,
+        fx_rate_to_eur=0.04,
+        discount_percent=None,
+        availability="in_stock",
+        product=SourceProductRecord(
+            external_product_id=external_product_id,
+            name="ASICS GT-2000 13",
+            brand_name="ASICS",
+            category_slug="running-shoes",
+            category_name="Running Shoes",
+            model="GT-2000 13",
+        ),
+    )

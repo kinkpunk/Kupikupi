@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -205,16 +205,24 @@ async def resolve_source_product_id(
         await session.flush()
         return mapping.product_id
 
+    brand = await _get_or_create_brand(session, record.product.brand_name)
+    category = await _get_or_create_category(
+        session,
+        slug=record.product.category_slug,
+        name=record.product.category_name,
+    )
     product = None
     if record.product.sku:
         product = await session.scalar(select(Product).where(Product.sku == record.product.sku))
     if product is None:
-        brand = await _get_or_create_brand(session, record.product.brand_name)
-        category = await _get_or_create_category(
+        product = await _find_product_by_normalized_identity(
             session,
-            slug=record.product.category_slug,
-            name=record.product.category_name,
+            brand=brand,
+            category=category,
+            model=record.product.model,
+            name=record.product.name,
         )
+    if product is None:
         product = Product(
             brand_id=brand.id if brand else None,
             category_id=category.id,
@@ -237,6 +245,45 @@ async def resolve_source_product_id(
     session.add(mapping)
     await session.flush()
     return product.id
+
+
+async def _find_product_by_normalized_identity(
+    session: AsyncSession,
+    *,
+    brand: Brand | None,
+    category: Category,
+    model: str | None,
+    name: str,
+) -> Product | None:
+    identity = _normalized_product_identity(model=model, name=name)
+    if identity is None:
+        return None
+
+    query = select(Product).where(Product.category_id == category.id)
+    if brand is not None:
+        query = query.where(Product.brand_id == brand.id)
+    else:
+        query = query.where(Product.brand_id.is_(None))
+    query = query.where(
+        func.lower(Product.model) == identity,
+    )
+    product = await session.scalar(query)
+    if product is not None:
+        return product
+
+    return await session.scalar(
+        select(Product)
+        .where(Product.category_id == category.id)
+        .where(Product.brand_id == brand.id if brand is not None else Product.brand_id.is_(None))
+        .where(func.lower(Product.name) == normalize_name(name))
+    )
+
+
+def _normalized_product_identity(*, model: str | None, name: str) -> str | None:
+    value = normalize_name(model or name)
+    if len(value) < 4:
+        return None
+    return value
 
 
 async def _get_or_create_brand(session: AsyncSession, name: str | None) -> Brand | None:
