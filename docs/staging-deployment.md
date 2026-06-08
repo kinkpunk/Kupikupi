@@ -225,8 +225,13 @@ Use the backend operator command to print a template and apply the final config:
 ```bash
 cd backend
 python scripts/store_feed.py --print-template
+python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3
 python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
 ```
+
+The dry run validates the JSON config, downloads the feed through the configured adapter, and prints
+`offers_seen` plus a small sample without writing to the database. Apply the config only after the
+sample has plausible product URLs, prices, currencies, category values, and sizes.
 
 Example `http_csv` source config settings:
 

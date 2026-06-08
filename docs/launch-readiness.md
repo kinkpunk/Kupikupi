@@ -35,6 +35,7 @@ Implemented and covered:
 - Live FX-rate updater job for configured currencies.
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Operator command for creating or updating `http_csv`/`http_json` store feed configs.
+- Store feed dry-run validation before database writes.
 - Request ID propagation and JSON access logs for backend API requests.
 - In-process backend request metrics endpoint.
 - Sentry-compatible HTTP error reporting hook for unhandled backend exceptions.
@@ -82,7 +83,7 @@ Blocking gaps:
 
 ## Recommended Next Iterations
 
-1. Configure one real Czech store feed through `scripts/store_feed.py`.
+1. Configure one real Czech store feed through `scripts/store_feed.py` after dry-run validation.
 2. Add tracing and deploy real alerting/dashboard infrastructure.
 3. Run the closed field test runbook on deployed staging, including `scripts/user_data_smoke.py`.
 
