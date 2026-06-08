@@ -53,6 +53,7 @@ Set these values for the backend API, worker, and scheduler unless noted otherwi
 | `ACCESS_TOKEN_TTL_SECONDS` | yes | yes | yes | `900` |
 | `REFRESH_TOKEN_TTL_SECONDS` | yes | yes | yes | `2592000` |
 | `TELEGRAM_BOT_TOKEN` | yes | yes | yes | real staging bot token |
+| `TELEGRAM_ALLOWED_USER_IDS` | yes | no | no | comma-separated Telegram tester IDs |
 | `CORS_ALLOWED_ORIGINS` | yes | no | no | `https://app.staging.kupikupi.example` |
 | `RUN_MIGRATIONS` | yes | no | no | `1` for one API instance during deploy |
 | `RUN_SEED` | yes | no | no | `0` by default |
@@ -101,15 +102,16 @@ Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 | `BACKEND_API_URL` | yes | `https://api.staging.kupikupi.example/v1` |
 | `BACKEND_ACCESS_TOKEN` | no | empty for per-user auth |
 | `TELEGRAM_WEBAPP_URL` | yes | `https://app.staging.kupikupi.example` |
-| `TELEGRAM_ALLOWED_USER_IDS` | no | comma-separated Telegram tester IDs |
+| `TELEGRAM_ALLOWED_USER_IDS` | no | same comma-separated Telegram tester IDs as backend |
 | `SUPPORT_CONTACT_URL` | yes | support contact URL |
 | `PRIVACY_POLICY_URL` | yes | privacy policy URL |
 | `BOT_POLLING_TIMEOUT_SECONDS` | yes | `30` |
 
 If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender through
 `/auth/telegram-bot-user` using `TELEGRAM_BOT_TOKEN`. This is the preferred staging mode.
-For a closed field test, set `TELEGRAM_ALLOWED_USER_IDS` to the Telegram numeric IDs allowed to use
-the bot. Leave it empty only for open testing.
+For a closed field test, set `TELEGRAM_ALLOWED_USER_IDS` in both backend and Telegram Bot
+environments. The backend enforces the allowlist for Telegram WebApp and Bot auth. Leave it empty
+only for open testing.
 
 ## Deployment Order
 
@@ -236,7 +238,7 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 - PostgreSQL and Redis credentials stored as secrets.
 - No demo access token in WebApp build args.
 - Support contact and privacy policy URLs configured for WebApp and Telegram Bot.
-- `TELEGRAM_ALLOWED_USER_IDS` configured for closed field testing.
+- `TELEGRAM_ALLOWED_USER_IDS` configured for backend and Telegram Bot closed field testing.
 - No localhost URLs in staging runtime config.
 
 ## Known Staging Limitations

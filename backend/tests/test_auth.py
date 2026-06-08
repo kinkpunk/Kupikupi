@@ -6,6 +6,8 @@ from urllib.parse import urlencode
 
 from fastapi.testclient import TestClient
 
+from app.core.config import settings
+
 
 def build_init_data(bot_token: str, user: dict[str, object], auth_date: int | None = None) -> str:
     payload = {
@@ -48,6 +50,34 @@ def test_telegram_auth_creates_user_and_allows_me(client: TestClient) -> None:
 
     assert me_response.status_code == 200
     assert me_response.json()["telegram_id"] == 123456789
+
+
+def test_telegram_auth_rejects_user_outside_allowlist(client: TestClient) -> None:
+    original_allowlist = settings.telegram_allowed_user_ids
+    settings.telegram_allowed_user_ids = "123"
+    try:
+        init_data = build_init_data("test-bot-token", {"id": 999, "first_name": "Blocked"})
+
+        response = client.post("/v1/auth/telegram", json={"init_data": init_data})
+    finally:
+        settings.telegram_allowed_user_ids = original_allowlist
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Telegram user is not allowed for this environment."
+
+
+def test_telegram_auth_allows_user_inside_allowlist(client: TestClient) -> None:
+    original_allowlist = settings.telegram_allowed_user_ids
+    settings.telegram_allowed_user_ids = "777"
+    try:
+        init_data = build_init_data("test-bot-token", {"id": 777, "first_name": "Allowed"})
+
+        response = client.post("/v1/auth/telegram", json={"init_data": init_data})
+    finally:
+        settings.telegram_allowed_user_ids = original_allowlist
+
+    assert response.status_code == 200
+    assert response.json()["user"]["telegram_id"] == 777
 
 
 def test_refresh_token_rotates_token_pair(client: TestClient) -> None:
@@ -102,6 +132,22 @@ def test_telegram_bot_user_auth_rejects_wrong_bot_token(client: TestClient) -> N
     )
 
     assert response.status_code == 401
+
+
+def test_telegram_bot_user_auth_rejects_user_outside_allowlist(client: TestClient) -> None:
+    original_allowlist = settings.telegram_allowed_user_ids
+    settings.telegram_allowed_user_ids = "444"
+    try:
+        response = client.post(
+            "/v1/auth/telegram-bot-user",
+            headers={"X-Telegram-Bot-Token": "test-bot-token"},
+            json={"telegram_id": 555, "first_name": "Blocked"},
+        )
+    finally:
+        settings.telegram_allowed_user_ids = original_allowlist
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Telegram user is not allowed for this environment."
 
 
 def test_telegram_auth_rejects_invalid_hash(client: TestClient) -> None:

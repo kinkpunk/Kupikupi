@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     refresh_token_ttl_seconds: int = 2_592_000
 
     telegram_bot_token: str | None = None
+    telegram_allowed_user_ids: str = ""
     cors_allowed_origins: str = "http://localhost:3000"
 
     source_sync_schedule_seconds: int = 300
@@ -52,6 +53,19 @@ class Settings(BaseSettings):
         ]
 
     @property
+    def allowed_telegram_user_ids(self) -> set[int]:
+        values = set()
+        for item in self.telegram_allowed_user_ids.split(","):
+            item = item.strip()
+            if item:
+                values.add(int(item))
+        return values
+
+    def is_telegram_user_allowed(self, telegram_id: int) -> bool:
+        allowed_user_ids = self.allowed_telegram_user_ids
+        return not allowed_user_ids or telegram_id in allowed_user_ids
+
+    @property
     def is_production_like(self) -> bool:
         return self.environment.lower() in {"production", "prod", "staging"}
 
@@ -77,6 +91,10 @@ class Settings(BaseSettings):
                 "CORS_ALLOWED_ORIGINS must not contain localhost origins "
                 "in production-like environments."
             )
+        try:
+            _ = self.allowed_telegram_user_ids
+        except ValueError:
+            issues.append("TELEGRAM_ALLOWED_USER_IDS must be a comma-separated list of integers.")
         return issues
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

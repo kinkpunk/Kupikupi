@@ -37,6 +37,7 @@ async def authenticate_telegram(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(exc),
         ) from exc
+    _ensure_telegram_user_allowed(telegram_user.telegram_id)
 
     user = await upsert_telegram_user(
         session,
@@ -68,6 +69,7 @@ async def authenticate_telegram_bot_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Telegram bot token is invalid.",
         )
+    _ensure_telegram_user_allowed(payload.telegram_id)
 
     user = await upsert_telegram_user(
         session,
@@ -97,3 +99,18 @@ async def refresh_token(
 
     await session.commit()
     return tokens
+
+
+def _ensure_telegram_user_allowed(telegram_id: int) -> None:
+    try:
+        is_allowed = settings.is_telegram_user_allowed(telegram_id)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Telegram allowlist is misconfigured.",
+        ) from exc
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Telegram user is not allowed for this environment.",
+        )
