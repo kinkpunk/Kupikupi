@@ -27,11 +27,22 @@ def help_reply(settings: BotSettings) -> BotReply:
         "- принять описание покупки обычным текстом;\n"
         "- передать запрос в Kupikupi WebApp;\n"
         "- позже присылать уведомления о хороших предложениях.\n\n"
-        "Команды: /start, /help, /privacy, /requests, /watchlists, "
+        "Команды: /start, /help, /id, /privacy, /requests, /watchlists, "
         "/pause <id>, /resume <id>, /archive <id>."
         f"{_support_privacy_footer(settings)}"
     )
     return BotReply(text=text, webapp_url=settings.telegram_webapp_url)
+
+
+def telegram_id_reply(telegram_id: int | None) -> BotReply:
+    if telegram_id is None:
+        return BotReply(text="Не удалось определить Telegram ID для этого сообщения.")
+    return BotReply(
+        text=(
+            f"Твой Telegram ID: {telegram_id}\n\n"
+            "Отправь этот номер оператору Kupikupi, чтобы попасть в закрытый тест."
+        )
+    )
 
 
 def privacy_reply(settings: BotSettings) -> BotReply:

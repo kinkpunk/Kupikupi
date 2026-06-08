@@ -20,6 +20,7 @@ from bot.messages import (
     shopping_request_failed_reply,
     shopping_requests_reply,
     start_reply,
+    telegram_id_reply,
     watchlist_action_reply,
     watchlist_action_usage_reply,
     watchlist_ambiguous_reply,
@@ -43,6 +44,11 @@ def build_router(settings: BotSettings) -> Router:
         if await _reply_if_access_denied(settings, message):
             return
         reply = help_reply(settings)
+        await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
+
+    @router.message(Command("id"))
+    async def handle_id(message: Message) -> None:
+        reply = telegram_id_reply(message.from_user.id if message.from_user else None)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(Command("privacy"))

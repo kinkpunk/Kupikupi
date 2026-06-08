@@ -10,6 +10,7 @@ from bot.messages import (
     shopping_requests_reply,
     shopping_text_reply,
     start_reply,
+    telegram_id_reply,
     watchlist_action_reply,
     watchlist_action_usage_reply,
     watchlist_ambiguous_reply,
@@ -39,6 +40,7 @@ def test_help_reply_lists_commands() -> None:
 
     assert "/start" in reply.text
     assert "/help" in reply.text
+    assert "/id" in reply.text
     assert "/privacy" in reply.text
     assert "/requests" in reply.text
     assert "/watchlists" in reply.text
@@ -62,6 +64,21 @@ def test_privacy_reply_includes_notice_and_links() -> None:
     assert "mailto:support@example.test" in reply.text
     assert "https://kupikupi.example/privacy" in reply.text
     assert reply.webapp_url == "https://kupikupi.example/app"
+
+
+def test_telegram_id_reply_shows_numeric_id() -> None:
+    reply = telegram_id_reply(123456789)
+
+    assert "123456789" in reply.text
+    assert "закрытый тест" in reply.text
+    assert reply.webapp_url is None
+
+
+def test_telegram_id_reply_handles_missing_user() -> None:
+    reply = telegram_id_reply(None)
+
+    assert "Не удалось определить Telegram ID" in reply.text
+    assert reply.webapp_url is None
 
 
 def test_access_denied_reply_mentions_closed_test_and_support() -> None:

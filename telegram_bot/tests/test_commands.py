@@ -8,6 +8,7 @@ def test_bot_commands_include_field_test_entry_points() -> None:
     assert command_names == [
         "start",
         "help",
+        "id",
         "privacy",
         "requests",
         "watchlists",

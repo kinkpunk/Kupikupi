@@ -111,7 +111,8 @@ If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender t
 `/auth/telegram-bot-user` using `TELEGRAM_BOT_TOKEN`. This is the preferred staging mode.
 For a closed field test, set `TELEGRAM_ALLOWED_USER_IDS` in both backend and Telegram Bot
 environments. The backend enforces the allowlist for Telegram WebApp and Bot auth. Leave it empty
-only for open testing.
+only for open testing. Testers can send `/id` to the staging bot to see the numeric Telegram ID that
+must be added to the allowlist.
 
 ## Deployment Order
 
