@@ -31,6 +31,8 @@ class BotSettings(BaseSettings):
         parsed_backend_url = urlparse(self.backend_api_url)
         if parsed_backend_url.scheme not in {"http", "https"} or not parsed_backend_url.netloc:
             issues.append("BACKEND_API_URL must be an absolute http(s) URL.")
+        if self.telegram_webapp_url and not _is_allowed_http_url(self.telegram_webapp_url):
+            issues.append("TELEGRAM_WEBAPP_URL must be an absolute http(s) URL.")
         if self.support_contact_url and not _is_allowed_public_url(self.support_contact_url):
             issues.append("SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.")
         if self.privacy_policy_url and not _is_allowed_public_url(self.privacy_policy_url):
@@ -52,7 +54,12 @@ def get_settings() -> BotSettings:
 def _is_allowed_public_url(value: str) -> bool:
     parsed = urlparse(value)
     if parsed.scheme in {"http", "https"}:
-        return bool(parsed.netloc)
+        return _is_allowed_http_url(value)
     if parsed.scheme == "mailto":
         return bool(parsed.path)
     return False
+
+
+def _is_allowed_http_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)

@@ -109,6 +109,7 @@ Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 
 If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender through
 `/auth/telegram-bot-user` using `TELEGRAM_BOT_TOKEN`. This is the preferred staging mode.
+`TELEGRAM_WEBAPP_URL` must be an absolute HTTPS URL for field testing.
 For a closed field test, set `TELEGRAM_ALLOWED_USER_IDS` in both backend and Telegram Bot
 environments. The backend enforces the allowlist for Telegram WebApp and Bot auth. Leave it empty
 only for open testing. Testers can send `/id` to the staging bot to see the numeric Telegram ID that

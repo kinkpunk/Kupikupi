@@ -16,6 +16,7 @@ Implemented and covered:
 - Watchlist creation only after explicit user confirmation.
 - Telegram Bot command flow and backend client.
 - Telegram Bot command menu registration on startup.
+- Telegram Bot runtime validation for WebApp URL.
 - Telegram Bot closed-test allowlist by Telegram user ID.
 - Telegram Bot `/id` helper for collecting tester Telegram IDs.
 - Backend Telegram auth allowlist for closed field testing.

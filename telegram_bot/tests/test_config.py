@@ -19,11 +19,24 @@ def test_runtime_configuration_accepts_valid_settings() -> None:
     settings = BotSettings(
         telegram_bot_token="token",
         backend_api_url="https://api.example.test/v1",
+        telegram_webapp_url="https://app.example.test",
         support_contact_url="mailto:support@example.test",
         privacy_policy_url="https://app.example.test/privacy",
     )
 
     assert settings.validate_runtime_configuration() == []
+
+
+def test_runtime_configuration_requires_absolute_webapp_url() -> None:
+    settings = BotSettings(
+        telegram_bot_token="token",
+        backend_api_url="https://api.example.test/v1",
+        telegram_webapp_url="/webapp",
+    )
+
+    assert settings.validate_runtime_configuration() == [
+        "TELEGRAM_WEBAPP_URL must be an absolute http(s) URL."
+    ]
 
 
 def test_runtime_configuration_requires_absolute_public_urls() -> None:
