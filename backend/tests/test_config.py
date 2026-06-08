@@ -68,6 +68,40 @@ def test_runtime_configuration_requires_telegram_bot_token_in_production() -> No
     ]
 
 
+def test_runtime_configuration_requires_error_reporting_endpoint_when_enabled() -> None:
+    settings = Settings(
+        environment="staging",
+        jwt_secret_key="custom-secret",
+        telegram_bot_token="bot-token",
+        database_url="postgresql+asyncpg://user:pass@db.example.test:5432/kupikupi",
+        redis_url="redis://redis.example.test:6379/0",
+        cors_allowed_origins="https://app.example.test",
+        error_reporting_enabled=True,
+        error_reporting_endpoint_url=None,
+    )
+
+    assert settings.validate_runtime_configuration() == [
+        "ERROR_REPORTING_ENDPOINT_URL must be set when error reporting is enabled."
+    ]
+
+
+def test_runtime_configuration_rejects_invalid_error_reporting_endpoint() -> None:
+    settings = Settings(
+        environment="staging",
+        jwt_secret_key="custom-secret",
+        telegram_bot_token="bot-token",
+        database_url="postgresql+asyncpg://user:pass@db.example.test:5432/kupikupi",
+        redis_url="redis://redis.example.test:6379/0",
+        cors_allowed_origins="https://app.example.test",
+        error_reporting_enabled=True,
+        error_reporting_endpoint_url="/events",
+    )
+
+    assert settings.validate_runtime_configuration() == [
+        "ERROR_REPORTING_ENDPOINT_URL must be an absolute http(s) URL."
+    ]
+
+
 def test_allowed_telegram_user_ids_parses_comma_separated_ids() -> None:
     settings = Settings(telegram_allowed_user_ids="123, 456,789")
 

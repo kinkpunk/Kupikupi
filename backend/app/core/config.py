@@ -93,6 +93,14 @@ class Settings(BaseSettings):
                 "CORS_ALLOWED_ORIGINS must not contain localhost origins "
                 "in production-like environments."
             )
+        if self.error_reporting_enabled and not self.error_reporting_endpoint_url:
+            issues.append(
+                "ERROR_REPORTING_ENDPOINT_URL must be set when error reporting is enabled."
+            )
+        if self.error_reporting_endpoint_url and not _is_http_url(
+            self.error_reporting_endpoint_url
+        ):
+            issues.append("ERROR_REPORTING_ENDPOINT_URL must be an absolute http(s) URL.")
         try:
             _ = self.allowed_telegram_user_ids
         except ValueError:
@@ -105,6 +113,11 @@ class Settings(BaseSettings):
 def _has_local_hostname(value: str) -> bool:
     hostname = urlparse(value).hostname
     return hostname in LOCAL_HOSTNAMES
+
+
+def _is_http_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
 @lru_cache

@@ -68,7 +68,7 @@ Set these values for the backend API, worker, and scheduler unless noted otherwi
 | `FX_RATE_SOURCE_URL` | no | yes | yes | HTTPS JSON rates URL with EUR base |
 | `FX_RATE_CURRENCIES` | no | yes | yes | `CZK` |
 | `ERROR_REPORTING_ENABLED` | yes | no | no | `1` when endpoint is configured |
-| `ERROR_REPORTING_ENDPOINT_URL` | yes | no | no | HTTPS error event collector URL |
+| `ERROR_REPORTING_ENDPOINT_URL` | yes | no | no | absolute HTTPS error event collector URL |
 
 Readiness must return `200` before dependent services are considered healthy:
 
@@ -78,6 +78,7 @@ curl https://api.staging.kupikupi.example/v1/ready
 
 For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `TELEGRAM_BOT_TOKEN`,
 `DATABASE_URL`, `REDIS_URL`, or `CORS_ALLOWED_ORIGINS` use local/default values.
+If `ERROR_REPORTING_ENABLED=1`, readiness also requires an absolute `ERROR_REPORTING_ENDPOINT_URL`.
 
 ## WebApp Build And Runtime Environment
 

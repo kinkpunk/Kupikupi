@@ -101,6 +101,7 @@ replace the default `JWT_SECRET_KEY`, configure `TELEGRAM_BOT_TOKEN`, and use no
 `DATABASE_URL`, `REDIS_URL`, and `CORS_ALLOWED_ORIGINS`; otherwise readiness fails with `503`.
 Set `TELEGRAM_ALLOWED_USER_IDS` to a comma-separated list of numeric Telegram IDs when backend
 Telegram auth should be limited to closed-test participants.
+If `ERROR_REPORTING_ENABLED=1`, set an absolute `ERROR_REPORTING_ENDPOINT_URL`.
 
 Migrations and seed data:
 
