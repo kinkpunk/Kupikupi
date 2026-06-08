@@ -740,6 +740,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/SourceConfig"
 
+  /admin/product-duplicate-candidates:
+    get:
+      tags: [Admin]
+      summary: List potential duplicate products for operator review
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 50
+      responses:
+        "200":
+          description: Potential duplicate product groups
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductDuplicateCandidateList"
+
   /admin/fx-rates:
     get:
       tags: [Admin]
@@ -1778,6 +1797,49 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SourceConfig"
+
+    ProductDuplicateCandidate:
+      type: object
+      required: [product_id, name]
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        model:
+          type: string
+          nullable: true
+        sku:
+          type: string
+          nullable: true
+
+    ProductDuplicateCandidateGroup:
+      type: object
+      required: [category_id, normalized_identity, products]
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        brand_id:
+          type: string
+          format: uuid
+          nullable: true
+        normalized_identity:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductDuplicateCandidate"
+
+    ProductDuplicateCandidateList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductDuplicateCandidateGroup"
 
     SyncRun:
       type: object

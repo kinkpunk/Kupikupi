@@ -7,6 +7,7 @@ from app.domains.fx.schemas import FxRateCreate, FxRateList, FxRateRead
 from app.domains.fx.service import create_fx_rate, list_fx_rates
 from app.domains.stores.schemas import (
     ManualSyncRequest,
+    ProductDuplicateCandidateList,
     SourceConfigCreate,
     SourceConfigList,
     SourceConfigRead,
@@ -25,6 +26,7 @@ from app.domains.stores.service import (
     get_source_config,
     get_store,
     get_sync_run,
+    list_product_duplicate_candidates,
     list_source_configs,
     list_stores,
     list_sync_run_items,
@@ -68,6 +70,17 @@ async def admin_list_stores(
     _admin: CurrentAdminUserDep,
 ) -> StoreList:
     return StoreList(items=await list_stores(session))
+
+
+@router.get("/product-duplicate-candidates", response_model=ProductDuplicateCandidateList)
+async def admin_list_product_duplicate_candidates(
+    session: DbSessionDep,
+    _admin: CurrentAdminUserDep,
+    limit: int = 50,
+) -> ProductDuplicateCandidateList:
+    return ProductDuplicateCandidateList(
+        items=await list_product_duplicate_candidates(session, limit=limit)
+    )
 
 
 @router.post("/stores", response_model=StoreRead, status_code=status.HTTP_201_CREATED)

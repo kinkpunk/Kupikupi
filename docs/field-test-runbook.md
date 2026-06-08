@@ -101,6 +101,13 @@ cd backend
 celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
 ```
 
+Review potential duplicate products after the sync:
+
+```bash
+curl -H "Authorization: Bearer $ADMIN_TOKEN" \
+  https://api.staging.kupikupi.example/v1/admin/product-duplicate-candidates
+```
+
 For the first field test, it is acceptable to use demo data only if testers know the test is focused
 on Telegram/WebApp flow rather than real prices.
 

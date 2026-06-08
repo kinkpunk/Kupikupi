@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.security import create_access_token
-from app.domains.catalog.models import Category
+from app.domains.catalog.models import Brand, Category, Product
 from app.domains.users.models import User
 
 
@@ -108,6 +108,77 @@ async def test_admin_can_create_catalog_and_public_search(
     body = search_response.json()
     assert body["total"] == 1
     assert body["items"][0]["name"] == "New Balance Fresh Foam 1080"
+
+
+async def test_admin_can_list_product_duplicate_candidates(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin = await create_test_user(db_session_factory, is_admin=True)
+    token = create_access_token(str(admin.id))
+
+    async with db_session_factory() as session:
+        brand = Brand(name="ASICS", normalized_name="asics")
+        category = Category(slug="running-shoes", name="Running Shoes")
+        session.add_all([brand, category])
+        await session.flush()
+        session.add_all(
+            [
+                Product(
+                    brand_id=brand.id,
+                    category_id=category.id,
+                    name="ASICS GT-2000 13",
+                    model="GT-2000 13",
+                    sku="ASICS-GT-2000-A",
+                ),
+                Product(
+                    brand_id=brand.id,
+                    category_id=category.id,
+                    name="Asics GT 2000 13",
+                    model="GT-2000 13",
+                    sku="ASICS-GT-2000-B",
+                ),
+                Product(
+                    brand_id=brand.id,
+                    category_id=category.id,
+                    name="ASICS Gel Nimbus",
+                    model="Gel Nimbus",
+                    sku="ASICS-NIMBUS",
+                ),
+            ]
+        )
+        await session.commit()
+
+    response = client.get(
+        "/v1/admin/product-duplicate-candidates",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["items"]) == 1
+    group = body["items"][0]
+    assert group["normalized_identity"] == "gt-2000 13"
+    assert len(group["products"]) == 2
+    assert {product["sku"] for product in group["products"]} == {
+        "ASICS-GT-2000-A",
+        "ASICS-GT-2000-B",
+    }
+
+
+async def test_non_admin_cannot_list_product_duplicate_candidates(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    user = await create_test_user(db_session_factory, is_admin=False)
+    token = create_access_token(str(user.id))
+
+    response = client.get(
+        "/v1/admin/product-duplicate-candidates",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 403
 
 
 async def test_product_detail_returns_404_for_missing_product(client: TestClient) -> None:

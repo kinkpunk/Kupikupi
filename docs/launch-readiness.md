@@ -38,6 +38,7 @@ Implemented and covered:
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Operator command for creating or updating `http_csv`/`http_json` store feed configs.
 - Store feed dry-run validation before database writes.
+- Operator endpoint for reviewing potential product duplicate candidates.
 - Request ID propagation and JSON access logs for backend API requests.
 - W3C `traceparent` propagation for API responses, logs, and error reports.
 - In-process backend request metrics endpoint.
@@ -78,8 +79,8 @@ Blocking gaps:
 - No HTTPS public domain for WebApp/API.
 - No real Telegram Bot token and webhook/polling deployment configuration for a public bot.
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
-- Product matching has deterministic cross-store reuse, but still needs robust normalization,
-  manual review tooling, and duplicate merge workflows.
+- Product matching has deterministic cross-store reuse and duplicate candidate review, but still
+  needs robust normalization and duplicate merge workflows.
 - No full observability stack yet: tracing provider and real alerting/dashboard infrastructure still
   need setup.
 - Privacy and terms still require legal review and final hosted URLs before public beta.

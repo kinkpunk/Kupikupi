@@ -264,6 +264,15 @@ Example `http_csv` source config settings:
 
 Required logical fields are `external_id`, `product_url`, `source_price`, and `product_name`.
 `source_currency` may come from a column or `defaults.source_currency`.
+After the first sync, review potential product duplicates:
+
+```bash
+curl -H "Authorization: Bearer $ADMIN_TOKEN" \
+  https://api.staging.kupikupi.example/v1/admin/product-duplicate-candidates
+```
+
+This endpoint groups products by category, brand, and normalized model/name so the operator can
+spot duplicates before a future merge workflow is available.
 
 ## Secrets Checklist
 
@@ -280,4 +289,5 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 
 - Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
+- Product duplicate candidates can be reviewed, but merge workflow is not implemented yet.
 - Full distributed tracing is not yet complete.

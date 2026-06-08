@@ -112,3 +112,25 @@ class SyncRunItemRead(BaseModel):
 
 class SyncRunItemList(BaseModel):
     items: list[SyncRunItemRead]
+
+
+class ProductDuplicateCandidateRead(BaseModel):
+    product_id: uuid.UUID
+    name: str
+    model: str | None
+    sku: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProductDuplicateCandidateGroupRead(BaseModel):
+    category_id: uuid.UUID
+    brand_id: uuid.UUID | None
+    normalized_identity: str
+    products: list[ProductDuplicateCandidateRead]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProductDuplicateCandidateList(BaseModel):
+    items: list[ProductDuplicateCandidateGroupRead]

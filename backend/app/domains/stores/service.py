@@ -1,9 +1,13 @@
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from app.domains.catalog.models import Product
+from app.domains.catalog.service import normalize_name
 from app.domains.stores.models import SourceConfig, SourceSyncRun, SourceSyncRunItem, Store
 from app.domains.stores.schemas import (
     SourceConfigCreate,
@@ -11,6 +15,22 @@ from app.domains.stores.schemas import (
     StoreCreate,
     StoreUpdate,
 )
+
+
+@dataclass(frozen=True)
+class ProductDuplicateCandidate:
+    product_id: uuid.UUID
+    name: str
+    model: str | None
+    sku: str | None
+
+
+@dataclass(frozen=True)
+class ProductDuplicateCandidateGroup:
+    category_id: uuid.UUID
+    brand_id: uuid.UUID | None
+    normalized_identity: str
+    products: list[ProductDuplicateCandidate]
 
 
 async def create_store(session: AsyncSession, payload: StoreCreate) -> Store:
@@ -142,3 +162,52 @@ async def list_sync_run_items(
         .order_by(SourceSyncRunItem.created_at.asc(), SourceSyncRunItem.id.asc())
     )
     return list(result.scalars().all())
+
+
+async def list_product_duplicate_candidates(
+    session: AsyncSession,
+    *,
+    limit: int = 50,
+) -> list[ProductDuplicateCandidateGroup]:
+    result = await session.execute(
+        select(Product)
+        .options(selectinload(Product.category), selectinload(Product.brand))
+        .order_by(Product.category_id, Product.brand_id, Product.name)
+    )
+    groups: dict[
+        tuple[uuid.UUID, uuid.UUID | None, str],
+        list[ProductDuplicateCandidate],
+    ] = {}
+    for product in result.scalars().all():
+        identity = _product_duplicate_identity(product)
+        if identity is None:
+            continue
+        key = (product.category_id, product.brand_id, identity)
+        groups.setdefault(key, []).append(
+            ProductDuplicateCandidate(
+                product_id=product.id,
+                name=product.name,
+                model=product.model,
+                sku=product.sku,
+            )
+        )
+
+    candidates = [
+        ProductDuplicateCandidateGroup(
+            category_id=category_id,
+            brand_id=brand_id,
+            normalized_identity=identity,
+            products=products,
+        )
+        for (category_id, brand_id, identity), products in groups.items()
+        if len(products) > 1
+    ]
+    candidates.sort(key=lambda item: (-len(item.products), item.normalized_identity))
+    return candidates[:limit]
+
+
+def _product_duplicate_identity(product: Product) -> str | None:
+    value = normalize_name(product.model or product.name)
+    if len(value) < 4:
+        return None
+    return value
