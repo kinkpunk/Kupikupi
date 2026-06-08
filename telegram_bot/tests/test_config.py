@@ -38,3 +38,24 @@ def test_runtime_configuration_requires_absolute_public_urls() -> None:
         "SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.",
         "PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.",
     ]
+
+
+def test_allowed_user_ids_parses_comma_separated_ids() -> None:
+    settings = BotSettings(
+        telegram_bot_token="token",
+        telegram_allowed_user_ids="123, 456,789",
+    )
+
+    assert settings.allowed_user_ids == {123, 456, 789}
+    assert settings.validate_runtime_configuration() == []
+
+
+def test_runtime_configuration_rejects_invalid_allowed_user_ids() -> None:
+    settings = BotSettings(
+        telegram_bot_token="token",
+        telegram_allowed_user_ids="123,not-a-number",
+    )
+
+    assert settings.validate_runtime_configuration() == [
+        "TELEGRAM_ALLOWED_USER_IDS must be a comma-separated list of integers."
+    ]

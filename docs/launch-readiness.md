@@ -16,6 +16,7 @@ Implemented and covered:
 - Watchlist creation only after explicit user confirmation.
 - Telegram Bot command flow and backend client.
 - Telegram Bot command menu registration on startup.
+- Telegram Bot closed-test allowlist by Telegram user ID.
 - Telegram Bot per-user backend authentication via bot-token protected exchange.
 - Telegram notification delivery integration.
 - Next.js Telegram WebApp MVP flow.

@@ -1,6 +1,7 @@
 from bot.backend_client import ShoppingRequestResult, ShoppingRequestSummary, WatchlistSummary
 from bot.config import BotSettings
 from bot.messages import (
+    access_denied_reply,
     backend_unavailable_reply,
     help_reply,
     privacy_reply,
@@ -61,6 +62,19 @@ def test_privacy_reply_includes_notice_and_links() -> None:
     assert "mailto:support@example.test" in reply.text
     assert "https://kupikupi.example/privacy" in reply.text
     assert reply.webapp_url == "https://kupikupi.example/app"
+
+
+def test_access_denied_reply_mentions_closed_test_and_support() -> None:
+    reply = access_denied_reply(
+        BotSettings(
+            telegram_bot_token="token",
+            support_contact_url="mailto:support@example.test",
+        )
+    )
+
+    assert "закрытого теста" in reply.text
+    assert "mailto:support@example.test" in reply.text
+    assert reply.webapp_url is None
 
 
 def test_shopping_text_reply_trims_and_previews_request() -> None:

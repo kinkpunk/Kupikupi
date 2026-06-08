@@ -207,6 +207,8 @@ python -m bot.main
 The bot requires `TELEGRAM_BOT_TOKEN` and an absolute `BACKEND_API_URL`.
 If `BACKEND_ACCESS_TOKEN` is omitted, the bot authenticates each Telegram sender through
 `/auth/telegram-bot-user` and receives a user-scoped backend token.
+Set `TELEGRAM_ALLOWED_USER_IDS` to a comma-separated list of numeric Telegram IDs for a closed
+field test.
 
 WebApp development:
 

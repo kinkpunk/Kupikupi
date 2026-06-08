@@ -101,12 +101,15 @@ Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 | `BACKEND_API_URL` | yes | `https://api.staging.kupikupi.example/v1` |
 | `BACKEND_ACCESS_TOKEN` | no | empty for per-user auth |
 | `TELEGRAM_WEBAPP_URL` | yes | `https://app.staging.kupikupi.example` |
+| `TELEGRAM_ALLOWED_USER_IDS` | no | comma-separated Telegram tester IDs |
 | `SUPPORT_CONTACT_URL` | yes | support contact URL |
 | `PRIVACY_POLICY_URL` | yes | privacy policy URL |
 | `BOT_POLLING_TIMEOUT_SECONDS` | yes | `30` |
 
 If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender through
 `/auth/telegram-bot-user` using `TELEGRAM_BOT_TOKEN`. This is the preferred staging mode.
+For a closed field test, set `TELEGRAM_ALLOWED_USER_IDS` to the Telegram numeric IDs allowed to use
+the bot. Leave it empty only for open testing.
 
 ## Deployment Order
 
@@ -233,6 +236,7 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 - PostgreSQL and Redis credentials stored as secrets.
 - No demo access token in WebApp build args.
 - Support contact and privacy policy URLs configured for WebApp and Telegram Bot.
+- `TELEGRAM_ALLOWED_USER_IDS` configured for closed field testing.
 - No localhost URLs in staging runtime config.
 
 ## Known Staging Limitations

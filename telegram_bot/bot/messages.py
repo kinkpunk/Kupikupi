@@ -179,6 +179,21 @@ def backend_unavailable_reply(settings: BotSettings) -> BotReply:
     )
 
 
+def access_denied_reply(settings: BotSettings) -> BotReply:
+    support_hint = (
+        f"\n\nЕсли ты должен участвовать в тесте, напиши: {settings.support_contact_url}"
+        if settings.support_contact_url
+        else ""
+    )
+    return BotReply(
+        text=(
+            "Kupikupi сейчас доступен только участникам закрытого теста."
+            f"{support_hint}"
+        ),
+        webapp_url=None,
+    )
+
+
 def _shopping_request_details(request: ShoppingRequestSummary) -> str:
     details = []
     if request.category:

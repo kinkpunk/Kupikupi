@@ -12,6 +12,7 @@ from bot.config import BotSettings
 from bot.keyboards import webapp_keyboard
 from bot.messages import (
     BotReply,
+    access_denied_reply,
     backend_unavailable_reply,
     help_reply,
     privacy_reply,
@@ -32,21 +33,29 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(Command("start"))
     async def handle_start(message: Message) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         reply = start_reply(settings)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(Command("help"))
     async def handle_help(message: Message) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         reply = help_reply(settings)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(Command("privacy"))
     async def handle_privacy(message: Message) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         reply = privacy_reply(settings)
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     @router.message(Command("requests"))
     async def handle_requests(message: Message) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         try:
             backend_client = await _backend_client_for_message(settings, message)
             requests = await backend_client.list_shopping_requests()
@@ -57,6 +66,8 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(Command("watchlists"))
     async def handle_watchlists(message: Message) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         try:
             backend_client = await _backend_client_for_message(settings, message)
             watchlists = await backend_client.list_watchlists()
@@ -67,6 +78,8 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(Command("pause"))
     async def handle_pause(message: Message, command: CommandObject) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         try:
             backend_client = await _backend_client_for_message(settings, message)
             reply = await _handle_watchlist_action(
@@ -81,6 +94,8 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(Command("resume"))
     async def handle_resume(message: Message, command: CommandObject) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         try:
             backend_client = await _backend_client_for_message(settings, message)
             reply = await _handle_watchlist_action(
@@ -95,6 +110,8 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(Command("archive"))
     async def handle_archive(message: Message, command: CommandObject) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         try:
             backend_client = await _backend_client_for_message(settings, message)
             reply = await _handle_watchlist_action(
@@ -109,6 +126,8 @@ def build_router(settings: BotSettings) -> Router:
 
     @router.message(F.text)
     async def handle_text(message: Message) -> None:
+        if await _reply_if_access_denied(settings, message):
+            return
         text = message.text or ""
         try:
             backend_client = await _backend_client_for_message(settings, message)
@@ -119,6 +138,18 @@ def build_router(settings: BotSettings) -> Router:
         await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
 
     return router
+
+
+async def _reply_if_access_denied(settings: BotSettings, message: Message) -> bool:
+    allowed_user_ids = settings.allowed_user_ids
+    if not allowed_user_ids:
+        return False
+    if message.from_user is not None and message.from_user.id in allowed_user_ids:
+        return False
+
+    reply = access_denied_reply(settings)
+    await message.answer(reply.text, reply_markup=webapp_keyboard(reply.webapp_url))
+    return True
 
 
 async def _backend_client_for_message(settings: BotSettings, message: Message) -> BackendClient:
