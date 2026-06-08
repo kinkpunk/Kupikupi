@@ -6,6 +6,8 @@ This guide defines the minimum staging environment needed before a closed user t
 Telegram users. It is deployment-provider neutral: the same values can be mapped to Docker Compose,
 PaaS services, or container orchestration.
 
+For the final go/no-go checklist, use `docs/field-test-runbook.md`.
+
 ## Domain Assumptions
 
 Use HTTPS for all public endpoints:
