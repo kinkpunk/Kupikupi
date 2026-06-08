@@ -118,7 +118,8 @@ If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender t
 6. Verify `/v1/health` and `/v1/ready`.
 7. Deploy Telegram Bot with real staging bot token and WebApp URL.
 8. Register the staging WebApp URL in Telegram Bot settings.
-9. Run staging smoke checks.
+9. Run remote staging smoke checks.
+10. Run manual Telegram field-test checks.
 
 Backend responses include `X-Request-ID`. Send this header from clients when available, and use the
 same value to correlate JSON access logs with user reports.
@@ -140,6 +141,29 @@ Before a remote staging smoke, run the local Docker smoke runner on a machine wi
 ```bash
 scripts/docker-smoke.sh --down
 ```
+
+Then run the remote staging smoke against HTTPS endpoints:
+
+```bash
+cd backend
+python scripts/staging_smoke.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --webapp-url https://app.staging.kupikupi.example
+```
+
+With a staging user access token, also run the authenticated flow:
+
+```bash
+cd backend
+python scripts/staging_smoke.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --webapp-url https://app.staging.kupikupi.example \
+  --access-token "$KUPIKUPI_ACCESS_TOKEN" \
+  --confirm-watchlist
+```
+
+The authenticated smoke creates a shopping request and, with `--confirm-watchlist`, confirms a
+watchlist. Use a staging-only test user token.
 
 Use a real Telegram account allowed to access the staging bot:
 

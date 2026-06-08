@@ -33,6 +33,7 @@ Implemented and covered:
 - Operator commands for user data export and account deletion by Telegram ID.
 - Visible support and privacy entry points in Telegram Bot and WebApp.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
+- Remote staging smoke script for HTTPS API/WebApp and optional authenticated shopping flow.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
@@ -69,7 +70,7 @@ Blocking gaps:
 1. Configure one real Czech store feed through `scripts/store_feed.py`.
 2. Validate data export/deletion commands on staging restore data.
 3. Add tracing, alerting, and container health dashboard notes.
-4. Run the Docker Compose smoke runner on a machine with Docker available.
+4. Run the Docker Compose smoke runner and remote staging smoke on deployed staging.
 
 ## Go/No-Go Summary
 

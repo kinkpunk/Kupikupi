@@ -134,6 +134,17 @@ python scripts/smoke_mvp.py
 The smoke script seeds demo data, imports demo offers, creates a demo user shopping request,
 confirms a watchlist, finds personalized deals, and generates notification records.
 
+Remote staging smoke:
+
+```bash
+cd backend
+python scripts/staging_smoke.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --webapp-url https://app.staging.kupikupi.example
+```
+
+Add `--access-token TOKEN --confirm-watchlist` to run the authenticated shopping request flow.
+
 Local WebApp demo token:
 
 ```bash

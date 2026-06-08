@@ -1,0 +1,130 @@
+from scripts.staging_smoke import StagingSmokeConfig, run_staging_smoke, smoke_passed
+
+
+def test_staging_smoke_checks_public_staging_endpoints() -> None:
+    client = FakeSmokeClient(
+        {
+            ("GET", "https://api.example.test/v1/health"): (
+                200,
+                {"status": "ok", "service": "api"},
+            ),
+            ("GET", "https://api.example.test/v1/ready"): (200, {"status": "ok"}),
+            ("GET", "https://api.example.test/v1/metrics"): (200, {"requests": 3, "routes": {}}),
+            ("GET", "https://app.example.test"): (200, {"text": "<html></html>"}),
+        }
+    )
+
+    steps = run_staging_smoke(
+        StagingSmokeConfig(
+            api_base_url="https://api.example.test/v1",
+            webapp_url="https://app.example.test",
+        ),
+        client,
+    )
+
+    assert smoke_passed(steps) is True
+    assert [step.name for step in steps] == [
+        "api-health",
+        "api-ready",
+        "api-metrics",
+        "webapp",
+        "authenticated-flow",
+    ]
+    assert steps[-1].status == "skipped"
+
+
+def test_staging_smoke_runs_authenticated_flow_with_watchlist_confirmation() -> None:
+    client = FakeSmokeClient(
+        {
+            ("GET", "https://api.example.test/v1/health"): (
+                200,
+                {"status": "ok", "service": "api"},
+            ),
+            ("GET", "https://api.example.test/v1/ready"): (200, {"status": "ok"}),
+            ("GET", "https://api.example.test/v1/metrics"): (200, {"requests": 3, "routes": {}}),
+            ("GET", "https://app.example.test"): (200, {"text": "<html></html>"}),
+            ("GET", "https://api.example.test/v1/me"): (200, {"id": "user-1"}),
+            ("POST", "https://api.example.test/v1/shopping-requests"): (
+                201,
+                {"id": "request-1"},
+            ),
+            (
+                "GET",
+                "https://api.example.test/v1/shopping-requests/request-1/recommendations",
+            ): (200, {"items": [{"id": "recommendation-1"}]}),
+            (
+                "POST",
+                "https://api.example.test/v1/shopping-requests/request-1/watchlist",
+            ): (201, {"id": "watchlist-1"}),
+        }
+    )
+
+    steps = run_staging_smoke(
+        StagingSmokeConfig(
+            api_base_url="https://api.example.test/v1",
+            webapp_url="https://app.example.test",
+            access_token="token",
+            confirm_watchlist=True,
+        ),
+        client,
+    )
+
+    assert smoke_passed(steps) is True
+    assert [step.name for step in steps] == [
+        "api-health",
+        "api-ready",
+        "api-metrics",
+        "webapp",
+        "auth-me",
+        "shopping-request",
+        "recommendations",
+        "watchlist-confirmation",
+    ]
+    assert client.requests[-1]["access_token"] == "token"
+    assert client.requests[5]["payload"]["text"].startswith("Хочу беговые кроссовки")
+
+
+def test_staging_smoke_fails_when_readiness_is_degraded() -> None:
+    client = FakeSmokeClient(
+        {
+            ("GET", "https://api.example.test/v1/health"): (
+                200,
+                {"status": "ok", "service": "api"},
+            ),
+            ("GET", "https://api.example.test/v1/ready"): (503, {"status": "degraded"}),
+            ("GET", "https://api.example.test/v1/metrics"): (200, {"requests": 3, "routes": {}}),
+            ("GET", "https://app.example.test"): (200, {"text": "<html></html>"}),
+        }
+    )
+
+    steps = run_staging_smoke(
+        StagingSmokeConfig(
+            api_base_url="https://api.example.test/v1",
+            webapp_url="https://app.example.test",
+        ),
+        client,
+    )
+
+    assert smoke_passed(steps) is False
+    assert steps[1].name == "api-ready"
+    assert steps[1].status == "failed"
+
+
+class FakeSmokeClient:
+    def __init__(self, responses):
+        self._responses = responses
+        self.requests = []
+
+    def request(self, method, url, *, access_token=None, payload=None):
+        self.requests.append(
+            {
+                "method": method,
+                "url": url,
+                "access_token": access_token,
+                "payload": payload,
+            }
+        )
+        key = (method, url)
+        if key not in self._responses:
+            raise AssertionError(f"Unexpected request: {method} {url}")
+        return self._responses[key]
