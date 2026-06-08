@@ -147,7 +147,8 @@ python scripts/staging_smoke.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
   --webapp-url https://app.staging.kupikupi.example \
   --support-url mailto:support@example.test \
-  --privacy-url https://app.staging.kupikupi.example/privacy
+  --privacy-url https://app.staging.kupikupi.example/privacy \
+  --terms-url https://app.staging.kupikupi.example/terms
 ```
 
 Add `--access-token TOKEN --confirm-watchlist` to run the authenticated shopping request flow.
@@ -268,8 +269,8 @@ npm run build
 
 For production-like WebApp builds, set `NEXT_PUBLIC_APP_ENV=production` or `staging` and use a
 non-localhost `NEXT_PUBLIC_API_BASE_URL`. Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` outside local
-testing. Set `NEXT_PUBLIC_SUPPORT_CONTACT_URL` and `NEXT_PUBLIC_PRIVACY_POLICY_URL` to show support
-and privacy links in the WebApp.
+testing. Set `NEXT_PUBLIC_SUPPORT_CONTACT_URL`, `NEXT_PUBLIC_PRIVACY_POLICY_URL`, and
+`NEXT_PUBLIC_TERMS_URL` to show support, privacy, and terms links in the WebApp.
 
 ## Planned Stack
 

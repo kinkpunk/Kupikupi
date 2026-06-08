@@ -12,6 +12,7 @@ def test_staging_smoke_checks_public_staging_endpoints() -> None:
             ("GET", "https://api.example.test/v1/metrics"): (200, {"requests": 3, "routes": {}}),
             ("GET", "https://app.example.test"): (200, {"text": "<html></html>"}),
             ("GET", "https://app.example.test/privacy"): (200, {"text": "<html></html>"}),
+            ("GET", "https://app.example.test/terms"): (200, {"text": "<html></html>"}),
         }
     )
 
@@ -21,6 +22,7 @@ def test_staging_smoke_checks_public_staging_endpoints() -> None:
             webapp_url="https://app.example.test",
             support_url="mailto:support@example.test",
             privacy_url="https://app.example.test/privacy",
+            terms_url="https://app.example.test/terms",
         ),
         client,
     )
@@ -33,6 +35,7 @@ def test_staging_smoke_checks_public_staging_endpoints() -> None:
         "webapp",
         "support-url",
         "privacy-url",
+        "terms-url",
         "authenticated-flow",
     ]
     assert steps[-1].status == "skipped"
@@ -82,6 +85,7 @@ def test_staging_smoke_runs_authenticated_flow_with_watchlist_confirmation() -> 
         "webapp",
         "support-url",
         "privacy-url",
+        "terms-url",
         "auth-me",
         "shopping-request",
         "recommendations",

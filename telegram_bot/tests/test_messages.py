@@ -25,6 +25,7 @@ def test_start_reply_includes_webapp_url() -> None:
         telegram_webapp_url="https://kupikupi.example/app",
         support_contact_url="mailto:support@example.test",
         privacy_policy_url="https://kupikupi.example/privacy",
+        terms_url="https://kupikupi.example/terms",
     )
 
     reply = start_reply(settings)
@@ -32,6 +33,7 @@ def test_start_reply_includes_webapp_url() -> None:
     assert "Kupikupi" in reply.text
     assert "support@example.test" in reply.text
     assert "https://kupikupi.example/privacy" in reply.text
+    assert "https://kupikupi.example/terms" in reply.text
     assert reply.webapp_url == "https://kupikupi.example/app"
 
 
@@ -56,6 +58,7 @@ def test_privacy_reply_includes_notice_and_links() -> None:
             telegram_webapp_url="https://kupikupi.example/app",
             support_contact_url="mailto:support@example.test",
             privacy_policy_url="https://kupikupi.example/privacy",
+            terms_url="https://kupikupi.example/terms",
         )
     )
 
@@ -63,6 +66,7 @@ def test_privacy_reply_includes_notice_and_links() -> None:
     assert "Покупки и платежи" in reply.text
     assert "mailto:support@example.test" in reply.text
     assert "https://kupikupi.example/privacy" in reply.text
+    assert "https://kupikupi.example/terms" in reply.text
     assert reply.webapp_url == "https://kupikupi.example/app"
 
 

@@ -119,6 +119,8 @@ def _validate_bot_env(env: dict[str, str]) -> list[str]:
         issues.append("bot SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.")
     if not _is_public_url(env.get("PRIVACY_POLICY_URL", "")):
         issues.append("bot PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.")
+    if not _is_public_url(env.get("TERMS_URL", "")):
+        issues.append("bot TERMS_URL must be an absolute http(s) or mailto URL.")
     if run_mode == "webhook":
         if not _is_https_url(env.get("TELEGRAM_WEBHOOK_URL", "")):
             issues.append("bot TELEGRAM_WEBHOOK_URL must be an absolute HTTPS URL in webhook mode.")
@@ -141,6 +143,8 @@ def _validate_webapp_env(env: dict[str, str]) -> list[str]:
         issues.append("webapp NEXT_PUBLIC_SUPPORT_CONTACT_URL must be absolute http(s) or mailto.")
     if not _is_public_url(env.get("NEXT_PUBLIC_PRIVACY_POLICY_URL", "")):
         issues.append("webapp NEXT_PUBLIC_PRIVACY_POLICY_URL must be absolute http(s) or mailto.")
+    if not _is_public_url(env.get("NEXT_PUBLIC_TERMS_URL", "")):
+        issues.append("webapp NEXT_PUBLIC_TERMS_URL must be absolute http(s) or mailto.")
     return issues
 
 

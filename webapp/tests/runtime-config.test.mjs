@@ -16,6 +16,7 @@ test("getWebAppConfig returns local defaults", () => {
     demoAccessToken: "",
     supportContactUrl: "",
     privacyPolicyUrl: "",
+    termsUrl: "",
   });
 });
 
@@ -26,6 +27,7 @@ test("validateWebAppConfig accepts local localhost API", () => {
     demoAccessToken: "demo-token",
     supportContactUrl: "mailto:support@example.test",
     privacyPolicyUrl: "https://app.example.test/privacy",
+    termsUrl: "https://app.example.test/terms",
   });
 
   assert.deepEqual(issues, []);
@@ -38,6 +40,7 @@ test("validateWebAppConfig rejects invalid API URL", () => {
     demoAccessToken: "",
     supportContactUrl: "",
     privacyPolicyUrl: "",
+    termsUrl: "",
   });
 
   assert.deepEqual(issues, ["NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL."]);
@@ -50,6 +53,7 @@ test("validateWebAppConfig rejects localhost API in production-like env", () => 
     demoAccessToken: "",
     supportContactUrl: "",
     privacyPolicyUrl: "",
+    termsUrl: "",
   });
 
   assert.deepEqual(issues, [
@@ -64,6 +68,7 @@ test("validateWebAppConfig rejects demo token in production-like env", () => {
     demoAccessToken: "demo-token",
     supportContactUrl: "",
     privacyPolicyUrl: "",
+    termsUrl: "",
   });
 
   assert.deepEqual(issues, [
@@ -78,11 +83,13 @@ test("validateWebAppConfig rejects invalid public contact URLs", () => {
     demoAccessToken: "",
     supportContactUrl: "telegram-user",
     privacyPolicyUrl: "/privacy",
+    termsUrl: "/terms",
   });
 
   assert.deepEqual(issues, [
     "NEXT_PUBLIC_SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.",
     "NEXT_PUBLIC_PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.",
+    "NEXT_PUBLIC_TERMS_URL must be an absolute http(s) or mailto URL.",
   ]);
 });
 

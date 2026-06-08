@@ -100,6 +100,7 @@ Docker build args or build-time environment variables:
 | `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` | yes | optional | empty |
 | `NEXT_PUBLIC_SUPPORT_CONTACT_URL` | yes | optional | support contact URL |
 | `NEXT_PUBLIC_PRIVACY_POLICY_URL` | yes | optional | privacy policy URL |
+| `NEXT_PUBLIC_TERMS_URL` | yes | optional | terms URL |
 
 Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 
@@ -114,6 +115,7 @@ Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 | `TELEGRAM_ALLOWED_USER_IDS` | no | same comma-separated Telegram tester IDs as backend |
 | `SUPPORT_CONTACT_URL` | yes | support contact URL |
 | `PRIVACY_POLICY_URL` | yes | privacy policy URL |
+| `TERMS_URL` | yes | terms URL |
 | `BOT_RUN_MODE` | yes | `polling` for simple staging, `webhook` behind HTTPS ingress |
 | `BOT_POLLING_TIMEOUT_SECONDS` | yes | `30` |
 | `TELEGRAM_WEBHOOK_URL` | webhook only | `https://bot.staging.kupikupi.example/telegram/webhook` |
@@ -192,7 +194,8 @@ python scripts/staging_smoke.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
   --webapp-url https://app.staging.kupikupi.example \
   --support-url mailto:support@example.test \
-  --privacy-url https://app.staging.kupikupi.example/privacy
+  --privacy-url https://app.staging.kupikupi.example/privacy \
+  --terms-url https://app.staging.kupikupi.example/terms
 ```
 
 With a staging user access token, also run the authenticated flow:
@@ -297,7 +300,7 @@ curl -X POST \
 - `TELEGRAM_BOT_TOKEN` stored as a secret, not committed.
 - PostgreSQL and Redis credentials stored as secrets.
 - No demo access token in WebApp build args.
-- Support contact and privacy policy URLs configured for WebApp and Telegram Bot.
+- Support contact, privacy policy, and terms URLs configured for WebApp and Telegram Bot.
 - Error reporting endpoint, observability dashboard, and alert contact configured.
 - `TELEGRAM_ALLOWED_USER_IDS` configured for backend and Telegram Bot closed field testing.
 - No localhost URLs in staging runtime config.

@@ -18,6 +18,7 @@ class StagingSmokeConfig:
     webapp_url: str
     support_url: str | None = None
     privacy_url: str | None = None
+    terms_url: str | None = None
     access_token: str | None = None
     request_text: str = DEFAULT_REQUEST_TEXT
     confirm_watchlist: bool = False
@@ -79,6 +80,7 @@ def run_staging_smoke(config: StagingSmokeConfig, client: HttpClient) -> list[Sm
         _check_webapp(config, client),
         _check_optional_url("support-url", config.support_url, client),
         _check_optional_url("privacy-url", config.privacy_url, client),
+        _check_optional_url("terms-url", config.terms_url, client),
     ]
 
     if config.access_token:
@@ -111,6 +113,7 @@ def config_from_env() -> StagingSmokeConfig:
         webapp_url=webapp_url,
         support_url=os.environ.get("KUPIKUPI_SUPPORT_URL") or None,
         privacy_url=os.environ.get("KUPIKUPI_PRIVACY_URL") or None,
+        terms_url=os.environ.get("KUPIKUPI_TERMS_URL") or None,
         access_token=os.environ.get("KUPIKUPI_ACCESS_TOKEN") or None,
         request_text=os.environ.get("KUPIKUPI_SMOKE_REQUEST_TEXT", DEFAULT_REQUEST_TEXT),
         confirm_watchlist=os.environ.get("KUPIKUPI_CONFIRM_WATCHLIST") == "1",
@@ -123,6 +126,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--webapp-url", default=os.environ.get("KUPIKUPI_WEBAPP_URL", ""))
     parser.add_argument("--support-url", default=os.environ.get("KUPIKUPI_SUPPORT_URL"))
     parser.add_argument("--privacy-url", default=os.environ.get("KUPIKUPI_PRIVACY_URL"))
+    parser.add_argument("--terms-url", default=os.environ.get("KUPIKUPI_TERMS_URL"))
     parser.add_argument("--access-token", default=os.environ.get("KUPIKUPI_ACCESS_TOKEN"))
     parser.add_argument(
         "--request-text",
@@ -143,6 +147,7 @@ def main() -> None:
         webapp_url=args.webapp_url.strip(),
         support_url=args.support_url or None,
         privacy_url=args.privacy_url or None,
+        terms_url=args.terms_url or None,
         access_token=args.access_token or None,
         request_text=args.request_text,
         confirm_watchlist=args.confirm_watchlist,

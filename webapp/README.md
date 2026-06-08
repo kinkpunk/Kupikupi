@@ -17,8 +17,8 @@ The app expects the backend API at `NEXT_PUBLIC_API_BASE_URL`.
 In Telegram, it authenticates with WebApp `initData` through `/auth/telegram`.
 For local MVP testing outside Telegram, set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` to a backend access token.
 
-Set `NEXT_PUBLIC_SUPPORT_CONTACT_URL` and `NEXT_PUBLIC_PRIVACY_POLICY_URL` to show support and
-privacy links in the WebApp entry point.
+Set `NEXT_PUBLIC_SUPPORT_CONTACT_URL`, `NEXT_PUBLIC_PRIVACY_POLICY_URL`, and
+`NEXT_PUBLIC_TERMS_URL` to show support, privacy, and terms links in the WebApp entry point.
 
 ## Tests
 

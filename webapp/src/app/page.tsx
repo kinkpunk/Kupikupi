@@ -38,6 +38,7 @@ const webAppConfig = getWebAppConfig();
 const apiBaseUrl = webAppConfig.apiBaseUrl;
 const supportContactUrl = webAppConfig.supportContactUrl;
 const privacyPolicyUrl = webAppConfig.privacyPolicyUrl;
+const termsUrl = webAppConfig.termsUrl;
 
 export default function Home() {
   const [text, setText] = useState(exampleText);
@@ -337,6 +338,11 @@ export default function Home() {
             {privacyPolicyUrl ? (
               <a href={privacyPolicyUrl} rel="noreferrer" target="_blank">
                 Privacy
+              </a>
+            ) : null}
+            {termsUrl ? (
+              <a href={termsUrl} rel="noreferrer" target="_blank">
+                Terms
               </a>
             ) : null}
           </div>

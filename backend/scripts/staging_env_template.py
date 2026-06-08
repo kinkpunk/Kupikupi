@@ -18,6 +18,7 @@ def build_staging_env_template(
     telegram_allowed_user_ids: str = "123456",
     support_contact_url: str = "mailto:support@example.test",
     privacy_policy_url: str = "https://app.staging.kupikupi.example/privacy",
+    terms_url: str = "https://app.staging.kupikupi.example/terms",
     jwt_secret_key: str = "replace-with-long-random-secret",
     database_url: str = "postgresql+asyncpg://user:pass@db.example.test:5432/kupikupi",
     redis_url: str = "redis://redis.example.test:6379/0",
@@ -72,6 +73,7 @@ def build_staging_env_template(
             f'TELEGRAM_ALLOWED_USER_IDS="{telegram_allowed_user_ids}"',
             f'SUPPORT_CONTACT_URL="{support_contact_url}"',
             f'PRIVACY_POLICY_URL="{privacy_policy_url}"',
+            f'TERMS_URL="{terms_url}"',
             f'BOT_RUN_MODE="{bot_run_mode}"',
             'BOT_POLLING_TIMEOUT_SECONDS="30"',
             f'TELEGRAM_WEBHOOK_URL="{telegram_webhook_url}"',
@@ -88,6 +90,7 @@ def build_staging_env_template(
             'NEXT_PUBLIC_DEMO_ACCESS_TOKEN=""',
             f'NEXT_PUBLIC_SUPPORT_CONTACT_URL="{support_contact_url}"',
             f'NEXT_PUBLIC_PRIVACY_POLICY_URL="{privacy_policy_url}"',
+            f'NEXT_PUBLIC_TERMS_URL="{terms_url}"',
         ]
     )
     return StagingEnvTemplate(
@@ -109,6 +112,7 @@ def parse_args() -> argparse.Namespace:
         "--privacy-policy-url",
         default="https://app.staging.kupikupi.example/privacy",
     )
+    parser.add_argument("--terms-url", default="https://app.staging.kupikupi.example/terms")
     parser.add_argument("--jwt-secret-key", default="replace-with-long-random-secret")
     parser.add_argument(
         "--database-url",
@@ -139,6 +143,7 @@ def main() -> None:
         telegram_allowed_user_ids=args.telegram_allowed_user_ids,
         support_contact_url=args.support_contact_url,
         privacy_policy_url=args.privacy_policy_url,
+        terms_url=args.terms_url,
         jwt_secret_key=args.jwt_secret_key,
         database_url=args.database_url,
         redis_url=args.redis_url,

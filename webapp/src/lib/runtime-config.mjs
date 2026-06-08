@@ -8,6 +8,7 @@ export function getWebAppConfig(env = process.env) {
     demoAccessToken: env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN || "",
     supportContactUrl: env.NEXT_PUBLIC_SUPPORT_CONTACT_URL || "",
     privacyPolicyUrl: env.NEXT_PUBLIC_PRIVACY_POLICY_URL || "",
+    termsUrl: env.NEXT_PUBLIC_TERMS_URL || "",
   };
 }
 
@@ -31,6 +32,9 @@ export function validateWebAppConfig(config) {
   }
   if (config.privacyPolicyUrl && !isAllowedPublicUrl(config.privacyPolicyUrl)) {
     issues.push("NEXT_PUBLIC_PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.");
+  }
+  if (config.termsUrl && !isAllowedPublicUrl(config.termsUrl)) {
+    issues.push("NEXT_PUBLIC_TERMS_URL must be an absolute http(s) or mailto URL.");
   }
 
   if (isProductionLike(config.appEnv)) {

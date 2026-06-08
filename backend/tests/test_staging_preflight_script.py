@@ -108,6 +108,7 @@ def _valid_envs() -> dict[str, dict[str, str]]:
             "TELEGRAM_ALLOWED_USER_IDS": allowlist,
             "SUPPORT_CONTACT_URL": "mailto:support@example.test",
             "PRIVACY_POLICY_URL": "https://app.staging.kupikupi.example/privacy",
+            "TERMS_URL": "https://app.staging.kupikupi.example/terms",
             "BOT_RUN_MODE": "polling",
             "BOT_POLLING_TIMEOUT_SECONDS": "30",
             "TELEGRAM_WEBHOOK_URL": "",
@@ -122,5 +123,6 @@ def _valid_envs() -> dict[str, dict[str, str]]:
             "NEXT_PUBLIC_DEMO_ACCESS_TOKEN": "",
             "NEXT_PUBLIC_SUPPORT_CONTACT_URL": "mailto:support@example.test",
             "NEXT_PUBLIC_PRIVACY_POLICY_URL": "https://app.staging.kupikupi.example/privacy",
+            "NEXT_PUBLIC_TERMS_URL": "https://app.staging.kupikupi.example/terms",
         },
     }

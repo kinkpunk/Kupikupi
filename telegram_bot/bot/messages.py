@@ -53,6 +53,8 @@ def privacy_reply(settings: BotSettings) -> BotReply:
     ]
     if settings.privacy_policy_url:
         lines.append(f"Privacy: {settings.privacy_policy_url}")
+    if settings.terms_url:
+        lines.append(f"Terms: {settings.terms_url}")
     if settings.support_contact_url:
         lines.append(f"Поддержка: {settings.support_contact_url}")
     return BotReply(text="\n\n".join(lines), webapp_url=settings.telegram_webapp_url)
@@ -236,6 +238,8 @@ def _support_privacy_footer(settings: BotSettings) -> str:
         lines.append(f"Поддержка: {settings.support_contact_url}")
     if settings.privacy_policy_url:
         lines.append(f"Privacy: {settings.privacy_policy_url}")
+    if settings.terms_url:
+        lines.append(f"Terms: {settings.terms_url}")
     if not lines:
         return ""
     return "\n\n" + "\n".join(lines)

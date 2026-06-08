@@ -13,6 +13,7 @@ class BotSettings(BaseSettings):
     telegram_allowed_user_ids: str = ""
     support_contact_url: str | None = None
     privacy_policy_url: str | None = None
+    terms_url: str | None = None
     bot_run_mode: str = "polling"
     bot_polling_timeout_seconds: int = Field(default=30, ge=1)
     telegram_webhook_url: str | None = None
@@ -46,6 +47,8 @@ class BotSettings(BaseSettings):
             issues.append("SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.")
         if self.privacy_policy_url and not _is_allowed_public_url(self.privacy_policy_url):
             issues.append("PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.")
+        if self.terms_url and not _is_allowed_public_url(self.terms_url):
+            issues.append("TERMS_URL must be an absolute http(s) or mailto URL.")
         if run_mode == "webhook":
             if not self.telegram_webhook_url or not _is_https_url(self.telegram_webhook_url):
                 issues.append("TELEGRAM_WEBHOOK_URL must be an absolute HTTPS URL in webhook mode.")

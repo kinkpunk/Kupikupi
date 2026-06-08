@@ -51,10 +51,10 @@ Implemented and covered:
 - Scheduled retention cleanup for expired sessions, notifications, and source sync logs.
 - Operator commands for user data export and account deletion by Telegram ID.
 - Operator smoke for validating user export/deletion on staging restore data.
-- Visible support and privacy entry points in Telegram Bot and WebApp.
+- Visible support, privacy, and terms entry points in Telegram Bot and WebApp.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - Remote staging smoke script for HTTPS API/WebApp and optional authenticated shopping flow.
-- Remote staging smoke checks for support and privacy URLs.
+- Remote staging smoke checks for support, privacy, and terms URLs.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.

@@ -10,6 +10,7 @@ def test_staging_env_template_contains_matching_service_values(tmp_path) -> None
         telegram_allowed_user_ids="123,456",
         support_contact_url="mailto:support@example.test",
         privacy_policy_url="https://app.staging.kupikupi.example/privacy",
+        terms_url="https://app.staging.kupikupi.example/terms",
         jwt_secret_key="secret",
     )
 
@@ -30,6 +31,11 @@ def test_staging_env_template_contains_matching_service_values(tmp_path) -> None
     assert "CORS_ALLOWED_ORIGINS=\"https://app.staging.kupikupi.example\"" in template.backend_env
     assert "TELEGRAM_ALLOWED_USER_IDS=\"123,456\"" in template.bot_env
     assert 'BOT_RUN_MODE="polling"' in template.bot_env
+    assert 'TERMS_URL="https://app.staging.kupikupi.example/terms"' in template.bot_env
+    assert (
+        'NEXT_PUBLIC_TERMS_URL="https://app.staging.kupikupi.example/terms"'
+        in template.webapp_env
+    )
     assert (
         'OBSERVABILITY_DASHBOARD_URL="https://dashboards.example.test/kupikupi-staging"'
         in template.backend_env

@@ -14,7 +14,7 @@ Use this checklist before inviting real Telegram users to a closed staging test.
 - `TELEGRAM_ALLOWED_USER_IDS` is configured in backend and Telegram Bot environments.
 - At least one real or semi-real `http_csv`/`http_json` store feed is configured, or the test is
   explicitly limited to demo data.
-- Support contact and privacy URLs are configured.
+- Support contact, privacy, and terms URLs are configured.
 - Error reporting, observability dashboard, and alert contact are configured.
 - Remote staging smoke passes.
 
@@ -53,6 +53,7 @@ WebApp build:
 - `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` is empty.
 - `NEXT_PUBLIC_SUPPORT_CONTACT_URL` is set.
 - `NEXT_PUBLIC_PRIVACY_POLICY_URL` is set.
+- `NEXT_PUBLIC_TERMS_URL` is set.
 
 Telegram Bot:
 
@@ -65,6 +66,7 @@ Telegram Bot:
   `TELEGRAM_WEBHOOK_PATH` are configured.
 - `SUPPORT_CONTACT_URL` is set.
 - `PRIVACY_POLICY_URL` is set.
+- `TERMS_URL` is set.
 
 ## Tester Allowlist
 
@@ -134,7 +136,8 @@ python scripts/staging_smoke.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
   --webapp-url https://app.staging.kupikupi.example \
   --support-url mailto:support@example.test \
-  --privacy-url https://app.staging.kupikupi.example/privacy
+  --privacy-url https://app.staging.kupikupi.example/privacy \
+  --terms-url https://app.staging.kupikupi.example/terms
 ```
 
 Run authenticated smoke with a staging-only user token:
@@ -173,6 +176,7 @@ Before inviting external testers:
 
 - Confirm support contact works.
 - Confirm privacy URL opens.
+- Confirm terms URL opens.
 - Open the observability dashboard and confirm `/v1/ready`, request volume, error rate, and
   notification dispatch panels are visible.
 - Validate user export/delete commands on staging restore data:
@@ -195,6 +199,6 @@ intentional deletion after the export and dry run.
 - Bot cannot authenticate users through backend.
 - Tester is not blocked when missing from `TELEGRAM_ALLOWED_USER_IDS`.
 - Store sync fails and the test depends on real offers.
-- Support/privacy links are missing.
+- Support/privacy/terms links are missing.
 - Observability dashboard or alert contact is missing.
 - Export/delete operator commands have not been validated on staging restore data.

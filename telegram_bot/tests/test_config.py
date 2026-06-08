@@ -22,6 +22,7 @@ def test_runtime_configuration_accepts_valid_settings() -> None:
         telegram_webapp_url="https://app.example.test",
         support_contact_url="mailto:support@example.test",
         privacy_policy_url="https://app.example.test/privacy",
+        terms_url="https://app.example.test/terms",
     )
 
     assert settings.validate_runtime_configuration() == []
@@ -84,11 +85,13 @@ def test_runtime_configuration_requires_absolute_public_urls() -> None:
         backend_api_url="https://api.example.test/v1",
         support_contact_url="support",
         privacy_policy_url="/privacy",
+        terms_url="/terms",
     )
 
     assert settings.validate_runtime_configuration() == [
         "SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.",
         "PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.",
+        "TERMS_URL must be an absolute http(s) or mailto URL.",
     ]
 
 
