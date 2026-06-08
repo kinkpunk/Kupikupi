@@ -69,8 +69,10 @@ Set these values for the backend API, worker, and scheduler unless noted otherwi
 | `SOURCE_SYNC_RETENTION_DAYS` | no | yes | yes | `90` |
 | `FX_RATE_SOURCE_URL` | no | yes | yes | HTTPS JSON rates URL with EUR base |
 | `FX_RATE_CURRENCIES` | no | yes | yes | `CZK` |
-| `ERROR_REPORTING_ENABLED` | yes | no | no | `1` when endpoint is configured |
+| `ERROR_REPORTING_ENABLED` | yes | no | no | `1` |
 | `ERROR_REPORTING_ENDPOINT_URL` | yes | no | no | absolute HTTPS error event collector URL |
+| `OBSERVABILITY_DASHBOARD_URL` | operator | operator | operator | absolute HTTPS dashboard URL |
+| `ALERT_CONTACT_URL` | operator | operator | operator | absolute HTTPS or `mailto:` incident contact |
 
 Readiness must return `200` before dependent services are considered healthy:
 
@@ -80,10 +82,11 @@ curl https://api.staging.kupikupi.example/v1/ready
 
 For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `TELEGRAM_BOT_TOKEN`,
 `DATABASE_URL`, `REDIS_URL`, or `CORS_ALLOWED_ORIGINS` use local/default values.
-If `ERROR_REPORTING_ENABLED=1`, readiness also requires an absolute `ERROR_REPORTING_ENDPOINT_URL`.
-Before deployment, use `backend/scripts/staging_preflight.py` to validate backend, bot, and WebApp
-environment files together.
+Readiness also requires an absolute `ERROR_REPORTING_ENDPOINT_URL` when error reporting is enabled.
+Before deployment, use `backend/scripts/staging_preflight.py` to validate backend, bot, WebApp,
+and operator observability values together.
 Use `backend/scripts/staging_env_template.py` to generate starter env files for that preflight.
+Use `docs/observability.md` for the minimum dashboard and alert checklist.
 
 ## WebApp Build And Runtime Environment
 
@@ -264,6 +267,7 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 - PostgreSQL and Redis credentials stored as secrets.
 - No demo access token in WebApp build args.
 - Support contact and privacy policy URLs configured for WebApp and Telegram Bot.
+- Error reporting endpoint, observability dashboard, and alert contact configured.
 - `TELEGRAM_ALLOWED_USER_IDS` configured for backend and Telegram Bot closed field testing.
 - No localhost URLs in staging runtime config.
 
@@ -271,4 +275,4 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 
 - Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
-- Error reporting dashboard setup and tracing are not yet complete.
+- Full distributed tracing is not yet complete.

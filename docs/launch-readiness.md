@@ -38,6 +38,7 @@ Implemented and covered:
 - Request ID propagation and JSON access logs for backend API requests.
 - In-process backend request metrics endpoint.
 - Sentry-compatible HTTP error reporting hook for unhandled backend exceptions.
+- Observability baseline checklist for staging dashboards and alerts.
 - PostgreSQL backup and restore procedure for staging.
 - Privacy and data retention draft for closed testing.
 - Scheduled retention cleanup for expired sessions, notifications, and source sync logs.
@@ -75,13 +76,14 @@ Blocking gaps:
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
 - Product matching is basic deterministic matching by category/product data, not robust
   cross-store normalization.
-- No full observability stack yet: tracing, alerting, or error reporting dashboards.
+- No full observability stack yet: tracing and real alerting/dashboard infrastructure still need
+  provider setup.
 - Privacy and terms still require legal review and final hosted URLs before public beta.
 
 ## Recommended Next Iterations
 
 1. Configure one real Czech store feed through `scripts/store_feed.py`.
-2. Add tracing, alerting, and container health dashboard notes.
+2. Add tracing and deploy real alerting/dashboard infrastructure.
 3. Run the closed field test runbook on deployed staging, including `scripts/user_data_smoke.py`.
 
 ## Go/No-Go Summary

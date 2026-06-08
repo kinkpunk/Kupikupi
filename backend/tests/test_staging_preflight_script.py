@@ -15,6 +15,9 @@ def test_staging_preflight_rejects_missing_and_mismatched_values() -> None:
     envs["backend_env"]["TELEGRAM_BOT_TOKEN"] = ""
     envs["backend_env"]["DATABASE_URL"] = "postgresql+asyncpg://user:pass@localhost/db"
     envs["backend_env"]["CORS_ALLOWED_ORIGINS"] = "http://localhost:3000"
+    envs["backend_env"]["ERROR_REPORTING_ENABLED"] = "0"
+    envs["backend_env"]["OBSERVABILITY_DASHBOARD_URL"] = ""
+    envs["backend_env"]["ALERT_CONTACT_URL"] = "not-a-url"
     envs["bot_env"]["BACKEND_API_URL"] = "https://other.example.test/v1"
     envs["webapp_env"]["NEXT_PUBLIC_DEMO_ACCESS_TOKEN"] = "demo-token"
 
@@ -24,6 +27,12 @@ def test_staging_preflight_rejects_missing_and_mismatched_values() -> None:
     assert "backend TELEGRAM_BOT_TOKEN must be set." in report.issues
     assert "backend DATABASE_URL must not point to localhost." in report.issues
     assert "backend CORS_ALLOWED_ORIGINS must not contain localhost or '*'." in report.issues
+    assert "backend ERROR_REPORTING_ENABLED must be enabled for staging." in report.issues
+    assert (
+        "backend OBSERVABILITY_DASHBOARD_URL must be an absolute http(s) URL."
+        in report.issues
+    )
+    assert "backend ALERT_CONTACT_URL must be an absolute http(s) or mailto URL." in report.issues
     assert "backend and bot TELEGRAM_BOT_TOKEN values must match." in report.issues
     assert "bot BACKEND_API_URL must match webapp NEXT_PUBLIC_API_BASE_URL." in report.issues
     assert "webapp NEXT_PUBLIC_DEMO_ACCESS_TOKEN must be empty in staging." in report.issues
@@ -56,6 +65,8 @@ def _valid_envs() -> dict[str, dict[str, str]]:
             "CORS_ALLOWED_ORIGINS": "https://app.staging.kupikupi.example",
             "ERROR_REPORTING_ENABLED": "1",
             "ERROR_REPORTING_ENDPOINT_URL": "https://errors.example.test/events",
+            "OBSERVABILITY_DASHBOARD_URL": "https://dashboards.example.test/kupikupi-staging",
+            "ALERT_CONTACT_URL": "mailto:oncall@example.test",
         },
         "bot_env": {
             "TELEGRAM_BOT_TOKEN": bot_token,

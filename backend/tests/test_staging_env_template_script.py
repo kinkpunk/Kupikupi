@@ -29,9 +29,14 @@ def test_staging_env_template_contains_matching_service_values(tmp_path) -> None
     assert report.passed is True
     assert "CORS_ALLOWED_ORIGINS=\"https://app.staging.kupikupi.example\"" in template.backend_env
     assert "TELEGRAM_ALLOWED_USER_IDS=\"123,456\"" in template.bot_env
+    assert (
+        'OBSERVABILITY_DASHBOARD_URL="https://dashboards.example.test/kupikupi-staging"'
+        in template.backend_env
+    )
+    assert 'ALERT_CONTACT_URL="mailto:oncall@example.test"' in template.backend_env
 
 
-def test_staging_env_template_enables_error_reporting_when_endpoint_is_set() -> None:
+def test_staging_env_template_allows_error_reporting_endpoint_override() -> None:
     template = build_staging_env_template(
         api_base_url="https://api.staging.kupikupi.example/v1",
         webapp_url="https://app.staging.kupikupi.example",

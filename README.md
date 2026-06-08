@@ -35,6 +35,7 @@ CI validates backend lint/tests/migrations, Telegram Bot lint/tests, and WebApp 
 - [Closed field test runbook](docs/field-test-runbook.md)
 - [PostgreSQL backup and restore](docs/postgres-backup-restore.md)
 - [Privacy and data retention draft](docs/privacy-data-retention.md)
+- [Observability baseline](docs/observability.md)
 - [Staging deployment](docs/staging-deployment.md)
 - [OpenAPI draft](packages/openapi/openapi.yaml)
 

@@ -91,10 +91,14 @@ def _validate_backend_env(env: dict[str, str]) -> list[str]:
         issues.append("backend CORS_ALLOWED_ORIGINS must not contain localhost or '*'.")
     if not _valid_allowlist(env.get("TELEGRAM_ALLOWED_USER_IDS", "")):
         issues.append("backend TELEGRAM_ALLOWED_USER_IDS must be comma-separated numeric IDs.")
-    if env.get("ERROR_REPORTING_ENABLED") in {"1", "true", "True"} and not _is_http_url(
-        env.get("ERROR_REPORTING_ENDPOINT_URL", "")
-    ):
-        issues.append("backend ERROR_REPORTING_ENDPOINT_URL must be absolute http(s) when enabled.")
+    if env.get("ERROR_REPORTING_ENABLED") not in {"1", "true", "True"}:
+        issues.append("backend ERROR_REPORTING_ENABLED must be enabled for staging.")
+    if not _is_http_url(env.get("ERROR_REPORTING_ENDPOINT_URL", "")):
+        issues.append("backend ERROR_REPORTING_ENDPOINT_URL must be absolute http(s).")
+    if not _is_http_url(env.get("OBSERVABILITY_DASHBOARD_URL", "")):
+        issues.append("backend OBSERVABILITY_DASHBOARD_URL must be an absolute http(s) URL.")
+    if not _is_public_url(env.get("ALERT_CONTACT_URL", "")):
+        issues.append("backend ALERT_CONTACT_URL must be an absolute http(s) or mailto URL.")
     return issues
 
 

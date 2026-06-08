@@ -21,7 +21,9 @@ def build_staging_env_template(
     jwt_secret_key: str = "replace-with-long-random-secret",
     database_url: str = "postgresql+asyncpg://user:pass@db.example.test:5432/kupikupi",
     redis_url: str = "redis://redis.example.test:6379/0",
-    error_reporting_endpoint_url: str = "",
+    error_reporting_endpoint_url: str = "https://errors.example.test/events",
+    observability_dashboard_url: str = "https://dashboards.example.test/kupikupi-staging",
+    alert_contact_url: str = "mailto:oncall@example.test",
 ) -> StagingEnvTemplate:
     webapp_origin = _origin(webapp_url)
     error_reporting_enabled = "1" if error_reporting_endpoint_url else "0"
@@ -54,6 +56,8 @@ def build_staging_env_template(
             'FX_RATE_CURRENCIES="CZK"',
             f'ERROR_REPORTING_ENABLED="{error_reporting_enabled}"',
             f'ERROR_REPORTING_ENDPOINT_URL="{error_reporting_endpoint_url}"',
+            f'OBSERVABILITY_DASHBOARD_URL="{observability_dashboard_url}"',
+            f'ALERT_CONTACT_URL="{alert_contact_url}"',
         ]
     )
     bot_env = "\n".join(
@@ -102,7 +106,15 @@ def parse_args() -> argparse.Namespace:
         default="postgresql+asyncpg://user:pass@db.example.test:5432/kupikupi",
     )
     parser.add_argument("--redis-url", default="redis://redis.example.test:6379/0")
-    parser.add_argument("--error-reporting-endpoint-url", default="")
+    parser.add_argument(
+        "--error-reporting-endpoint-url",
+        default="https://errors.example.test/events",
+    )
+    parser.add_argument(
+        "--observability-dashboard-url",
+        default="https://dashboards.example.test/kupikupi-staging",
+    )
+    parser.add_argument("--alert-contact-url", default="mailto:oncall@example.test")
     return parser.parse_args()
 
 
@@ -119,6 +131,8 @@ def main() -> None:
         database_url=args.database_url,
         redis_url=args.redis_url,
         error_reporting_endpoint_url=args.error_reporting_endpoint_url,
+        observability_dashboard_url=args.observability_dashboard_url,
+        alert_contact_url=args.alert_contact_url,
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     (args.output_dir / "kupikupi-backend.env").write_text(template.backend_env, encoding="utf-8")

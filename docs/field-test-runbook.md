@@ -15,6 +15,7 @@ Use this checklist before inviting real Telegram users to a closed staging test.
 - At least one real or semi-real `http_csv`/`http_json` store feed is configured, or the test is
   explicitly limited to demo data.
 - Support contact and privacy URLs are configured.
+- Error reporting, observability dashboard, and alert contact are configured.
 - Remote staging smoke passes.
 
 ## Environment Checklist
@@ -149,6 +150,8 @@ Before inviting external testers:
 
 - Confirm support contact works.
 - Confirm privacy URL opens.
+- Open the observability dashboard and confirm `/v1/ready`, request volume, error rate, and
+  notification dispatch panels are visible.
 - Validate user export/delete commands on staging restore data:
 
   ```bash
@@ -170,4 +173,5 @@ intentional deletion after the export and dry run.
 - Tester is not blocked when missing from `TELEGRAM_ALLOWED_USER_IDS`.
 - Store sync fails and the test depends on real offers.
 - Support/privacy links are missing.
+- Observability dashboard or alert contact is missing.
 - Export/delete operator commands have not been validated on staging restore data.
