@@ -19,6 +19,16 @@ Use this checklist before inviting real Telegram users to a closed staging test.
 
 ## Environment Checklist
 
+Before deploying, run the staging env preflight:
+
+```bash
+cd backend
+python scripts/staging_preflight.py \
+  --backend-env /tmp/kupikupi-backend.env \
+  --bot-env /tmp/kupikupi-bot.env \
+  --webapp-env /tmp/kupikupi-webapp.env
+```
+
 Backend API, worker, and scheduler:
 
 - `ENVIRONMENT=staging`

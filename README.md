@@ -149,6 +149,16 @@ python scripts/staging_smoke.py \
 
 Add `--access-token TOKEN --confirm-watchlist` to run the authenticated shopping request flow.
 
+Staging env preflight:
+
+```bash
+cd backend
+python scripts/staging_preflight.py \
+  --backend-env /tmp/kupikupi-backend.env \
+  --bot-env /tmp/kupikupi-bot.env \
+  --webapp-env /tmp/kupikupi-webapp.env
+```
+
 Local WebApp demo token:
 
 ```bash

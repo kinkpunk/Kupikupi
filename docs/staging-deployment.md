@@ -81,6 +81,8 @@ curl https://api.staging.kupikupi.example/v1/ready
 For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `TELEGRAM_BOT_TOKEN`,
 `DATABASE_URL`, `REDIS_URL`, or `CORS_ALLOWED_ORIGINS` use local/default values.
 If `ERROR_REPORTING_ENABLED=1`, readiness also requires an absolute `ERROR_REPORTING_ENDPOINT_URL`.
+Before deployment, use `backend/scripts/staging_preflight.py` to validate backend, bot, and WebApp
+environment files together.
 
 ## WebApp Build And Runtime Environment
 
