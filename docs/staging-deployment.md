@@ -83,6 +83,7 @@ For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `TELEGRAM_BOT_TO
 If `ERROR_REPORTING_ENABLED=1`, readiness also requires an absolute `ERROR_REPORTING_ENDPOINT_URL`.
 Before deployment, use `backend/scripts/staging_preflight.py` to validate backend, bot, and WebApp
 environment files together.
+Use `backend/scripts/staging_env_template.py` to generate starter env files for that preflight.
 
 ## WebApp Build And Runtime Environment
 

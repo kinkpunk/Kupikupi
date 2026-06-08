@@ -23,6 +23,7 @@ Implemented and covered:
 - Backend readiness validates Telegram Bot token in staging/production.
 - Backend readiness validates error reporting endpoint when reporting is enabled.
 - Staging environment preflight script for backend, bot, and WebApp config.
+- Staging environment template generator for backend, bot, and WebApp.
 - Operator helper for building Telegram closed-test allowlist env values.
 - Telegram Bot per-user backend authentication via bot-token protected exchange.
 - Telegram notification delivery integration.
