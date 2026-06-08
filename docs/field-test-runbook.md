@@ -113,18 +113,22 @@ The sync report must show `failed=0` and `partially_failed=0`. For a single know
 Review potential duplicate products after the sync:
 
 ```bash
-curl -H "Authorization: Bearer $ADMIN_TOKEN" \
-  https://api.staging.kupikupi.example/v1/admin/product-duplicate-candidates
+cd backend
+python scripts/product_duplicates.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+  list
 ```
 
 Merge only obvious duplicates into the canonical product:
 
 ```bash
-curl -X POST \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"target_product_id":"TARGET_PRODUCT_UUID"}' \
-  https://api.staging.kupikupi.example/v1/admin/products/SOURCE_PRODUCT_UUID/merge
+python scripts/product_duplicates.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+  merge \
+  --source-product-id SOURCE_PRODUCT_UUID \
+  --target-product-id TARGET_PRODUCT_UUID
 ```
 
 For the first field test, it is acceptable to use demo data only if testers know the test is focused

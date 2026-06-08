@@ -283,19 +283,23 @@ Required logical fields are `external_id`, `product_url`, `source_price`, and `p
 After the first sync, review potential product duplicates:
 
 ```bash
-curl -H "Authorization: Bearer $ADMIN_TOKEN" \
-  https://api.staging.kupikupi.example/v1/admin/product-duplicate-candidates
+cd backend
+python scripts/product_duplicates.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+  list
 ```
 
-This endpoint groups products by category, brand, and normalized model/name so the operator can
-spot duplicates. Merge confirmed duplicates into the canonical target product:
+The command groups products by category, brand, and normalized model/name so the operator can spot
+duplicates. Merge confirmed duplicates into the canonical target product:
 
 ```bash
-curl -X POST \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"target_product_id":"TARGET_PRODUCT_UUID"}' \
-  https://api.staging.kupikupi.example/v1/admin/products/SOURCE_PRODUCT_UUID/merge
+python scripts/product_duplicates.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+  merge \
+  --source-product-id SOURCE_PRODUCT_UUID \
+  --target-product-id TARGET_PRODUCT_UUID
 ```
 
 ## Secrets Checklist
