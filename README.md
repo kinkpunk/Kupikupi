@@ -166,7 +166,8 @@ python scripts/staging_env_template.py \
 python scripts/staging_preflight.py \
   --backend-env /tmp/kupikupi-staging-env/kupikupi-backend.env \
   --bot-env /tmp/kupikupi-staging-env/kupikupi-bot.env \
-  --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env
+  --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env \
+  --operator-env /tmp/kupikupi-staging-env/kupikupi-operator.env
 ```
 
 Local WebApp demo token:

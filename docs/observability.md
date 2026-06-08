@@ -21,7 +21,8 @@ cd backend
 python scripts/staging_preflight.py \
   --backend-env /tmp/kupikupi-staging-env/kupikupi-backend.env \
   --bot-env /tmp/kupikupi-staging-env/kupikupi-bot.env \
-  --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env
+  --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env \
+  --operator-env /tmp/kupikupi-staging-env/kupikupi-operator.env
 ```
 
 ## Runtime Signals

@@ -21,12 +21,17 @@ def run_preflight(
     backend_env: dict[str, str],
     bot_env: dict[str, str],
     webapp_env: dict[str, str],
+    operator_env: dict[str, str] | None = None,
 ) -> PreflightReport:
     issues = []
     issues.extend(_validate_backend_env(backend_env))
     issues.extend(_validate_bot_env(bot_env))
     issues.extend(_validate_webapp_env(webapp_env))
+    if operator_env is not None:
+        issues.extend(_validate_operator_env(operator_env))
     issues.extend(_validate_cross_service_env(backend_env, bot_env, webapp_env))
+    if operator_env is not None:
+        issues.extend(_validate_operator_cross_service_env(operator_env, bot_env, webapp_env))
     return PreflightReport(issues=issues)
 
 
@@ -54,6 +59,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--backend-env", type=Path, help="Backend env file.")
     parser.add_argument("--bot-env", type=Path, help="Telegram Bot env file.")
     parser.add_argument("--webapp-env", type=Path, help="WebApp build/runtime env file.")
+    parser.add_argument("--operator-env", type=Path, help="Operator env file for smoke scripts.")
     return parser.parse_args()
 
 
@@ -63,6 +69,7 @@ def main() -> None:
         backend_env=merged_env(args.backend_env),
         bot_env=merged_env(args.bot_env),
         webapp_env=merged_env(args.webapp_env),
+        operator_env=merged_env(args.operator_env) if args.operator_env else None,
     )
 
     if report.passed:
@@ -148,6 +155,27 @@ def _validate_webapp_env(env: dict[str, str]) -> list[str]:
     return issues
 
 
+def _validate_operator_env(env: dict[str, str]) -> list[str]:
+    issues = []
+    if not _is_https_url(env.get("KUPIKUPI_API_BASE_URL", "")):
+        issues.append("operator KUPIKUPI_API_BASE_URL must be an absolute HTTPS URL.")
+    if not _is_https_url(env.get("KUPIKUPI_WEBAPP_URL", "")):
+        issues.append("operator KUPIKUPI_WEBAPP_URL must be an absolute HTTPS URL.")
+    if not _is_public_url(env.get("KUPIKUPI_SUPPORT_URL", "")):
+        issues.append("operator KUPIKUPI_SUPPORT_URL must be absolute http(s) or mailto.")
+    if not _is_public_url(env.get("KUPIKUPI_PRIVACY_URL", "")):
+        issues.append("operator KUPIKUPI_PRIVACY_URL must be absolute http(s) or mailto.")
+    if not _is_public_url(env.get("KUPIKUPI_TERMS_URL", "")):
+        issues.append("operator KUPIKUPI_TERMS_URL must be absolute http(s) or mailto.")
+    admin_token = env.get("KUPIKUPI_ADMIN_ACCESS_TOKEN", "")
+    if not admin_token or admin_token == "replace-with-staging-admin-token":
+        issues.append("operator KUPIKUPI_ADMIN_ACCESS_TOKEN must be set.")
+    confirm_watchlist = env.get("KUPIKUPI_CONFIRM_WATCHLIST", "0")
+    if confirm_watchlist not in {"0", "1"}:
+        issues.append("operator KUPIKUPI_CONFIRM_WATCHLIST must be 0 or 1.")
+    return issues
+
+
 def _validate_cross_service_env(
     backend_env: dict[str, str],
     bot_env: dict[str, str],
@@ -166,6 +194,29 @@ def _validate_cross_service_env(
     backend_cors_origins = _split_csv(backend_env.get("CORS_ALLOWED_ORIGINS", ""))
     if webapp_origin and webapp_origin not in backend_cors_origins:
         issues.append("backend CORS_ALLOWED_ORIGINS must include the Telegram WebApp origin.")
+    return issues
+
+
+def _validate_operator_cross_service_env(
+    operator_env: dict[str, str],
+    bot_env: dict[str, str],
+    webapp_env: dict[str, str],
+) -> list[str]:
+    issues = []
+    if operator_env.get("KUPIKUPI_API_BASE_URL") != webapp_env.get("NEXT_PUBLIC_API_BASE_URL"):
+        issues.append(
+            "operator KUPIKUPI_API_BASE_URL must match webapp NEXT_PUBLIC_API_BASE_URL."
+        )
+    if operator_env.get("KUPIKUPI_WEBAPP_URL") != bot_env.get("TELEGRAM_WEBAPP_URL"):
+        issues.append("operator KUPIKUPI_WEBAPP_URL must match bot TELEGRAM_WEBAPP_URL.")
+    if operator_env.get("KUPIKUPI_PRIVACY_URL") != webapp_env.get(
+        "NEXT_PUBLIC_PRIVACY_POLICY_URL"
+    ):
+        issues.append(
+            "operator KUPIKUPI_PRIVACY_URL must match webapp NEXT_PUBLIC_PRIVACY_POLICY_URL."
+        )
+    if operator_env.get("KUPIKUPI_TERMS_URL") != webapp_env.get("NEXT_PUBLIC_TERMS_URL"):
+        issues.append("operator KUPIKUPI_TERMS_URL must match webapp NEXT_PUBLIC_TERMS_URL.")
     return issues
 
 

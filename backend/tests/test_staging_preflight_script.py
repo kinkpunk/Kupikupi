@@ -10,6 +10,15 @@ def test_staging_preflight_accepts_valid_environment() -> None:
     assert report.issues == []
 
 
+def test_staging_preflight_accepts_valid_environment_without_operator_env() -> None:
+    envs = _valid_envs()
+    envs.pop("operator_env")
+
+    report = run_preflight(**envs)
+
+    assert report.passed is True
+
+
 def test_staging_preflight_rejects_missing_and_mismatched_values() -> None:
     envs = _valid_envs()
     envs["backend_env"]["TELEGRAM_BOT_TOKEN"] = ""
@@ -81,6 +90,26 @@ def test_staging_preflight_rejects_invalid_webhook_bot_mode() -> None:
     assert "bot TELEGRAM_WEBHOOK_PATH must start with '/'." in report.issues
 
 
+def test_staging_preflight_rejects_invalid_operator_env() -> None:
+    envs = _valid_envs()
+    envs["operator_env"]["KUPIKUPI_API_BASE_URL"] = "http://localhost:8000/v1"
+    envs["operator_env"]["KUPIKUPI_WEBAPP_URL"] = "https://other-app.example.test"
+    envs["operator_env"]["KUPIKUPI_ADMIN_ACCESS_TOKEN"] = "replace-with-staging-admin-token"
+    envs["operator_env"]["KUPIKUPI_CONFIRM_WATCHLIST"] = "yes"
+
+    report = run_preflight(**envs)
+
+    assert report.passed is False
+    assert "operator KUPIKUPI_API_BASE_URL must be an absolute HTTPS URL." in report.issues
+    assert "operator KUPIKUPI_ADMIN_ACCESS_TOKEN must be set." in report.issues
+    assert "operator KUPIKUPI_CONFIRM_WATCHLIST must be 0 or 1." in report.issues
+    assert (
+        "operator KUPIKUPI_API_BASE_URL must match webapp NEXT_PUBLIC_API_BASE_URL."
+        in report.issues
+    )
+    assert "operator KUPIKUPI_WEBAPP_URL must match bot TELEGRAM_WEBAPP_URL." in report.issues
+
+
 def _valid_envs() -> dict[str, dict[str, str]]:
     api_url = "https://api.staging.kupikupi.example/v1"
     webapp_url = "https://app.staging.kupikupi.example"
@@ -124,5 +153,15 @@ def _valid_envs() -> dict[str, dict[str, str]]:
             "NEXT_PUBLIC_SUPPORT_CONTACT_URL": "mailto:support@example.test",
             "NEXT_PUBLIC_PRIVACY_POLICY_URL": "https://app.staging.kupikupi.example/privacy",
             "NEXT_PUBLIC_TERMS_URL": "https://app.staging.kupikupi.example/terms",
+        },
+        "operator_env": {
+            "KUPIKUPI_API_BASE_URL": api_url,
+            "KUPIKUPI_WEBAPP_URL": webapp_url,
+            "KUPIKUPI_SUPPORT_URL": "mailto:support@example.test",
+            "KUPIKUPI_PRIVACY_URL": "https://app.staging.kupikupi.example/privacy",
+            "KUPIKUPI_TERMS_URL": "https://app.staging.kupikupi.example/terms",
+            "KUPIKUPI_ACCESS_TOKEN": "",
+            "KUPIKUPI_ADMIN_ACCESS_TOKEN": "staging-admin-token",
+            "KUPIKUPI_CONFIRM_WATCHLIST": "0",
         },
     }

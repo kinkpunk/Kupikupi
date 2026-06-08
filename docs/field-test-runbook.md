@@ -31,7 +31,8 @@ python scripts/staging_env_template.py \
 python scripts/staging_preflight.py \
   --backend-env /tmp/kupikupi-staging-env/kupikupi-backend.env \
   --bot-env /tmp/kupikupi-staging-env/kupikupi-bot.env \
-  --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env
+  --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env \
+  --operator-env /tmp/kupikupi-staging-env/kupikupi-operator.env
 ```
 
 Backend API, worker, and scheduler:
@@ -67,6 +68,16 @@ Telegram Bot:
 - `SUPPORT_CONTACT_URL` is set.
 - `PRIVACY_POLICY_URL` is set.
 - `TERMS_URL` is set.
+
+Operator smoke environment:
+
+- `KUPIKUPI_API_BASE_URL=https://api.staging.kupikupi.example/v1`
+- `KUPIKUPI_WEBAPP_URL=https://app.staging.kupikupi.example`
+- `KUPIKUPI_SUPPORT_URL` is set.
+- `KUPIKUPI_PRIVACY_URL` is set.
+- `KUPIKUPI_TERMS_URL` is set.
+- `KUPIKUPI_ADMIN_ACCESS_TOKEN` is set for admin smoke and duplicate review.
+- `KUPIKUPI_CONFIRM_WATCHLIST` is `0` or `1`.
 
 ## Tester Allowlist
 

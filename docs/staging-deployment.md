@@ -84,7 +84,7 @@ For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `TELEGRAM_BOT_TO
 `DATABASE_URL`, `REDIS_URL`, or `CORS_ALLOWED_ORIGINS` use local/default values.
 Readiness also requires an absolute `ERROR_REPORTING_ENDPOINT_URL` when error reporting is enabled.
 Before deployment, use `backend/scripts/staging_preflight.py` to validate backend, bot, WebApp,
-and operator observability values together.
+operator smoke, and operator observability values together.
 Use `backend/scripts/staging_env_template.py` to generate starter env files for that preflight.
 Use `docs/observability.md` for the minimum dashboard and alert checklist.
 
@@ -127,6 +127,19 @@ Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender through
 `/auth/telegram-bot-user` using `TELEGRAM_BOT_TOKEN`. This is the preferred staging mode.
 `TELEGRAM_WEBAPP_URL` must be an absolute HTTPS URL for field testing.
+
+## Operator Smoke Environment
+
+| Variable | Required | Staging value |
+| --- | --- | --- |
+| `KUPIKUPI_API_BASE_URL` | yes | `https://api.staging.kupikupi.example/v1` |
+| `KUPIKUPI_WEBAPP_URL` | yes | `https://app.staging.kupikupi.example` |
+| `KUPIKUPI_SUPPORT_URL` | yes | support contact URL |
+| `KUPIKUPI_PRIVACY_URL` | yes | privacy policy URL |
+| `KUPIKUPI_TERMS_URL` | yes | terms URL |
+| `KUPIKUPI_ACCESS_TOKEN` | optional | staging-only user token for authenticated smoke |
+| `KUPIKUPI_ADMIN_ACCESS_TOKEN` | yes | staging admin token for admin smoke and duplicate review |
+| `KUPIKUPI_CONFIRM_WATCHLIST` | yes | `0` by default, `1` for watchlist confirmation smoke |
 For the first closed test, `BOT_RUN_MODE=polling` is acceptable and operationally simpler. Use
 `BOT_RUN_MODE=webhook` when the bot container is exposed through HTTPS ingress and set
 `TELEGRAM_WEBHOOK_SECRET` as a secret.

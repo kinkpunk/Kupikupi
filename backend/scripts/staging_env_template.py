@@ -8,6 +8,7 @@ class StagingEnvTemplate:
     backend_env: str
     bot_env: str
     webapp_env: str
+    operator_env: str
 
 
 def build_staging_env_template(
@@ -25,6 +26,7 @@ def build_staging_env_template(
     error_reporting_endpoint_url: str = "https://errors.example.test/events",
     observability_dashboard_url: str = "https://dashboards.example.test/kupikupi-staging",
     alert_contact_url: str = "mailto:oncall@example.test",
+    operator_admin_access_token: str = "replace-with-staging-admin-token",
     bot_run_mode: str = "polling",
     telegram_webhook_url: str = "",
     telegram_webhook_secret: str = "",
@@ -93,10 +95,23 @@ def build_staging_env_template(
             f'NEXT_PUBLIC_TERMS_URL="{terms_url}"',
         ]
     )
+    operator_env = "\n".join(
+        [
+            f'KUPIKUPI_API_BASE_URL="{api_base_url}"',
+            f'KUPIKUPI_WEBAPP_URL="{webapp_url}"',
+            f'KUPIKUPI_SUPPORT_URL="{support_contact_url}"',
+            f'KUPIKUPI_PRIVACY_URL="{privacy_policy_url}"',
+            f'KUPIKUPI_TERMS_URL="{terms_url}"',
+            'KUPIKUPI_ACCESS_TOKEN=""',
+            f'KUPIKUPI_ADMIN_ACCESS_TOKEN="{operator_admin_access_token}"',
+            'KUPIKUPI_CONFIRM_WATCHLIST="0"',
+        ]
+    )
     return StagingEnvTemplate(
         backend_env=backend_env + "\n",
         bot_env=bot_env + "\n",
         webapp_env=webapp_env + "\n",
+        operator_env=operator_env + "\n",
     )
 
 
@@ -128,6 +143,10 @@ def parse_args() -> argparse.Namespace:
         default="https://dashboards.example.test/kupikupi-staging",
     )
     parser.add_argument("--alert-contact-url", default="mailto:oncall@example.test")
+    parser.add_argument(
+        "--operator-admin-access-token",
+        default="replace-with-staging-admin-token",
+    )
     parser.add_argument("--bot-run-mode", default="polling", choices=["polling", "webhook"])
     parser.add_argument("--telegram-webhook-url", default="")
     parser.add_argument("--telegram-webhook-secret", default="")
@@ -150,6 +169,7 @@ def main() -> None:
         error_reporting_endpoint_url=args.error_reporting_endpoint_url,
         observability_dashboard_url=args.observability_dashboard_url,
         alert_contact_url=args.alert_contact_url,
+        operator_admin_access_token=args.operator_admin_access_token,
         bot_run_mode=args.bot_run_mode,
         telegram_webhook_url=args.telegram_webhook_url,
         telegram_webhook_secret=args.telegram_webhook_secret,
@@ -158,6 +178,10 @@ def main() -> None:
     (args.output_dir / "kupikupi-backend.env").write_text(template.backend_env, encoding="utf-8")
     (args.output_dir / "kupikupi-bot.env").write_text(template.bot_env, encoding="utf-8")
     (args.output_dir / "kupikupi-webapp.env").write_text(template.webapp_env, encoding="utf-8")
+    (args.output_dir / "kupikupi-operator.env").write_text(
+        template.operator_env,
+        encoding="utf-8",
+    )
     print(f"Wrote staging env templates to {args.output_dir}")
 
 
