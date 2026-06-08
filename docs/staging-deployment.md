@@ -118,6 +118,7 @@ If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender t
 6. Verify `/v1/health` and `/v1/ready`.
 7. Deploy Telegram Bot with real staging bot token and WebApp URL.
 8. Register the staging WebApp URL in Telegram Bot settings.
+   The bot registers its command menu on startup.
 9. Run remote staging smoke checks.
 10. Run manual Telegram field-test checks.
 
