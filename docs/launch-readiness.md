@@ -45,6 +45,7 @@ Implemented and covered:
 - Visible support and privacy entry points in Telegram Bot and WebApp.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - Remote staging smoke script for HTTPS API/WebApp and optional authenticated shopping flow.
+- Remote staging smoke checks for support and privacy URLs.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.

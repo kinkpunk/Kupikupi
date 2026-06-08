@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
 DEFAULT_REQUEST_TEXT = (
@@ -16,6 +16,8 @@ DEFAULT_REQUEST_TEXT = (
 class StagingSmokeConfig:
     api_base_url: str
     webapp_url: str
+    support_url: str | None = None
+    privacy_url: str | None = None
     access_token: str | None = None
     request_text: str = DEFAULT_REQUEST_TEXT
     confirm_watchlist: bool = False
@@ -75,6 +77,8 @@ def run_staging_smoke(config: StagingSmokeConfig, client: HttpClient) -> list[Sm
         _check_api_readiness(config, client),
         _check_api_metrics(config, client),
         _check_webapp(config, client),
+        _check_optional_url("support-url", config.support_url, client),
+        _check_optional_url("privacy-url", config.privacy_url, client),
     ]
 
     if config.access_token:
@@ -105,6 +109,8 @@ def config_from_env() -> StagingSmokeConfig:
     return StagingSmokeConfig(
         api_base_url=api_base_url,
         webapp_url=webapp_url,
+        support_url=os.environ.get("KUPIKUPI_SUPPORT_URL") or None,
+        privacy_url=os.environ.get("KUPIKUPI_PRIVACY_URL") or None,
         access_token=os.environ.get("KUPIKUPI_ACCESS_TOKEN") or None,
         request_text=os.environ.get("KUPIKUPI_SMOKE_REQUEST_TEXT", DEFAULT_REQUEST_TEXT),
         confirm_watchlist=os.environ.get("KUPIKUPI_CONFIRM_WATCHLIST") == "1",
@@ -115,6 +121,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a remote Kupikupi staging smoke check.")
     parser.add_argument("--api-base-url", default=os.environ.get("KUPIKUPI_API_BASE_URL", ""))
     parser.add_argument("--webapp-url", default=os.environ.get("KUPIKUPI_WEBAPP_URL", ""))
+    parser.add_argument("--support-url", default=os.environ.get("KUPIKUPI_SUPPORT_URL"))
+    parser.add_argument("--privacy-url", default=os.environ.get("KUPIKUPI_PRIVACY_URL"))
     parser.add_argument("--access-token", default=os.environ.get("KUPIKUPI_ACCESS_TOKEN"))
     parser.add_argument(
         "--request-text",
@@ -133,6 +141,8 @@ def main() -> None:
     config = StagingSmokeConfig(
         api_base_url=args.api_base_url.strip(),
         webapp_url=args.webapp_url.strip(),
+        support_url=args.support_url or None,
+        privacy_url=args.privacy_url or None,
         access_token=args.access_token or None,
         request_text=args.request_text,
         confirm_watchlist=args.confirm_watchlist,
@@ -172,6 +182,17 @@ def _check_webapp(config: StagingSmokeConfig, client: HttpClient) -> SmokeStep:
     if status == 200:
         return SmokeStep("webapp", "ok", config.webapp_url)
     return SmokeStep("webapp", "failed", f"HTTP {status}")
+
+
+def _check_optional_url(name: str, url: str | None, client: HttpClient) -> SmokeStep:
+    if not url:
+        return SmokeStep(name, "skipped", "URL is not configured.")
+    if urlparse(url).scheme == "mailto":
+        return SmokeStep(name, "ok", "mailto link configured")
+    status, _body = client.request("GET", url)
+    if 200 <= status < 400:
+        return SmokeStep(name, "ok", url)
+    return SmokeStep(name, "failed", f"HTTP {status}: {url}")
 
 
 def _run_authenticated_flow(config: StagingSmokeConfig, client: HttpClient) -> list[SmokeStep]:

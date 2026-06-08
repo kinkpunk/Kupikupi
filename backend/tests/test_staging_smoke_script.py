@@ -11,6 +11,7 @@ def test_staging_smoke_checks_public_staging_endpoints() -> None:
             ("GET", "https://api.example.test/v1/ready"): (200, {"status": "ok"}),
             ("GET", "https://api.example.test/v1/metrics"): (200, {"requests": 3, "routes": {}}),
             ("GET", "https://app.example.test"): (200, {"text": "<html></html>"}),
+            ("GET", "https://app.example.test/privacy"): (200, {"text": "<html></html>"}),
         }
     )
 
@@ -18,6 +19,8 @@ def test_staging_smoke_checks_public_staging_endpoints() -> None:
         StagingSmokeConfig(
             api_base_url="https://api.example.test/v1",
             webapp_url="https://app.example.test",
+            support_url="mailto:support@example.test",
+            privacy_url="https://app.example.test/privacy",
         ),
         client,
     )
@@ -28,6 +31,8 @@ def test_staging_smoke_checks_public_staging_endpoints() -> None:
         "api-ready",
         "api-metrics",
         "webapp",
+        "support-url",
+        "privacy-url",
         "authenticated-flow",
     ]
     assert steps[-1].status == "skipped"
@@ -75,6 +80,8 @@ def test_staging_smoke_runs_authenticated_flow_with_watchlist_confirmation() -> 
         "api-ready",
         "api-metrics",
         "webapp",
+        "support-url",
+        "privacy-url",
         "auth-me",
         "shopping-request",
         "recommendations",
@@ -108,6 +115,34 @@ def test_staging_smoke_fails_when_readiness_is_degraded() -> None:
     assert smoke_passed(steps) is False
     assert steps[1].name == "api-ready"
     assert steps[1].status == "failed"
+
+
+def test_staging_smoke_fails_when_configured_privacy_url_is_unavailable() -> None:
+    client = FakeSmokeClient(
+        {
+            ("GET", "https://api.example.test/v1/health"): (
+                200,
+                {"status": "ok", "service": "api"},
+            ),
+            ("GET", "https://api.example.test/v1/ready"): (200, {"status": "ok"}),
+            ("GET", "https://api.example.test/v1/metrics"): (200, {"requests": 3, "routes": {}}),
+            ("GET", "https://app.example.test"): (200, {"text": "<html></html>"}),
+            ("GET", "https://app.example.test/privacy"): (404, {"text": "missing"}),
+        }
+    )
+
+    steps = run_staging_smoke(
+        StagingSmokeConfig(
+            api_base_url="https://api.example.test/v1",
+            webapp_url="https://app.example.test",
+            privacy_url="https://app.example.test/privacy",
+        ),
+        client,
+    )
+
+    assert smoke_passed(steps) is False
+    assert steps[5].name == "privacy-url"
+    assert steps[5].status == "failed"
 
 
 class FakeSmokeClient:

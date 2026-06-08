@@ -168,7 +168,9 @@ Then run the remote staging smoke against HTTPS endpoints:
 cd backend
 python scripts/staging_smoke.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
-  --webapp-url https://app.staging.kupikupi.example
+  --webapp-url https://app.staging.kupikupi.example \
+  --support-url mailto:support@example.test \
+  --privacy-url https://app.staging.kupikupi.example/privacy
 ```
 
 With a staging user access token, also run the authenticated flow:
