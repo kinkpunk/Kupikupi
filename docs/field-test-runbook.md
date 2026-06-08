@@ -93,11 +93,12 @@ Apply the feed config:
 
 ```bash
 cd backend
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3
+python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3 --min-offers 1
 python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
 ```
 
-The dry run must show at least one offer and a plausible sample before applying the config.
+The dry run must pass and show at least one offer, product details, EUR prices, size coverage for
+size-sensitive categories, and a plausible sample before applying the config.
 
 Run sync:
 

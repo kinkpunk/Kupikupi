@@ -221,13 +221,15 @@ Store feed operator commands:
 ```bash
 cd backend
 python scripts/store_feed.py --print-template
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3
+python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3 --min-offers 1
 python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
 celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
 ```
 
-The dry run validates the config and fetches sample offers without database writes. The apply command
-creates or updates a store and its `http_csv`/`http_json` source config.
+The dry run validates the config, fetches sample offers without database writes, and fails if the
+feed returns fewer than `--min-offers` offers. Its report includes offer, product, EUR price, size,
+currency, availability, and warning counts. The apply command creates or updates a store and its
+`http_csv`/`http_json` source config.
 
 Telegram closed-test allowlist helper:
 

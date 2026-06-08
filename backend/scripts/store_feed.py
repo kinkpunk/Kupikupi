@@ -16,7 +16,7 @@ from app.domains.stores.models import SourceConfig
 from app.integrations.stores.registry import adapter_from_source_config
 
 
-async def dry_run_config_command(*, config_path: Path, limit: int) -> int:
+async def dry_run_config_command(*, config_path: Path, limit: int, min_offers: int = 1) -> int:
     try:
         payload = StoreFeedConfig.model_validate_json(config_path.read_text(encoding="utf-8"))
         source_config = SourceConfig(
@@ -31,21 +31,75 @@ async def dry_run_config_command(*, config_path: Path, limit: int) -> int:
         print(f"Store feed dry run failed: {exc}")
         return 1
 
-    print(
-        json.dumps(
-            {
-                "store_name": payload.store.name,
-                "source_type": payload.source.source_type,
-                "endpoint_url": payload.source.endpoint_url,
-                "offers_seen": len(records),
-                "sample": [_offer_sample(record) for record in records[:limit]],
-            },
-            ensure_ascii=False,
-            indent=2,
-            sort_keys=True,
-        )
+    report = _dry_run_report(payload=payload, records=records, limit=limit, min_offers=min_offers)
+    print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if len(records) >= min_offers else 1
+
+
+def _dry_run_report(
+    *,
+    payload: StoreFeedConfig,
+    records: list[Any],
+    limit: int,
+    min_offers: int,
+) -> dict[str, Any]:
+    offers_seen = len(records)
+    products_seen = sum(1 for record in records if record.product is not None)
+    eur_prices_seen = sum(1 for record in records if record.eur_price is not None)
+    offers_with_sizes = sum(1 for record in records if record.sizes)
+    warnings = _dry_run_warnings(
+        offers_seen=offers_seen,
+        min_offers=min_offers,
+        products_seen=products_seen,
+        eur_prices_seen=eur_prices_seen,
+        offers_with_sizes=offers_with_sizes,
     )
-    return 0
+    return {
+        "store_name": payload.store.name,
+        "source_type": payload.source.source_type,
+        "endpoint_url": payload.source.endpoint_url,
+        "offers_seen": offers_seen,
+        "products_seen": products_seen,
+        "eur_prices_seen": eur_prices_seen,
+        "offers_with_sizes": offers_with_sizes,
+        "currencies": _count_by(records, "source_currency"),
+        "availability": _count_by(records, "availability"),
+        "warnings": warnings,
+        "sample": [_offer_sample(record) for record in records[:limit]],
+    }
+
+
+def _dry_run_warnings(
+    *,
+    offers_seen: int,
+    min_offers: int,
+    products_seen: int,
+    eur_prices_seen: int,
+    offers_with_sizes: int,
+) -> list[str]:
+    warnings: list[str] = []
+    if offers_seen < min_offers:
+        warnings.append(f"Feed returned {offers_seen} offers, below required minimum {min_offers}.")
+    if offers_seen == 0:
+        return warnings
+    if products_seen < offers_seen:
+        warnings.append("Some offers are missing product details and may not be matched.")
+    if eur_prices_seen < offers_seen:
+        warnings.append(
+            "Some offers are missing EUR normalized prices; check FX rates or currency mapping."
+        )
+    if offers_with_sizes == 0:
+        warnings.append("No offers include sizes; size-based requests may not match this feed.")
+    return warnings
+
+
+def _count_by(records: list[Any], field_name: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in records:
+        value = getattr(record, field_name)
+        key = str(value) if value else "unknown"
+        counts[key] = counts.get(key, 0) + 1
+    return counts
 
 
 async def apply_config_command(*, config_path: Path) -> int:
@@ -88,6 +142,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--limit", type=int, default=3, help="Sample offers to print in dry-run.")
     parser.add_argument(
+        "--min-offers",
+        type=int,
+        default=1,
+        help="Minimum offers required for dry-run success.",
+    )
+    parser.add_argument(
         "--print-template",
         action="store_true",
         help="Print an example http_csv feed config.",
@@ -105,7 +165,13 @@ def main() -> None:
         raise SystemExit(2)
     if args.dry_run:
         raise SystemExit(
-            asyncio.run(dry_run_config_command(config_path=args.config, limit=args.limit))
+            asyncio.run(
+                dry_run_config_command(
+                    config_path=args.config,
+                    limit=args.limit,
+                    min_offers=args.min_offers,
+                )
+            )
         )
     raise SystemExit(asyncio.run(apply_config_command(config_path=args.config)))
 

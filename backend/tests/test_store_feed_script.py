@@ -22,6 +22,12 @@ async def test_store_feed_dry_run_fetches_offers_without_database_write(
     assert output["store_name"] == "Example Store"
     assert output["source_type"] == "http_csv"
     assert output["offers_seen"] == 2
+    assert output["products_seen"] == 1
+    assert output["eur_prices_seen"] == 2
+    assert output["offers_with_sizes"] == 1
+    assert output["currencies"] == {"CZK": 2}
+    assert output["availability"] == {"in_stock": 2}
+    assert output["warnings"] == ["Some offers are missing product details and may not be matched."]
     assert len(output["sample"]) == 1
     assert output["sample"][0]["external_id"] == "feed-1"
     assert output["sample"][0]["product_name"] == "New Balance Fresh Foam 1080"
@@ -35,6 +41,23 @@ async def test_store_feed_dry_run_reports_invalid_config(tmp_path, capsys) -> No
 
     assert exit_code == 1
     assert "Store feed dry run failed:" in capsys.readouterr().out
+
+
+async def test_store_feed_dry_run_fails_when_feed_is_empty(
+    monkeypatch,
+    tmp_path,
+    capsys,
+) -> None:
+    config_path = _write_config(tmp_path)
+
+    monkeypatch.setattr(store_feed, "adapter_from_source_config", _empty_adapter_factory)
+
+    exit_code = await dry_run_config_command(config_path=config_path, limit=3)
+
+    output = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert output["offers_seen"] == 0
+    assert output["warnings"] == ["Feed returned 0 offers, below required minimum 1."]
 
 
 def _write_config(tmp_path: Path) -> Path:
@@ -68,6 +91,10 @@ def _write_config(tmp_path: Path) -> Path:
 
 def _fake_adapter_factory(_source_config):
     return FakeStoreSourceAdapter()
+
+
+def _empty_adapter_factory(_source_config):
+    return EmptyStoreSourceAdapter()
 
 
 class FakeStoreSourceAdapter:
@@ -107,3 +134,8 @@ class FakeStoreSourceAdapter:
                 availability="in_stock",
             ),
         ]
+
+
+class EmptyStoreSourceAdapter:
+    async def fetch_offers(self):
+        return []
