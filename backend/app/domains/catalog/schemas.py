@@ -42,6 +42,22 @@ class ProductCreate(BaseModel):
     attributes: dict[str, object] | None = None
 
 
+class ProductMergeRequest(BaseModel):
+    target_product_id: uuid.UUID
+
+
+class ProductMergeResult(BaseModel):
+    source_product_id: uuid.UUID
+    target_product_id: uuid.UUID
+    offers_moved: int
+    price_analytics_moved: int
+    recommendations_moved: int
+    watchlists_moved: int
+    source_mappings_moved: int
+    sync_items_moved: int
+    variants_moved: int
+
+
 class ProductRead(BaseModel):
     id: uuid.UUID
     brand_id: uuid.UUID | None
@@ -59,4 +75,3 @@ class ProductRead(BaseModel):
 class ProductList(BaseModel):
     items: list[ProductRead]
     total: int
-

@@ -272,7 +272,15 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
 ```
 
 This endpoint groups products by category, brand, and normalized model/name so the operator can
-spot duplicates before a future merge workflow is available.
+spot duplicates. Merge confirmed duplicates into the canonical target product:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"target_product_id":"TARGET_PRODUCT_UUID"}' \
+  https://api.staging.kupikupi.example/v1/admin/products/SOURCE_PRODUCT_UUID/merge
+```
 
 ## Secrets Checklist
 
@@ -289,5 +297,6 @@ spot duplicates before a future merge workflow is available.
 
 - Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
-- Product duplicate candidates can be reviewed, but merge workflow is not implemented yet.
+- Product duplicate candidates can be reviewed and merged, but bulk review tooling is not
+  implemented yet.
 - Full distributed tracing is not yet complete.

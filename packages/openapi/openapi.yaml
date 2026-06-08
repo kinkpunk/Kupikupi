@@ -554,6 +554,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Product"
 
+  /admin/products/{source_product_id}/merge:
+    post:
+      tags: [Admin]
+      summary: Merge duplicate product into a target product
+      parameters:
+        - name: source_product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductMergeRequest"
+      responses:
+        "200":
+          description: Merge result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductMergeResult"
+
   /admin/offers:
     post:
       tags: [Admin]
@@ -1334,6 +1359,48 @@ components:
           items:
             $ref: "#/components/schemas/Product"
         total:
+          type: integer
+
+    ProductMergeRequest:
+      type: object
+      required: [target_product_id]
+      properties:
+        target_product_id:
+          type: string
+          format: uuid
+
+    ProductMergeResult:
+      type: object
+      required:
+        - source_product_id
+        - target_product_id
+        - offers_moved
+        - price_analytics_moved
+        - recommendations_moved
+        - watchlists_moved
+        - source_mappings_moved
+        - sync_items_moved
+        - variants_moved
+      properties:
+        source_product_id:
+          type: string
+          format: uuid
+        target_product_id:
+          type: string
+          format: uuid
+        offers_moved:
+          type: integer
+        price_analytics_moved:
+          type: integer
+        recommendations_moved:
+          type: integer
+        watchlists_moved:
+          type: integer
+        source_mappings_moved:
+          type: integer
+        sync_items_moved:
+          type: integer
+        variants_moved:
           type: integer
 
     Offer:

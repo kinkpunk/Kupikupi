@@ -108,6 +108,16 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
   https://api.staging.kupikupi.example/v1/admin/product-duplicate-candidates
 ```
 
+Merge only obvious duplicates into the canonical product:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"target_product_id":"TARGET_PRODUCT_UUID"}' \
+  https://api.staging.kupikupi.example/v1/admin/products/SOURCE_PRODUCT_UUID/merge
+```
+
 For the first field test, it is acceptable to use demo data only if testers know the test is focused
 on Telegram/WebApp flow rather than real prices.
 

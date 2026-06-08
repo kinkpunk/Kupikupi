@@ -1,10 +1,19 @@
 import uuid
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.catalog.models import Brand, Category, Product
-from app.domains.catalog.schemas import BrandCreate, CategoryCreate, ProductCreate
+from app.domains.catalog.models import Brand, Category, Product, ProductVariant
+from app.domains.catalog.schemas import (
+    BrandCreate,
+    CategoryCreate,
+    ProductCreate,
+    ProductMergeResult,
+)
+from app.domains.offers.models import Offer, PriceAnalytics
+from app.domains.shopping_requests.models import Recommendation
+from app.domains.stores.models import SourceProductMapping, SourceSyncRunItem
+from app.domains.watchlists.models import Watchlist
 
 
 def normalize_name(value: str) -> str:
@@ -85,3 +94,79 @@ async def search_products(
 async def get_product(session: AsyncSession, product_id: uuid.UUID) -> Product | None:
     result = await session.execute(select(Product).where(Product.id == product_id))
     return result.scalar_one_or_none()
+
+
+async def merge_product(
+    session: AsyncSession,
+    *,
+    source_product_id: uuid.UUID,
+    target_product_id: uuid.UUID,
+) -> ProductMergeResult:
+    if source_product_id == target_product_id:
+        raise ValueError("source and target products must be different.")
+
+    source_product = await get_product(session, source_product_id)
+    target_product = await get_product(session, target_product_id)
+    if source_product is None:
+        raise ValueError("source product was not found.")
+    if target_product is None:
+        raise ValueError("target product was not found.")
+
+    result = ProductMergeResult(
+        source_product_id=source_product_id,
+        target_product_id=target_product_id,
+        offers_moved=await _move_product_refs(session, Offer, source_product_id, target_product_id),
+        price_analytics_moved=await _move_product_refs(
+            session,
+            PriceAnalytics,
+            source_product_id,
+            target_product_id,
+        ),
+        recommendations_moved=await _move_product_refs(
+            session,
+            Recommendation,
+            source_product_id,
+            target_product_id,
+        ),
+        watchlists_moved=await _move_product_refs(
+            session,
+            Watchlist,
+            source_product_id,
+            target_product_id,
+        ),
+        source_mappings_moved=await _move_product_refs(
+            session,
+            SourceProductMapping,
+            source_product_id,
+            target_product_id,
+        ),
+        sync_items_moved=await _move_product_refs(
+            session,
+            SourceSyncRunItem,
+            source_product_id,
+            target_product_id,
+        ),
+        variants_moved=await _move_product_refs(
+            session,
+            ProductVariant,
+            source_product_id,
+            target_product_id,
+        ),
+    )
+    await session.execute(delete(Product).where(Product.id == source_product_id))
+    await session.flush()
+    return result
+
+
+async def _move_product_refs(
+    session: AsyncSession,
+    model,
+    source_product_id: uuid.UUID,
+    target_product_id: uuid.UUID,
+) -> int:
+    result = await session.execute(
+        update(model)
+        .where(model.product_id == source_product_id)
+        .values(product_id=target_product_id)
+    )
+    return int(result.rowcount or 0)

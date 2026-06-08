@@ -10,6 +10,8 @@ from app.domains.catalog.schemas import (
     CategoryRead,
     ProductCreate,
     ProductList,
+    ProductMergeRequest,
+    ProductMergeResult,
     ProductRead,
 )
 from app.domains.catalog.service import (
@@ -19,6 +21,7 @@ from app.domains.catalog.service import (
     get_product,
     list_brands,
     list_categories,
+    merge_product,
     search_products,
 )
 
@@ -98,3 +101,21 @@ async def admin_create_product(
     await session.refresh(product)
     return product
 
+
+@router.post("/admin/products/{source_product_id}/merge", response_model=ProductMergeResult)
+async def admin_merge_product(
+    source_product_id: uuid.UUID,
+    payload: ProductMergeRequest,
+    session: DbSessionDep,
+    _admin: CurrentAdminUserDep,
+) -> ProductMergeResult:
+    try:
+        result = await merge_product(
+            session,
+            source_product_id=source_product_id,
+            target_product_id=payload.target_product_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    await session.commit()
+    return result
