@@ -30,6 +30,8 @@ python scripts/staging_preflight.py \
 - `/v1/ready`: dependency and production-like runtime configuration check.
 - `/v1/metrics`: in-process request counters for a lightweight staging dashboard.
 - `X-Request-ID`: request correlation header returned by the backend and written to access logs.
+- `traceparent`: W3C trace context header accepted by the backend, returned in responses, and
+  included in error reports.
 - `ERROR_REPORTING_ENDPOINT_URL`: Sentry-compatible HTTP endpoint for backend exception reports.
 
 ## Dashboard Panels
@@ -43,6 +45,7 @@ For closed testing, keep the dashboard small:
 - Notification generation and dispatch counts.
 - Source sync success and failure counts.
 - Latest backend deploy version.
+- Trace ID search for reported user sessions.
 
 ## Alerts
 

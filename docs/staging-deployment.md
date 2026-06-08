@@ -144,8 +144,8 @@ python scripts/telegram_allowlist.py 123456 789012
 9. Run remote staging smoke checks.
 10. Run manual Telegram field-test checks.
 
-Backend responses include `X-Request-ID`. Send this header from clients when available, and use the
-same value to correlate JSON access logs with user reports.
+Backend responses include `X-Request-ID` and `traceparent`. Send these headers from clients when
+available, and use the same values to correlate JSON access logs, error reports, and user reports.
 Basic in-process request counters are available at `/v1/metrics`.
 
 Before deploying migrations or opening staging to testers, follow the PostgreSQL backup and restore

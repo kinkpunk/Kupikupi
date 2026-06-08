@@ -38,6 +38,7 @@ Implemented and covered:
 - Operator command for creating or updating `http_csv`/`http_json` store feed configs.
 - Store feed dry-run validation before database writes.
 - Request ID propagation and JSON access logs for backend API requests.
+- W3C `traceparent` propagation for API responses, logs, and error reports.
 - In-process backend request metrics endpoint.
 - Sentry-compatible HTTP error reporting hook for unhandled backend exceptions.
 - Observability baseline checklist for staging dashboards and alerts.
@@ -77,14 +78,14 @@ Blocking gaps:
 - No real Telegram Bot token and webhook/polling deployment configuration for a public bot.
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
 - Product matching is deterministic and still needs robust cross-store product normalization.
-- No full observability stack yet: tracing and real alerting/dashboard infrastructure still need
-  provider setup.
+- No full observability stack yet: tracing provider and real alerting/dashboard infrastructure still
+  need setup.
 - Privacy and terms still require legal review and final hosted URLs before public beta.
 
 ## Recommended Next Iterations
 
 1. Configure one real Czech store feed through `scripts/store_feed.py` after dry-run validation.
-2. Add tracing and deploy real alerting/dashboard infrastructure.
+2. Add tracing provider and deploy real alerting/dashboard infrastructure.
 3. Run the closed field test runbook on deployed staging, including `scripts/user_data_smoke.py`.
 
 ## Go/No-Go Summary

@@ -37,6 +37,29 @@ def test_request_id_header_is_generated() -> None:
     assert response.headers["x-request-id"]
 
 
+def test_traceparent_header_is_preserved() -> None:
+    client = TestClient(create_app())
+    traceparent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+
+    response = client.get("/v1/health", headers={"traceparent": traceparent})
+
+    assert response.status_code == 200
+    assert response.headers["traceparent"] == traceparent
+
+
+def test_traceparent_header_is_generated() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/v1/health")
+
+    assert response.status_code == 200
+    parts = response.headers["traceparent"].split("-")
+    assert parts[0] == "00"
+    assert len(parts[1]) == 32
+    assert len(parts[2]) == 16
+    assert parts[3] == "01"
+
+
 def test_metrics_records_requests() -> None:
     metrics_registry.reset()
     client = TestClient(create_app())

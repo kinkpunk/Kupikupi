@@ -36,14 +36,20 @@ def test_request_logging_middleware_reports_unhandled_exceptions() -> None:
         raise RuntimeError("boom")
 
     client = TestClient(app, raise_server_exceptions=False)
+    traceparent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 
-    response = client.get("/boom", headers={"X-Request-ID": "request-err-1"})
+    response = client.get(
+        "/boom",
+        headers={"X-Request-ID": "request-err-1", "traceparent": traceparent},
+    )
 
     assert response.status_code == 500
     assert reporter.payloads == [
         {
             "event": "unhandled_exception",
             "request_id": "request-err-1",
+            "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+            "traceparent": traceparent,
             "method": "GET",
             "path": "/boom",
             "error_type": "RuntimeError",
