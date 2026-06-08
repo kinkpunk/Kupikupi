@@ -19,6 +19,7 @@ Implemented and covered:
 - Telegram Bot closed-test allowlist by Telegram user ID.
 - Telegram Bot `/id` helper for collecting tester Telegram IDs.
 - Backend Telegram auth allowlist for closed field testing.
+- Backend readiness validates Telegram Bot token in staging/production.
 - Operator helper for building Telegram closed-test allowlist env values.
 - Telegram Bot per-user backend authentication via bot-token protected exchange.
 - Telegram notification delivery integration.

@@ -76,8 +76,8 @@ Readiness must return `200` before dependent services are considered healthy:
 curl https://api.staging.kupikupi.example/v1/ready
 ```
 
-For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `DATABASE_URL`, `REDIS_URL`, or
-`CORS_ALLOWED_ORIGINS` use local/default values.
+For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `TELEGRAM_BOT_TOKEN`,
+`DATABASE_URL`, `REDIS_URL`, or `CORS_ALLOWED_ORIGINS` use local/default values.
 
 ## WebApp Build And Runtime Environment
 

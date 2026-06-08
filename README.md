@@ -97,8 +97,8 @@ curl http://localhost:8000/v1/ready
 
 `/health` is a fast liveness check. `/ready` verifies runtime configuration, PostgreSQL, and Redis
 before dependent services proceed in Docker Compose. For `ENVIRONMENT=production` or `staging`,
-replace the default `JWT_SECRET_KEY` and use non-localhost `DATABASE_URL`, `REDIS_URL`, and
-`CORS_ALLOWED_ORIGINS`; otherwise readiness fails with `503`.
+replace the default `JWT_SECRET_KEY`, configure `TELEGRAM_BOT_TOKEN`, and use non-localhost
+`DATABASE_URL`, `REDIS_URL`, and `CORS_ALLOWED_ORIGINS`; otherwise readiness fails with `503`.
 Set `TELEGRAM_ALLOWED_USER_IDS` to a comma-separated list of numeric Telegram IDs when backend
 Telegram auth should be limited to closed-test participants.
 

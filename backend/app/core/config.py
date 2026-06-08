@@ -76,6 +76,8 @@ class Settings(BaseSettings):
 
         if self.jwt_secret_key == "change-me-in-production":
             issues.append("JWT_SECRET_KEY must be changed for production-like environments.")
+        if not self.telegram_bot_token:
+            issues.append("TELEGRAM_BOT_TOKEN must be configured for production-like environments.")
         if _has_local_hostname(self.database_url):
             issues.append(
                 "DATABASE_URL must not point to localhost in production-like environments."
