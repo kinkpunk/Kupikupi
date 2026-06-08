@@ -13,6 +13,7 @@ Implemented and covered:
   health and readiness checks.
 - PostgreSQL migrations through `0014_fx_rates`.
 - Deterministic phase 1 shopping request parser.
+- Deterministic recommendation scoring by category, brand, use case, size availability, and budget.
 - Watchlist creation only after explicit user confirmation.
 - Telegram Bot command flow and backend client.
 - Telegram Bot command menu registration on startup.
@@ -75,8 +76,7 @@ Blocking gaps:
 - No HTTPS public domain for WebApp/API.
 - No real Telegram Bot token and webhook/polling deployment configuration for a public bot.
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
-- Product matching is basic deterministic matching by category/product data, not robust
-  cross-store normalization.
+- Product matching is deterministic and still needs robust cross-store product normalization.
 - No full observability stack yet: tracing and real alerting/dashboard infrastructure still need
   provider setup.
 - Privacy and terms still require legal review and final hosted URLs before public beta.

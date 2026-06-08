@@ -2,8 +2,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.security import create_access_token
-from app.domains.catalog.models import Category, Product
+from app.domains.catalog.models import Brand, Category, Product
+from app.domains.offers.models import Offer, OfferAvailability
 from app.domains.shopping_requests.parser import parse_shopping_request
+from app.domains.stores.models import Store
 from app.domains.users.models import User
 
 
@@ -20,16 +22,76 @@ async def create_user_and_catalog(db_session_factory: async_sessionmaker[AsyncSe
             is_admin=False,
         )
         category = Category(slug="running-shoes", name="Running Shoes")
-        session.add_all([user, category])
+        brand = Brand(name="New Balance", normalized_name="new balance")
+        other_brand = Brand(name="Nike", normalized_name="nike")
+        store = Store(name="Runner Shop", country="CZ", url="https://shop.example.test")
+        session.add_all([user, category, brand, other_brand, store])
         await session.flush()
-        session.add(
-            Product(
-                category_id=category.id,
-                name="New Balance Fresh Foam 1080",
-                model="Fresh Foam 1080",
-                sku="NB-1080",
-                attributes={"use_case": "daily training"},
-            )
+        matched_product = Product(
+            brand_id=brand.id,
+            category_id=category.id,
+            name="New Balance Fresh Foam 1080",
+            model="Fresh Foam 1080",
+            sku="NB-1080",
+            attributes={"use_case": "daily training"},
+        )
+        other_product = Product(
+            brand_id=other_brand.id,
+            category_id=category.id,
+            name="Nike Pegasus Trail",
+            model="Pegasus Trail",
+            sku="NIKE-PEG-TRAIL",
+            attributes={"use_case": "trail running"},
+        )
+        session.add_all([matched_product, other_product])
+        await session.flush()
+        matched_offer = Offer(
+            product_id=matched_product.id,
+            store_id=store.id,
+            external_id="nb-1080",
+            product_url="https://shop.example.test/nb-1080",
+            source_price=3290,
+            source_old_price=None,
+            source_currency="CZK",
+            eur_price=134.29,
+            eur_old_price=None,
+            fx_rate_to_eur=0.040817,
+            discount_percent=None,
+            availability="in_stock",
+        )
+        other_offer = Offer(
+            product_id=other_product.id,
+            store_id=store.id,
+            external_id="nike-pegasus",
+            product_url="https://shop.example.test/nike-pegasus",
+            source_price=3990,
+            source_old_price=None,
+            source_currency="CZK",
+            eur_price=162.84,
+            eur_old_price=None,
+            fx_rate_to_eur=0.040817,
+            discount_percent=None,
+            availability="in_stock",
+        )
+        session.add_all([matched_offer, other_offer])
+        await session.flush()
+        session.add_all(
+            [
+                OfferAvailability(
+                    offer_id=matched_offer.id,
+                    size_value="41",
+                    size_system="EU",
+                    in_stock=True,
+                    stock_count=2,
+                ),
+                OfferAvailability(
+                    offer_id=other_offer.id,
+                    size_value="42",
+                    size_system="EU",
+                    in_stock=True,
+                    stock_count=1,
+                ),
+            ]
         )
         await session.commit()
         await session.refresh(user)
@@ -90,9 +152,46 @@ async def test_create_shopping_request_parses_constraints_and_recommends_product
     )
     assert recommendations_response.status_code == 200
     recommendations = recommendations_response.json()["items"]
-    assert len(recommendations) == 1
+    assert len(recommendations) == 2
     assert recommendations[0]["product"]["name"] == "New Balance Fresh Foam 1080"
-    assert recommendations[0]["reason"] == "Matched by deterministic category parser."
+    assert recommendations[0]["best_offer_id"] is not None
+    assert recommendations[0]["score"] > recommendations[1]["score"]
+    assert recommendations[0]["reason"] == (
+        "Matched by category, use case, size in stock, within budget."
+    )
+
+
+async def test_recommendations_boost_preferred_brand_match(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    user = await create_user_and_catalog(db_session_factory)
+    token = create_access_token(str(user.id))
+
+    response = client.post(
+        "/v1/shopping-requests",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "text": (
+                "Хочу New Balance беговые кроссовки для ежедневных тренировок. "
+                "Размер 41. Бюджет 150 евро."
+            )
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["constraints"]["preferred_brand"] == "New Balance"
+
+    recommendations_response = client.get(
+        f"/v1/shopping-requests/{response.json()['id']}/recommendations",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    recommendations = recommendations_response.json()["items"]
+
+    assert recommendations[0]["product"]["name"] == "New Balance Fresh Foam 1080"
+    assert recommendations[0]["reason"] == (
+        "Matched by category, brand, model/text, use case, size in stock, within budget."
+    )
 
 
 async def test_user_cannot_read_other_users_shopping_request(
