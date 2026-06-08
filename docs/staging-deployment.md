@@ -113,6 +113,12 @@ For a closed field test, set `TELEGRAM_ALLOWED_USER_IDS` in both backend and Tel
 environments. The backend enforces the allowlist for Telegram WebApp and Bot auth. Leave it empty
 only for open testing. Testers can send `/id` to the staging bot to see the numeric Telegram ID that
 must be added to the allowlist.
+Build the env value with:
+
+```bash
+cd backend
+python scripts/telegram_allowlist.py 123456 789012
+```
 
 ## Deployment Order
 

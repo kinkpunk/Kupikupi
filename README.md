@@ -195,6 +195,14 @@ celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
 
 The feed config command creates or updates a store and its `http_csv`/`http_json` source config.
 
+Telegram closed-test allowlist helper:
+
+```bash
+cd backend
+python scripts/telegram_allowlist.py 123456 789012
+python scripts/telegram_allowlist.py --file /tmp/kupikupi-testers.txt
+```
+
 Telegram Bot development:
 
 ```bash
