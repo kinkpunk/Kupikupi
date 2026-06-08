@@ -17,6 +17,7 @@ Implemented and covered:
 - Deterministic source product reuse by SKU or normalized brand/category/model identity.
 - Watchlist creation only after explicit user confirmation.
 - Telegram Bot command flow and backend client.
+- Telegram Bot polling/webhook runtime mode configuration.
 - Telegram Bot command menu registration on startup.
 - Telegram Bot runtime validation for WebApp URL.
 - Telegram Bot closed-test allowlist by Telegram user ID.
@@ -78,7 +79,7 @@ Blocking gaps:
 
 - No real production or staging environment is configured.
 - No HTTPS public domain for WebApp/API.
-- No real Telegram Bot token and webhook/polling deployment configuration for a public bot.
+- No real Telegram Bot token or deployed public bot runtime.
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
 - Product matching has deterministic cross-store reuse, duplicate candidate review, and manual
   duplicate merge, but still needs robust normalization and bulk review tooling.

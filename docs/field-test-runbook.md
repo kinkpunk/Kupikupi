@@ -60,6 +60,9 @@ Telegram Bot:
 - `BACKEND_ACCESS_TOKEN` is empty for per-user auth.
 - `TELEGRAM_WEBAPP_URL=https://app.staging.kupikupi.example`
 - `TELEGRAM_ALLOWED_USER_IDS` matches the backend allowlist.
+- `BOT_RUN_MODE=polling` for simple staging, or `webhook` with HTTPS ingress.
+- If `BOT_RUN_MODE=webhook`, `TELEGRAM_WEBHOOK_URL`, `TELEGRAM_WEBHOOK_SECRET`, and
+  `TELEGRAM_WEBHOOK_PATH` are configured.
 - `SUPPORT_CONTACT_URL` is set.
 - `PRIVACY_POLICY_URL` is set.
 

@@ -104,8 +104,11 @@ def _validate_backend_env(env: dict[str, str]) -> list[str]:
 
 def _validate_bot_env(env: dict[str, str]) -> list[str]:
     issues = []
+    run_mode = env.get("BOT_RUN_MODE", "polling")
     if not env.get("TELEGRAM_BOT_TOKEN"):
         issues.append("bot TELEGRAM_BOT_TOKEN must be set.")
+    if run_mode not in {"polling", "webhook"}:
+        issues.append("bot BOT_RUN_MODE must be polling or webhook.")
     if not _is_http_url(env.get("BACKEND_API_URL", "")):
         issues.append("bot BACKEND_API_URL must be an absolute http(s) URL.")
     if not _is_https_url(env.get("TELEGRAM_WEBAPP_URL", "")):
@@ -116,6 +119,13 @@ def _validate_bot_env(env: dict[str, str]) -> list[str]:
         issues.append("bot SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.")
     if not _is_public_url(env.get("PRIVACY_POLICY_URL", "")):
         issues.append("bot PRIVACY_POLICY_URL must be an absolute http(s) or mailto URL.")
+    if run_mode == "webhook":
+        if not _is_https_url(env.get("TELEGRAM_WEBHOOK_URL", "")):
+            issues.append("bot TELEGRAM_WEBHOOK_URL must be an absolute HTTPS URL in webhook mode.")
+        if not env.get("TELEGRAM_WEBHOOK_SECRET"):
+            issues.append("bot TELEGRAM_WEBHOOK_SECRET must be set in webhook mode.")
+        if not env.get("TELEGRAM_WEBHOOK_PATH", "/").startswith("/"):
+            issues.append("bot TELEGRAM_WEBHOOK_PATH must start with '/'.")
     return issues
 
 

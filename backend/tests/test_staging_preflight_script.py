@@ -49,6 +49,38 @@ def test_staging_preflight_rejects_invalid_allowlist() -> None:
     assert "backend and bot TELEGRAM_ALLOWED_USER_IDS values must match." in report.issues
 
 
+def test_staging_preflight_accepts_webhook_bot_mode() -> None:
+    envs = _valid_envs()
+    envs["bot_env"]["BOT_RUN_MODE"] = "webhook"
+    envs["bot_env"]["TELEGRAM_WEBHOOK_URL"] = (
+        "https://bot.staging.kupikupi.example/telegram/webhook"
+    )
+    envs["bot_env"]["TELEGRAM_WEBHOOK_SECRET"] = "secret"
+    envs["bot_env"]["TELEGRAM_WEBHOOK_PATH"] = "/telegram/webhook"
+
+    report = run_preflight(**envs)
+
+    assert report.passed is True
+
+
+def test_staging_preflight_rejects_invalid_webhook_bot_mode() -> None:
+    envs = _valid_envs()
+    envs["bot_env"]["BOT_RUN_MODE"] = "webhook"
+    envs["bot_env"]["TELEGRAM_WEBHOOK_URL"] = "http://bot.example.test/webhook"
+    envs["bot_env"]["TELEGRAM_WEBHOOK_SECRET"] = ""
+    envs["bot_env"]["TELEGRAM_WEBHOOK_PATH"] = "telegram/webhook"
+
+    report = run_preflight(**envs)
+
+    assert report.passed is False
+    assert (
+        "bot TELEGRAM_WEBHOOK_URL must be an absolute HTTPS URL in webhook mode."
+        in report.issues
+    )
+    assert "bot TELEGRAM_WEBHOOK_SECRET must be set in webhook mode." in report.issues
+    assert "bot TELEGRAM_WEBHOOK_PATH must start with '/'." in report.issues
+
+
 def _valid_envs() -> dict[str, dict[str, str]]:
     api_url = "https://api.staging.kupikupi.example/v1"
     webapp_url = "https://app.staging.kupikupi.example"
@@ -76,6 +108,13 @@ def _valid_envs() -> dict[str, dict[str, str]]:
             "TELEGRAM_ALLOWED_USER_IDS": allowlist,
             "SUPPORT_CONTACT_URL": "mailto:support@example.test",
             "PRIVACY_POLICY_URL": "https://app.staging.kupikupi.example/privacy",
+            "BOT_RUN_MODE": "polling",
+            "BOT_POLLING_TIMEOUT_SECONDS": "30",
+            "TELEGRAM_WEBHOOK_URL": "",
+            "TELEGRAM_WEBHOOK_SECRET": "",
+            "TELEGRAM_WEBHOOK_PATH": "/telegram/webhook",
+            "WEBHOOK_HOST": "0.0.0.0",
+            "WEBHOOK_PORT": "8080",
         },
         "webapp_env": {
             "NEXT_PUBLIC_APP_ENV": "staging",

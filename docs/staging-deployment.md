@@ -114,11 +114,20 @@ Do not set `NEXT_PUBLIC_DEMO_ACCESS_TOKEN` in staging.
 | `TELEGRAM_ALLOWED_USER_IDS` | no | same comma-separated Telegram tester IDs as backend |
 | `SUPPORT_CONTACT_URL` | yes | support contact URL |
 | `PRIVACY_POLICY_URL` | yes | privacy policy URL |
+| `BOT_RUN_MODE` | yes | `polling` for simple staging, `webhook` behind HTTPS ingress |
 | `BOT_POLLING_TIMEOUT_SECONDS` | yes | `30` |
+| `TELEGRAM_WEBHOOK_URL` | webhook only | `https://bot.staging.kupikupi.example/telegram/webhook` |
+| `TELEGRAM_WEBHOOK_SECRET` | webhook only | long random secret |
+| `TELEGRAM_WEBHOOK_PATH` | webhook only | `/telegram/webhook` |
+| `WEBHOOK_HOST` | webhook only | `0.0.0.0` |
+| `WEBHOOK_PORT` | webhook only | `8080` |
 
 If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender through
 `/auth/telegram-bot-user` using `TELEGRAM_BOT_TOKEN`. This is the preferred staging mode.
 `TELEGRAM_WEBAPP_URL` must be an absolute HTTPS URL for field testing.
+For the first closed test, `BOT_RUN_MODE=polling` is acceptable and operationally simpler. Use
+`BOT_RUN_MODE=webhook` when the bot container is exposed through HTTPS ingress and set
+`TELEGRAM_WEBHOOK_SECRET` as a secret.
 For a closed field test, set `TELEGRAM_ALLOWED_USER_IDS` in both backend and Telegram Bot
 environments. The backend enforces the allowlist for Telegram WebApp and Bot auth. Leave it empty
 only for open testing. Testers can send `/id` to the staging bot to see the numeric Telegram ID that

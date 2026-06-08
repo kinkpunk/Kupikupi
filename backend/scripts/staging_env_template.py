@@ -24,6 +24,9 @@ def build_staging_env_template(
     error_reporting_endpoint_url: str = "https://errors.example.test/events",
     observability_dashboard_url: str = "https://dashboards.example.test/kupikupi-staging",
     alert_contact_url: str = "mailto:oncall@example.test",
+    bot_run_mode: str = "polling",
+    telegram_webhook_url: str = "",
+    telegram_webhook_secret: str = "",
 ) -> StagingEnvTemplate:
     webapp_origin = _origin(webapp_url)
     error_reporting_enabled = "1" if error_reporting_endpoint_url else "0"
@@ -69,7 +72,13 @@ def build_staging_env_template(
             f'TELEGRAM_ALLOWED_USER_IDS="{telegram_allowed_user_ids}"',
             f'SUPPORT_CONTACT_URL="{support_contact_url}"',
             f'PRIVACY_POLICY_URL="{privacy_policy_url}"',
+            f'BOT_RUN_MODE="{bot_run_mode}"',
             'BOT_POLLING_TIMEOUT_SECONDS="30"',
+            f'TELEGRAM_WEBHOOK_URL="{telegram_webhook_url}"',
+            f'TELEGRAM_WEBHOOK_SECRET="{telegram_webhook_secret}"',
+            'TELEGRAM_WEBHOOK_PATH="/telegram/webhook"',
+            'WEBHOOK_HOST="0.0.0.0"',
+            'WEBHOOK_PORT="8080"',
         ]
     )
     webapp_env = "\n".join(
@@ -115,6 +124,9 @@ def parse_args() -> argparse.Namespace:
         default="https://dashboards.example.test/kupikupi-staging",
     )
     parser.add_argument("--alert-contact-url", default="mailto:oncall@example.test")
+    parser.add_argument("--bot-run-mode", default="polling", choices=["polling", "webhook"])
+    parser.add_argument("--telegram-webhook-url", default="")
+    parser.add_argument("--telegram-webhook-secret", default="")
     return parser.parse_args()
 
 
@@ -133,6 +145,9 @@ def main() -> None:
         error_reporting_endpoint_url=args.error_reporting_endpoint_url,
         observability_dashboard_url=args.observability_dashboard_url,
         alert_contact_url=args.alert_contact_url,
+        bot_run_mode=args.bot_run_mode,
+        telegram_webhook_url=args.telegram_webhook_url,
+        telegram_webhook_secret=args.telegram_webhook_secret,
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     (args.output_dir / "kupikupi-backend.env").write_text(template.backend_env, encoding="utf-8")
