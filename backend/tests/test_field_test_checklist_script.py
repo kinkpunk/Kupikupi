@@ -1,5 +1,7 @@
+import json
 from pathlib import Path
 
+from app.domains.stores.feed_config import store_feed_template
 from scripts.field_test_checklist import build_field_test_checklist
 from scripts.staging_env_template import build_staging_env_template
 
@@ -20,6 +22,7 @@ def test_field_test_checklist_passes_with_valid_operator_env(tmp_path) -> None:
     assert _status_by_name(report)["error-reporting"] == "ok"
     assert _status_by_name(report)["observability-dashboard"] == "ok"
     assert _status_by_name(report)["alert-contact"] == "ok"
+    assert _status_by_name(report)["store-feed"] == "ok"
     assert _status_by_name(report)["authenticated-smoke-token"] == "ok"
     assert _status_by_name(report)["admin-smoke-token"] == "ok"
     assert _status_by_name(report)["watchlist-confirmation-smoke"] == "ok"
@@ -34,6 +37,7 @@ def test_field_test_checklist_warns_when_user_smoke_token_is_missing(tmp_path) -
     report = _build_report(tmp_path)
 
     assert report.passed is True
+    assert _status_by_name(report)["store-feed"] == "ok"
     assert _status_by_name(report)["authenticated-smoke-token"] == "warning"
     assert _status_by_name(report)["watchlist-confirmation-smoke"] == "warning"
     assert _status_by_name(report)["notification-admin-smoke"] == "warning"
@@ -45,6 +49,24 @@ def test_field_test_checklist_fails_when_env_files_are_missing(tmp_path) -> None
     assert report.passed is False
     assert report.items[0].name == "env-files"
     assert report.items[0].status == "failed"
+
+
+def test_field_test_checklist_warns_when_demo_data_only(tmp_path) -> None:
+    _write_template(tmp_path, demo_data_only="1", write_feed_config=False)
+
+    report = _build_report(tmp_path)
+
+    assert report.passed is True
+    assert _status_by_name(report)["store-feed"] == "warning"
+
+
+def test_field_test_checklist_fails_when_store_feed_config_is_missing(tmp_path) -> None:
+    _write_template(tmp_path, write_feed_config=False)
+
+    report = _build_report(tmp_path)
+
+    assert report.passed is False
+    assert _status_by_name(report)["store-feed"] == "failed"
 
 
 def test_field_test_checklist_fails_when_admin_token_is_placeholder(tmp_path) -> None:
@@ -87,6 +109,8 @@ def _write_template(
     admin_token: str = "admin-token",
     confirm_watchlist: str = "0",
     run_notification_smoke: str = "0",
+    demo_data_only: str = "0",
+    write_feed_config: bool = True,
     backend_overrides: dict[str, str] | None = None,
 ) -> None:
     template = build_staging_env_template(
@@ -106,7 +130,20 @@ def _write_template(
     ).replace(
         'KUPIKUPI_RUN_NOTIFICATION_SMOKE="0"',
         f'KUPIKUPI_RUN_NOTIFICATION_SMOKE="{run_notification_smoke}"',
+    ).replace(
+        'KUPIKUPI_DEMO_DATA_ONLY="0"',
+        f'KUPIKUPI_DEMO_DATA_ONLY="{demo_data_only}"',
     )
+    feed_config_path = tmp_path / "store-feed.json"
+    operator_env = operator_env.replace(
+        'KUPIKUPI_STORE_FEED_CONFIG="/tmp/kupikupi-store-feed.json"',
+        f'KUPIKUPI_STORE_FEED_CONFIG="{feed_config_path}"',
+    )
+    if write_feed_config:
+        feed_config_path.write_text(
+            json.dumps(store_feed_template()),
+            encoding="utf-8",
+        )
     backend_env = template.backend_env
     for old, new in (backend_overrides or {}).items():
         backend_env = backend_env.replace(old, new)

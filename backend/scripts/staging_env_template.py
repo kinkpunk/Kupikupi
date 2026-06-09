@@ -107,6 +107,8 @@ def build_staging_env_template(
             'KUPIKUPI_CONFIRM_WATCHLIST="0"',
             'KUPIKUPI_RUN_NOTIFICATION_SMOKE="0"',
             'KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT="100"',
+            'KUPIKUPI_STORE_FEED_CONFIG="/tmp/kupikupi-store-feed.json"',
+            'KUPIKUPI_DEMO_DATA_ONLY="0"',
         ]
     )
     return StagingEnvTemplate(

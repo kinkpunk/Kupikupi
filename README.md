@@ -236,8 +236,8 @@ Store feed operator commands:
 ```bash
 cd backend
 python scripts/store_feed.py --print-template
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3 --min-offers 1
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
+python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG" --dry-run --limit 3 --min-offers 1
+python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG"
 python scripts/source_sync.py --due --limit 10
 python scripts/product_duplicates.py --api-base-url https://api.staging.kupikupi.example/v1 \
   --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" list
@@ -250,6 +250,7 @@ The dry run validates the config, fetches sample offers without database writes,
 feed returns fewer than `--min-offers` offers. Its report includes offer, product, EUR price, size,
 currency, availability, and warning counts. The apply command creates or updates a store and its
 `http_csv`/`http_json` source config.
+Set `KUPIKUPI_DEMO_DATA_ONLY=1` only when the field test is explicitly limited to demo data.
 
 Telegram closed-test allowlist helper:
 

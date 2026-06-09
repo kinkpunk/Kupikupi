@@ -36,8 +36,9 @@ python scripts/staging_preflight.py \
 python scripts/field_test_checklist.py --env-dir /tmp/kupikupi-staging-env
 ```
 
-The checklist is local-only: it validates env files, runs preflight, flags missing smoke tokens,
-checks observability links, and prints the next operator commands.
+The checklist is local-only: it validates env files, runs preflight, validates the store feed config
+or explicit demo-data mode, flags missing smoke tokens, checks observability links, and prints the
+next operator commands.
 
 Backend API, worker, and scheduler:
 
@@ -84,6 +85,8 @@ Operator smoke environment:
 - `KUPIKUPI_CONFIRM_WATCHLIST` is `0` or `1`.
 - `KUPIKUPI_RUN_NOTIFICATION_SMOKE` is `0` or `1`.
 - `KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT` is a positive integer.
+- `KUPIKUPI_STORE_FEED_CONFIG` points to the local JSON feed config for dry-run/apply.
+- `KUPIKUPI_DEMO_DATA_ONLY` is `0`, unless the test is explicitly limited to demo data.
 
 ## Tester Allowlist
 
@@ -110,12 +113,14 @@ Apply the feed config:
 
 ```bash
 cd backend
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3 --min-offers 1
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
+python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG" --dry-run --limit 3 --min-offers 1
+python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG"
 ```
 
 The dry run must pass and show at least one offer, product details, EUR prices, size coverage for
 size-sensitive categories, and a plausible sample before applying the config.
+If `KUPIKUPI_DEMO_DATA_ONLY=1`, skip this section and tell testers the run does not validate real
+prices.
 
 Run sync:
 

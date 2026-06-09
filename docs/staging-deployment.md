@@ -142,6 +142,9 @@ If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender t
 | `KUPIKUPI_CONFIRM_WATCHLIST` | yes | `0` by default, `1` for watchlist confirmation smoke |
 | `KUPIKUPI_RUN_NOTIFICATION_SMOKE` | yes | `0` by default, `1` when notification smoke may run |
 | `KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT` | yes | `100` |
+| `KUPIKUPI_STORE_FEED_CONFIG` | yes unless demo-only | `/tmp/kupikupi-store-feed.json` |
+| `KUPIKUPI_DEMO_DATA_ONLY` | yes | `0`, or `1` for an explicitly demo-data-only test |
+
 For the first closed test, `BOT_RUN_MODE=polling` is acceptable and operationally simpler. Use
 `BOT_RUN_MODE=webhook` when the bot container is exposed through HTTPS ingress and set
 `TELEGRAM_WEBHOOK_SECRET` as a secret.
@@ -268,8 +271,8 @@ Use the backend operator command to print a template and apply the final config:
 ```bash
 cd backend
 python scripts/store_feed.py --print-template
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json --dry-run --limit 3 --min-offers 1
-python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
+python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG" --dry-run --limit 3 --min-offers 1
+python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG"
 python scripts/source_sync.py --due --limit 10
 ```
 
@@ -279,6 +282,8 @@ fails if the feed returns fewer than `--min-offers` offers. Apply the config onl
 has plausible product URLs, prices, currencies, category values, and sizes.
 The sync command prints a JSON summary and returns a non-zero exit code if any run fails or partially
 fails.
+For a demo-data-only closed test, set `KUPIKUPI_DEMO_DATA_ONLY=1`, skip the real feed commands, and
+make that limitation explicit to testers.
 
 Example `http_csv` source config settings:
 

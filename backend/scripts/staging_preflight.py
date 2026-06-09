@@ -179,6 +179,11 @@ def _validate_operator_env(env: dict[str, str]) -> list[str]:
     dispatch_limit = env.get("KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT", "100")
     if not dispatch_limit.isdecimal() or int(dispatch_limit) < 1:
         issues.append("operator KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT must be a positive integer.")
+    demo_data_only = env.get("KUPIKUPI_DEMO_DATA_ONLY", "0")
+    if demo_data_only not in {"0", "1"}:
+        issues.append("operator KUPIKUPI_DEMO_DATA_ONLY must be 0 or 1.")
+    if demo_data_only != "1" and not env.get("KUPIKUPI_STORE_FEED_CONFIG", ""):
+        issues.append("operator KUPIKUPI_STORE_FEED_CONFIG must be set unless demo-data-only.")
     return issues
 
 

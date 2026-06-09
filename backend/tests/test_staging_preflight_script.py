@@ -98,6 +98,8 @@ def test_staging_preflight_rejects_invalid_operator_env() -> None:
     envs["operator_env"]["KUPIKUPI_CONFIRM_WATCHLIST"] = "yes"
     envs["operator_env"]["KUPIKUPI_RUN_NOTIFICATION_SMOKE"] = "yes"
     envs["operator_env"]["KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT"] = "0"
+    envs["operator_env"]["KUPIKUPI_DEMO_DATA_ONLY"] = "yes"
+    envs["operator_env"]["KUPIKUPI_STORE_FEED_CONFIG"] = ""
 
     report = run_preflight(**envs)
 
@@ -110,6 +112,8 @@ def test_staging_preflight_rejects_invalid_operator_env() -> None:
         "operator KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT must be a positive integer."
         in report.issues
     )
+    assert "operator KUPIKUPI_DEMO_DATA_ONLY must be 0 or 1." in report.issues
+    assert "operator KUPIKUPI_STORE_FEED_CONFIG must be set unless demo-data-only." in report.issues
     assert (
         "operator KUPIKUPI_API_BASE_URL must match webapp NEXT_PUBLIC_API_BASE_URL."
         in report.issues
@@ -172,5 +176,7 @@ def _valid_envs() -> dict[str, dict[str, str]]:
             "KUPIKUPI_CONFIRM_WATCHLIST": "0",
             "KUPIKUPI_RUN_NOTIFICATION_SMOKE": "0",
             "KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT": "100",
+            "KUPIKUPI_STORE_FEED_CONFIG": "/tmp/kupikupi-store-feed.json",
+            "KUPIKUPI_DEMO_DATA_ONLY": "0",
         },
     }

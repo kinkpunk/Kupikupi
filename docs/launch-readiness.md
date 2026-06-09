@@ -39,7 +39,8 @@ Implemented and covered:
 - Live FX-rate updater job for configured currencies.
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Operator command for creating or updating `http_csv`/`http_json` store feed configs.
-- Store feed dry-run validation before database writes.
+- Store feed dry-run validation before database writes and field-test checklist validation for feed
+  config or explicit demo-data-only mode.
 - Operator source sync script with JSON summary and non-zero failure exit codes.
 - Operator endpoint for reviewing potential product duplicate candidates.
 - Operator endpoint for merging confirmed duplicate products.
@@ -95,8 +96,9 @@ Blocking gaps:
 
 ## Recommended Next Iterations
 
-1. Run `scripts/field_test_checklist.py` against real staging env files.
-2. Configure one real Czech store feed through `scripts/store_feed.py` after dry-run validation.
+1. Run `scripts/field_test_checklist.py` against real staging env files and feed config.
+2. Configure one real Czech store feed through `scripts/store_feed.py` after dry-run validation, or
+   explicitly mark the closed test as demo-data-only.
 3. Add tracing provider and deploy real alerting/dashboard infrastructure.
 4. Run the closed field test runbook on deployed staging, including `scripts/user_data_smoke.py`.
 

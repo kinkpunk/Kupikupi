@@ -4,6 +4,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
 
+from pydantic import ValidationError
+
+from app.domains.stores.feed_config import StoreFeedConfig
 from scripts.staging_preflight import load_env_file, run_preflight
 
 ChecklistStatus = Literal["ok", "warning", "failed"]
@@ -78,6 +81,7 @@ def build_field_test_checklist(
         )
 
     items.extend(_observability_items(backend_env))
+    items.append(_store_feed_item(operator_env))
 
     access_token = operator_env.get("KUPIKUPI_ACCESS_TOKEN", "")
     if access_token:
@@ -150,6 +154,46 @@ def build_field_test_checklist(
         )
 
     return FieldTestChecklistReport(items=items, commands=commands)
+
+
+def _store_feed_item(operator_env: dict[str, str]) -> ChecklistItem:
+    if operator_env.get("KUPIKUPI_DEMO_DATA_ONLY") == "1":
+        return ChecklistItem(
+            name="store-feed",
+            status="warning",
+            detail="KUPIKUPI_DEMO_DATA_ONLY=1; field test is explicitly limited to demo data",
+        )
+
+    config_path_value = operator_env.get("KUPIKUPI_STORE_FEED_CONFIG", "")
+    if not config_path_value:
+        return ChecklistItem(
+            name="store-feed",
+            status="failed",
+            detail="KUPIKUPI_STORE_FEED_CONFIG is required unless demo-data-only",
+        )
+
+    config_path = Path(config_path_value)
+    if not config_path.exists():
+        return ChecklistItem(
+            name="store-feed",
+            status="failed",
+            detail=f"store feed config does not exist: {config_path}",
+        )
+
+    try:
+        payload = StoreFeedConfig.model_validate_json(config_path.read_text(encoding="utf-8"))
+    except (OSError, ValidationError, ValueError) as exc:
+        return ChecklistItem(
+            name="store-feed",
+            status="failed",
+            detail=f"store feed config is invalid: {exc}",
+        )
+
+    return ChecklistItem(
+        name="store-feed",
+        status="ok",
+        detail=f"{payload.store.name} {payload.source.source_type} feed config is valid",
+    )
 
 
 def _observability_items(backend_env: dict[str, str]) -> list[ChecklistItem]:
@@ -259,6 +303,10 @@ def _recommended_commands(*, operator_env: dict[str, str]) -> list[str]:
     support_url = operator_env.get("KUPIKUPI_SUPPORT_URL", "$KUPIKUPI_SUPPORT_URL")
     privacy_url = operator_env.get("KUPIKUPI_PRIVACY_URL", "$KUPIKUPI_PRIVACY_URL")
     terms_url = operator_env.get("KUPIKUPI_TERMS_URL", "$KUPIKUPI_TERMS_URL")
+    store_feed_config = operator_env.get(
+        "KUPIKUPI_STORE_FEED_CONFIG",
+        "$KUPIKUPI_STORE_FEED_CONFIG",
+    )
     return [
         "python scripts/staging_preflight.py "
         "--backend-env /tmp/kupikupi-staging-env/kupikupi-backend.env "
@@ -278,6 +326,10 @@ def _recommended_commands(*, operator_env: dict[str, str]) -> list[str]:
         '--admin-access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" '
         "--confirm-watchlist "
         "--run-notification-smoke",
+        "python scripts/store_feed.py "
+        f"--config {store_feed_config} --dry-run --limit 3 --min-offers 1",
+        f"python scripts/store_feed.py --config {store_feed_config}",
+        "python scripts/source_sync.py --due --limit 10",
         "python scripts/product_duplicates.py "
         f"--api-base-url {api_base_url} "
         '--access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" list',
