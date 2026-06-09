@@ -139,6 +139,63 @@ def test_staging_smoke_runs_admin_flow() -> None:
         "authenticated-flow",
         "admin-sync-runs",
         "admin-duplicate-candidates",
+        "admin-notifications",
+    ]
+    assert client.requests[-2]["access_token"] == "admin-token"
+    assert client.requests[-1]["access_token"] == "admin-token"
+
+
+def test_staging_smoke_runs_notification_admin_flow_when_enabled() -> None:
+    client = FakeSmokeClient(
+        {
+            ("GET", "https://api.example.test/v1/health"): (
+                200,
+                {"status": "ok", "service": "api"},
+            ),
+            ("GET", "https://api.example.test/v1/ready"): (200, {"status": "ok"}),
+            ("GET", "https://api.example.test/v1/metrics"): (200, {"requests": 3, "routes": {}}),
+            ("GET", "https://app.example.test"): (200, {"text": "<html></html>"}),
+            ("GET", "https://api.example.test/v1/admin/sync-runs"): (200, {"items": []}),
+            ("GET", "https://api.example.test/v1/admin/product-duplicate-candidates"): (
+                200,
+                {"items": []},
+            ),
+            ("POST", "https://api.example.test/v1/admin/notifications/generate"): (
+                200,
+                {"created": 2, "skipped": 1},
+            ),
+            ("POST", "https://api.example.test/v1/admin/notifications/dispatch?limit=25"): (
+                200,
+                {"sent": 2, "failed": 0, "skipped": 1},
+            ),
+        }
+    )
+
+    steps = run_staging_smoke(
+        StagingSmokeConfig(
+            api_base_url="https://api.example.test/v1",
+            webapp_url="https://app.example.test",
+            admin_access_token="admin-token",
+            run_notification_smoke=True,
+            notification_dispatch_limit=25,
+        ),
+        client,
+    )
+
+    assert smoke_passed(steps) is True
+    assert [step.name for step in steps] == [
+        "api-health",
+        "api-ready",
+        "api-metrics",
+        "webapp",
+        "support-url",
+        "privacy-url",
+        "terms-url",
+        "authenticated-flow",
+        "admin-sync-runs",
+        "admin-duplicate-candidates",
+        "admin-notifications-generate",
+        "admin-notifications-dispatch",
     ]
     assert client.requests[-2]["access_token"] == "admin-token"
     assert client.requests[-1]["access_token"] == "admin-token"

@@ -46,6 +46,8 @@ def test_staging_env_template_contains_matching_service_values(tmp_path) -> None
     )
     assert 'KUPIKUPI_WEBAPP_URL="https://app.staging.kupikupi.example"' in template.operator_env
     assert 'KUPIKUPI_ADMIN_ACCESS_TOKEN="staging-admin-token"' in template.operator_env
+    assert 'KUPIKUPI_RUN_NOTIFICATION_SMOKE="0"' in template.operator_env
+    assert 'KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT="100"' in template.operator_env
     assert (
         'OBSERVABILITY_DASHBOARD_URL="https://dashboards.example.test/kupikupi-staging"'
         in template.backend_env

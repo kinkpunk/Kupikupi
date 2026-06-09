@@ -30,6 +30,7 @@ Implemented and covered:
 - Operator helper for building Telegram closed-test allowlist env values.
 - Telegram Bot per-user backend authentication via bot-token protected exchange.
 - Telegram notification delivery integration.
+- Operator script for generating and dispatching test notifications through staging API.
 - Next.js Telegram WebApp MVP flow.
 - WebApp authentication prefers fresh Telegram `initData` over stored or demo tokens.
 - Docker Compose for local backend, worker, scheduler, WebApp, optional Telegram Bot profile.
@@ -57,7 +58,8 @@ Implemented and covered:
 - Visible support, privacy, and terms entry points in Telegram Bot and WebApp.
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - Remote staging smoke script for HTTPS API/WebApp and optional authenticated shopping flow.
-- Remote staging smoke checks for support, privacy, terms, and optional admin endpoints.
+- Remote staging smoke checks for support, privacy, terms, optional admin endpoints, and opt-in
+  notification admin flow.
 - Closed field-test checklist script for local env/preflight/smoke-token/observability readiness.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.

@@ -173,6 +173,12 @@ def _validate_operator_env(env: dict[str, str]) -> list[str]:
     confirm_watchlist = env.get("KUPIKUPI_CONFIRM_WATCHLIST", "0")
     if confirm_watchlist not in {"0", "1"}:
         issues.append("operator KUPIKUPI_CONFIRM_WATCHLIST must be 0 or 1.")
+    run_notification_smoke = env.get("KUPIKUPI_RUN_NOTIFICATION_SMOKE", "0")
+    if run_notification_smoke not in {"0", "1"}:
+        issues.append("operator KUPIKUPI_RUN_NOTIFICATION_SMOKE must be 0 or 1.")
+    dispatch_limit = env.get("KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT", "100")
+    if not dispatch_limit.isdecimal() or int(dispatch_limit) < 1:
+        issues.append("operator KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT must be a positive integer.")
     return issues
 
 

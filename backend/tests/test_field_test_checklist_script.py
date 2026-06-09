@@ -5,7 +5,12 @@ from scripts.staging_env_template import build_staging_env_template
 
 
 def test_field_test_checklist_passes_with_valid_operator_env(tmp_path) -> None:
-    _write_template(tmp_path, access_token="user-token", confirm_watchlist="1")
+    _write_template(
+        tmp_path,
+        access_token="user-token",
+        confirm_watchlist="1",
+        run_notification_smoke="1",
+    )
 
     report = _build_report(tmp_path)
 
@@ -18,7 +23,9 @@ def test_field_test_checklist_passes_with_valid_operator_env(tmp_path) -> None:
     assert _status_by_name(report)["authenticated-smoke-token"] == "ok"
     assert _status_by_name(report)["admin-smoke-token"] == "ok"
     assert _status_by_name(report)["watchlist-confirmation-smoke"] == "ok"
+    assert _status_by_name(report)["notification-admin-smoke"] == "ok"
     assert any("scripts/staging_smoke.py" in command for command in report.commands)
+    assert any("scripts/notifications.py" in command for command in report.commands)
 
 
 def test_field_test_checklist_warns_when_user_smoke_token_is_missing(tmp_path) -> None:
@@ -29,6 +36,7 @@ def test_field_test_checklist_warns_when_user_smoke_token_is_missing(tmp_path) -
     assert report.passed is True
     assert _status_by_name(report)["authenticated-smoke-token"] == "warning"
     assert _status_by_name(report)["watchlist-confirmation-smoke"] == "warning"
+    assert _status_by_name(report)["notification-admin-smoke"] == "warning"
 
 
 def test_field_test_checklist_fails_when_env_files_are_missing(tmp_path) -> None:
@@ -78,6 +86,7 @@ def _write_template(
     access_token: str = "",
     admin_token: str = "admin-token",
     confirm_watchlist: str = "0",
+    run_notification_smoke: str = "0",
     backend_overrides: dict[str, str] | None = None,
 ) -> None:
     template = build_staging_env_template(
@@ -94,6 +103,9 @@ def _write_template(
     ).replace(
         'KUPIKUPI_CONFIRM_WATCHLIST="0"',
         f'KUPIKUPI_CONFIRM_WATCHLIST="{confirm_watchlist}"',
+    ).replace(
+        'KUPIKUPI_RUN_NOTIFICATION_SMOKE="0"',
+        f'KUPIKUPI_RUN_NOTIFICATION_SMOKE="{run_notification_smoke}"',
     )
     backend_env = template.backend_env
     for old, new in (backend_overrides or {}).items():

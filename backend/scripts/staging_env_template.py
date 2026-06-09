@@ -105,6 +105,8 @@ def build_staging_env_template(
             'KUPIKUPI_ACCESS_TOKEN=""',
             f'KUPIKUPI_ADMIN_ACCESS_TOKEN="{operator_admin_access_token}"',
             'KUPIKUPI_CONFIRM_WATCHLIST="0"',
+            'KUPIKUPI_RUN_NOTIFICATION_SMOKE="0"',
+            'KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT="100"',
         ]
     )
     return StagingEnvTemplate(

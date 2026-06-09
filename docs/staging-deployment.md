@@ -140,6 +140,8 @@ If `BACKEND_ACCESS_TOKEN` is empty, the bot authenticates each Telegram sender t
 | `KUPIKUPI_ACCESS_TOKEN` | optional | staging-only user token for authenticated smoke |
 | `KUPIKUPI_ADMIN_ACCESS_TOKEN` | yes | staging admin token for admin smoke and duplicate review |
 | `KUPIKUPI_CONFIRM_WATCHLIST` | yes | `0` by default, `1` for watchlist confirmation smoke |
+| `KUPIKUPI_RUN_NOTIFICATION_SMOKE` | yes | `0` by default, `1` when notification smoke may run |
+| `KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT` | yes | `100` |
 For the first closed test, `BOT_RUN_MODE=polling` is acceptable and operationally simpler. Use
 `BOT_RUN_MODE=webhook` when the bot container is exposed through HTTPS ingress and set
 `TELEGRAM_WEBHOOK_SECRET` as a secret.
@@ -220,12 +222,14 @@ python scripts/staging_smoke.py \
   --webapp-url https://app.staging.kupikupi.example \
   --access-token "$KUPIKUPI_ACCESS_TOKEN" \
   --admin-access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
-  --confirm-watchlist
+  --confirm-watchlist \
+  --run-notification-smoke
 ```
 
 The authenticated smoke creates a shopping request and, with `--confirm-watchlist`, confirms a
 watchlist. The admin smoke verifies operator access to sync runs and duplicate candidate review.
-Use staging-only user and admin tokens.
+Use staging-only user and admin tokens. Enable notification smoke only when staging is ready to
+generate and dispatch test notifications.
 
 Use a real Telegram account allowed to access the staging bot:
 
@@ -241,7 +245,19 @@ Use a real Telegram account allowed to access the staging bot:
 5. Confirm that parser output is shown.
 6. Confirm watchlist creation manually.
 7. Verify `/requests` and `/watchlists` in the Telegram Bot.
-8. Trigger notification generation and dispatch in staging.
+8. Trigger notification generation and dispatch in staging:
+
+   ```bash
+   python scripts/notifications.py \
+     --api-base-url https://api.staging.kupikupi.example/v1 \
+     --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+     generate
+   python scripts/notifications.py \
+     --api-base-url https://api.staging.kupikupi.example/v1 \
+     --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+     dispatch --limit 100
+   ```
+
 9. Confirm a notification is delivered to the same Telegram user.
 
 ## First Store Feed Configuration

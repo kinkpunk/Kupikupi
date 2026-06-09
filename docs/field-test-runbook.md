@@ -82,6 +82,8 @@ Operator smoke environment:
 - `KUPIKUPI_TERMS_URL` is set.
 - `KUPIKUPI_ADMIN_ACCESS_TOKEN` is set for admin smoke and duplicate review.
 - `KUPIKUPI_CONFIRM_WATCHLIST` is `0` or `1`.
+- `KUPIKUPI_RUN_NOTIFICATION_SMOKE` is `0` or `1`.
+- `KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT` is a positive integer.
 
 ## Tester Allowlist
 
@@ -176,11 +178,13 @@ python scripts/staging_smoke.py \
   --webapp-url https://app.staging.kupikupi.example \
   --access-token "$KUPIKUPI_ACCESS_TOKEN" \
   --admin-access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
-  --confirm-watchlist
+  --confirm-watchlist \
+  --run-notification-smoke
 ```
 
 The smoke report must show `admin-sync-runs=ok` and `admin-duplicate-candidates=ok` when an admin
-token is supplied.
+token is supplied. Enable notification smoke only when test notifications may be generated and
+dispatched.
 
 ## Manual Telegram Scenario
 
@@ -198,7 +202,20 @@ Use a real Telegram tester account included in the allowlist:
 5. Confirm parsed constraints are shown.
 6. Confirm watchlist creation manually.
 7. Run `/requests` and `/watchlists`.
-8. Trigger notification generation and dispatch.
+8. Trigger notification generation and dispatch:
+
+   ```bash
+   cd backend
+   python scripts/notifications.py \
+     --api-base-url https://api.staging.kupikupi.example/v1 \
+     --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+     generate
+   python scripts/notifications.py \
+     --api-base-url https://api.staging.kupikupi.example/v1 \
+     --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+     dispatch --limit 100
+   ```
+
 9. Confirm Telegram notification delivery.
 
 ## Privacy Operations

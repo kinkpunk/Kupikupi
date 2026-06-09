@@ -96,6 +96,8 @@ def test_staging_preflight_rejects_invalid_operator_env() -> None:
     envs["operator_env"]["KUPIKUPI_WEBAPP_URL"] = "https://other-app.example.test"
     envs["operator_env"]["KUPIKUPI_ADMIN_ACCESS_TOKEN"] = "replace-with-staging-admin-token"
     envs["operator_env"]["KUPIKUPI_CONFIRM_WATCHLIST"] = "yes"
+    envs["operator_env"]["KUPIKUPI_RUN_NOTIFICATION_SMOKE"] = "yes"
+    envs["operator_env"]["KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT"] = "0"
 
     report = run_preflight(**envs)
 
@@ -103,6 +105,11 @@ def test_staging_preflight_rejects_invalid_operator_env() -> None:
     assert "operator KUPIKUPI_API_BASE_URL must be an absolute HTTPS URL." in report.issues
     assert "operator KUPIKUPI_ADMIN_ACCESS_TOKEN must be set." in report.issues
     assert "operator KUPIKUPI_CONFIRM_WATCHLIST must be 0 or 1." in report.issues
+    assert "operator KUPIKUPI_RUN_NOTIFICATION_SMOKE must be 0 or 1." in report.issues
+    assert (
+        "operator KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT must be a positive integer."
+        in report.issues
+    )
     assert (
         "operator KUPIKUPI_API_BASE_URL must match webapp NEXT_PUBLIC_API_BASE_URL."
         in report.issues
@@ -163,5 +170,7 @@ def _valid_envs() -> dict[str, dict[str, str]]:
             "KUPIKUPI_ACCESS_TOKEN": "",
             "KUPIKUPI_ADMIN_ACCESS_TOKEN": "staging-admin-token",
             "KUPIKUPI_CONFIRM_WATCHLIST": "0",
+            "KUPIKUPI_RUN_NOTIFICATION_SMOKE": "0",
+            "KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT": "100",
         },
     }

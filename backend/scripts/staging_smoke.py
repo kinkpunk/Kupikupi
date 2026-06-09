@@ -23,6 +23,8 @@ class StagingSmokeConfig:
     admin_access_token: str | None = None
     request_text: str = DEFAULT_REQUEST_TEXT
     confirm_watchlist: bool = False
+    run_notification_smoke: bool = False
+    notification_dispatch_limit: int = 100
 
 
 @dataclass(frozen=True)
@@ -124,6 +126,10 @@ def config_from_env() -> StagingSmokeConfig:
         admin_access_token=os.environ.get("KUPIKUPI_ADMIN_ACCESS_TOKEN") or None,
         request_text=os.environ.get("KUPIKUPI_SMOKE_REQUEST_TEXT", DEFAULT_REQUEST_TEXT),
         confirm_watchlist=os.environ.get("KUPIKUPI_CONFIRM_WATCHLIST") == "1",
+        run_notification_smoke=os.environ.get("KUPIKUPI_RUN_NOTIFICATION_SMOKE") == "1",
+        notification_dispatch_limit=int(
+            os.environ.get("KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT", "100")
+        ),
     )
 
 
@@ -148,6 +154,16 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         default=os.environ.get("KUPIKUPI_CONFIRM_WATCHLIST") == "1",
     )
+    parser.add_argument(
+        "--run-notification-smoke",
+        action="store_true",
+        default=os.environ.get("KUPIKUPI_RUN_NOTIFICATION_SMOKE") == "1",
+    )
+    parser.add_argument(
+        "--notification-dispatch-limit",
+        type=int,
+        default=int(os.environ.get("KUPIKUPI_NOTIFICATION_DISPATCH_LIMIT", "100")),
+    )
     return parser.parse_args()
 
 
@@ -163,6 +179,8 @@ def main() -> None:
         admin_access_token=args.admin_access_token or None,
         request_text=args.request_text,
         confirm_watchlist=args.confirm_watchlist,
+        run_notification_smoke=args.run_notification_smoke,
+        notification_dispatch_limit=args.notification_dispatch_limit,
     )
     if not config.api_base_url or not config.webapp_url:
         print("Provide --api-base-url and --webapp-url or matching KUPIKUPI_* env vars.")
@@ -304,6 +322,74 @@ def _run_admin_flow(config: StagingSmokeConfig, client: HttpClient) -> list[Smok
                 "admin-duplicate-candidates",
                 "failed",
                 f"HTTP {status}: {candidates}",
+            )
+        )
+    steps.extend(_run_notification_admin_flow(config, client))
+    return steps
+
+
+def _run_notification_admin_flow(
+    config: StagingSmokeConfig,
+    client: HttpClient,
+) -> list[SmokeStep]:
+    if not config.run_notification_smoke:
+        return [
+            SmokeStep(
+                "admin-notifications",
+                "skipped",
+                "enable with --run-notification-smoke",
+            )
+        ]
+
+    steps = []
+    status, generation = client.request(
+        "POST",
+        _api_url(config, "/admin/notifications/generate"),
+        access_token=config.admin_access_token,
+    )
+    if status == 200 and isinstance(generation, dict) and "created" in generation:
+        steps.append(
+            SmokeStep(
+                "admin-notifications-generate",
+                "ok",
+                f"{generation.get('created')} created, {generation.get('skipped')} skipped",
+            )
+        )
+    else:
+        steps.append(
+            SmokeStep(
+                "admin-notifications-generate",
+                "failed",
+                f"HTTP {status}: {generation}",
+            )
+        )
+        return steps
+
+    status, dispatch = client.request(
+        "POST",
+        _api_url(
+            config,
+            f"/admin/notifications/dispatch?limit={config.notification_dispatch_limit}",
+        ),
+        access_token=config.admin_access_token,
+    )
+    if status == 200 and isinstance(dispatch, dict) and "sent" in dispatch:
+        steps.append(
+            SmokeStep(
+                "admin-notifications-dispatch",
+                "ok",
+                (
+                    f"{dispatch.get('sent')} sent, {dispatch.get('failed')} failed, "
+                    f"{dispatch.get('skipped')} skipped"
+                ),
+            )
+        )
+    else:
+        steps.append(
+            SmokeStep(
+                "admin-notifications-dispatch",
+                "failed",
+                f"HTTP {status}: {dispatch}",
             )
         )
     return steps

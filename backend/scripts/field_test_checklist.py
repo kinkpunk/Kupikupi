@@ -132,6 +132,23 @@ def build_field_test_checklist(
             )
         )
 
+    if operator_env.get("KUPIKUPI_RUN_NOTIFICATION_SMOKE") == "1":
+        items.append(
+            ChecklistItem(
+                name="notification-admin-smoke",
+                status="ok",
+                detail="notification admin smoke is enabled",
+            )
+        )
+    else:
+        items.append(
+            ChecklistItem(
+                name="notification-admin-smoke",
+                status="warning",
+                detail="set KUPIKUPI_RUN_NOTIFICATION_SMOKE=1 to smoke notification endpoints",
+            )
+        )
+
     return FieldTestChecklistReport(items=items, commands=commands)
 
 
@@ -259,10 +276,17 @@ def _recommended_commands(*, operator_env: dict[str, str]) -> list[str]:
         f"--webapp-url {webapp_url} "
         '--access-token "$KUPIKUPI_ACCESS_TOKEN" '
         '--admin-access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" '
-        "--confirm-watchlist",
+        "--confirm-watchlist "
+        "--run-notification-smoke",
         "python scripts/product_duplicates.py "
         f"--api-base-url {api_base_url} "
         '--access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" list',
+        "python scripts/notifications.py "
+        f"--api-base-url {api_base_url} "
+        '--access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" generate',
+        "python scripts/notifications.py "
+        f"--api-base-url {api_base_url} "
+        '--access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" dispatch --limit 100',
     ]
 
 

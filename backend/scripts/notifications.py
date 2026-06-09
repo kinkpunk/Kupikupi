@@ -1,0 +1,152 @@
+import argparse
+import json
+import os
+from typing import Protocol
+
+import httpx
+
+
+class NotificationAdminClient(Protocol):
+    def request(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: dict[str, str],
+    ) -> httpx.Response:
+        pass
+
+
+def generate_notifications_command(
+    *,
+    api_base_url: str,
+    access_token: str,
+    client: NotificationAdminClient | None = None,
+) -> int:
+    return _post_admin_notification_endpoint(
+        api_base_url=api_base_url,
+        access_token=access_token,
+        path="/admin/notifications/generate",
+        client=client,
+    )
+
+
+def dispatch_notifications_command(
+    *,
+    api_base_url: str,
+    access_token: str,
+    limit: int,
+    client: NotificationAdminClient | None = None,
+) -> int:
+    return _post_admin_notification_endpoint(
+        api_base_url=api_base_url,
+        access_token=access_token,
+        path=f"/admin/notifications/dispatch?limit={limit}",
+        client=client,
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run Kupikupi notification operator commands.")
+    parser.add_argument(
+        "--api-base-url",
+        default=os.environ.get("KUPIKUPI_API_BASE_URL", ""),
+        help="Backend API base URL, for example https://api.staging.kupikupi.example/v1.",
+    )
+    parser.add_argument(
+        "--access-token",
+        default=os.environ.get("KUPIKUPI_ADMIN_ACCESS_TOKEN", ""),
+        help="Admin access token. Defaults to KUPIKUPI_ADMIN_ACCESS_TOKEN.",
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("generate", help="Generate notifications from active watchlists.")
+    dispatch_parser = subparsers.add_parser("dispatch", help="Dispatch created notifications.")
+    dispatch_parser.add_argument("--limit", type=int, default=100)
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    if not args.api_base_url.strip():
+        print("Provide --api-base-url or KUPIKUPI_API_BASE_URL.")
+        raise SystemExit(2)
+    if not args.access_token.strip():
+        print("Provide --access-token or KUPIKUPI_ADMIN_ACCESS_TOKEN.")
+        raise SystemExit(2)
+
+    if args.command == "generate":
+        raise SystemExit(
+            generate_notifications_command(
+                api_base_url=args.api_base_url,
+                access_token=args.access_token,
+            )
+        )
+    raise SystemExit(
+        dispatch_notifications_command(
+            api_base_url=args.api_base_url,
+            access_token=args.access_token,
+            limit=args.limit,
+        )
+    )
+
+
+def _post_admin_notification_endpoint(
+    *,
+    api_base_url: str,
+    access_token: str,
+    path: str,
+    client: NotificationAdminClient | None,
+) -> int:
+    with _client_context(client) as active_client:
+        response = active_client.request(
+            "POST",
+            _url(api_base_url, path),
+            headers=_headers(access_token),
+        )
+    if response.status_code != 200:
+        print(_error_report(response))
+        return 1
+
+    print(json.dumps(response.json(), ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def _url(api_base_url: str, path: str) -> str:
+    return f"{api_base_url.rstrip('/')}{path}"
+
+
+def _headers(access_token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+def _error_report(response: httpx.Response) -> str:
+    try:
+        detail = response.json()
+    except ValueError:
+        detail = response.text
+    return json.dumps(
+        {"status_code": response.status_code, "error": detail},
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+    )
+
+
+class _client_context:
+    def __init__(self, client: NotificationAdminClient | None) -> None:
+        self._provided_client = client
+        self._created_client: httpx.Client | None = None
+
+    def __enter__(self) -> NotificationAdminClient:
+        if self._provided_client is not None:
+            return self._provided_client
+        self._created_client = httpx.Client(timeout=15)
+        return self._created_client
+
+    def __exit__(self, *_args) -> None:
+        if self._created_client is not None:
+            self._created_client.close()
+
+
+if __name__ == "__main__":
+    main()

@@ -153,7 +153,8 @@ python scripts/staging_smoke.py \
 
 Add `--access-token TOKEN --confirm-watchlist` to run the authenticated shopping request flow.
 Add `--admin-access-token ADMIN_TOKEN` to verify staging operator endpoints for sync runs and
-duplicate candidates.
+duplicate candidates. Add `--run-notification-smoke` only when staging is ready to generate and
+dispatch test notifications.
 
 Staging env preflight:
 
@@ -195,6 +196,16 @@ celery -A app.core.celery_app.celery_app call retention.cleanup
 celery -A app.core.celery_app.celery_app call sync.run_fake
 celery -A app.core.celery_app.celery_app call sync.run_source_config --args='["SOURCE_CONFIG_ID"]'
 celery -A app.core.celery_app.celery_app call sync.run_due_source_configs
+```
+
+Notification operator commands:
+
+```bash
+cd backend
+python scripts/notifications.py --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" generate
+python scripts/notifications.py --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" dispatch --limit 100
 ```
 
 User data operator commands:
