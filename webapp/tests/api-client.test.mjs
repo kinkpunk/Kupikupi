@@ -313,6 +313,55 @@ test("mergeDuplicateProduct posts target product id", async () => {
   });
 });
 
+test("admin operations client lists stores and source configs", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "admin-token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, { items: [] });
+    },
+  });
+
+  await client.listStores();
+  await client.listStoreSourceConfigs("store-1");
+
+  assert.equal(calls[0].url, "https://api.example.test/v1/admin/stores");
+  assert.equal(calls[0].init.method, "GET");
+  assert.equal(
+    calls[1].url,
+    "https://api.example.test/v1/admin/stores/store-1/source-configs",
+  );
+  assert.equal(calls[1].init.method, "GET");
+});
+
+test("admin operations client manages sync runs", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "admin-token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, { items: [] });
+    },
+  });
+
+  await client.listSyncRuns();
+  await client.listSyncRunItems("sync-run-1");
+  await client.triggerSourceConfigSync("source-config-1");
+
+  assert.equal(calls[0].url, "https://api.example.test/v1/admin/sync-runs");
+  assert.equal(calls[0].init.method, "GET");
+  assert.equal(calls[1].url, "https://api.example.test/v1/admin/sync-runs/sync-run-1/items");
+  assert.equal(calls[1].init.method, "GET");
+  assert.equal(calls[2].url, "https://api.example.test/v1/admin/sync-runs");
+  assert.equal(calls[2].init.method, "POST");
+  assert.deepEqual(JSON.parse(calls[2].init.body), {
+    source_config_id: "source-config-1",
+  });
+});
+
 test("client requires access token", async () => {
   const client = createApiClient({
     baseUrl: "https://api.example.test/v1",

@@ -246,8 +246,9 @@ python scripts/product_duplicates.py --api-base-url https://api.staging.kupikupi
   --output /tmp/kupikupi-duplicate-candidates.csv
 ```
 
-The WebApp also exposes `/admin` for operator duplicate review and confirmed product merges with
-the staging admin token.
+The WebApp also exposes `/admin` for operator store/source-config review, manual source sync runs,
+sync-run item inspection, duplicate review, and confirmed product merges with the staging admin
+token.
 
 The dry run validates the config, fetches sample offers without database writes, and fails if the
 feed returns fewer than `--min-offers` offers. Its report includes offer, product, EUR price, size,

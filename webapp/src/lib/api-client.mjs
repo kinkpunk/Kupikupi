@@ -157,6 +157,26 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
         },
       });
     },
+    listStores() {
+      return request("/admin/stores");
+    },
+    listStoreSourceConfigs(storeId) {
+      return request(`/admin/stores/${storeId}/source-configs`);
+    },
+    listSyncRuns() {
+      return request("/admin/sync-runs");
+    },
+    listSyncRunItems(syncRunId) {
+      return request(`/admin/sync-runs/${syncRunId}/items`);
+    },
+    triggerSourceConfigSync(sourceConfigId) {
+      return request("/admin/sync-runs", {
+        method: "POST",
+        body: {
+          source_config_id: sourceConfigId,
+        },
+      });
+    },
   };
 
   async function authRequest(path, body) {

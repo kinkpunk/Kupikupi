@@ -178,3 +178,51 @@ export type ProductMergeResult = {
   sync_run_items_moved: number;
   source_product_deleted: boolean;
 };
+
+export type Store = {
+  id: string;
+  name: string;
+  country: string;
+  url: string;
+  active: boolean;
+  delivers_to_cz: boolean;
+  created_at: string;
+};
+
+export type SourceConfig = {
+  id: string;
+  store_id: string;
+  source_type: string;
+  endpoint_url?: string | null;
+  active: boolean;
+  sync_interval_minutes?: number | null;
+  last_sync_at?: string | null;
+  next_sync_at?: string | null;
+  settings?: Record<string, unknown> | null;
+};
+
+export type SyncRun = {
+  id: string;
+  store_id?: string | null;
+  source_config_id?: string | null;
+  source_type: string;
+  status: string;
+  products_seen: number;
+  offers_seen: number;
+  failed_offers: number;
+  error_message?: string | null;
+  started_at: string;
+  finished_at?: string | null;
+};
+
+export type SyncRunItem = {
+  id: string;
+  sync_run_id: string;
+  external_id?: string | null;
+  status: string;
+  product_id?: string | null;
+  offer_id?: string | null;
+  error_message?: string | null;
+  raw_data?: Record<string, unknown> | null;
+  created_at: string;
+};

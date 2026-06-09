@@ -47,6 +47,8 @@ Implemented and covered:
 - Operator script for listing, CSV-exporting, and merging product duplicate candidates through
   staging API.
 - WebApp operator screen for reviewing duplicate candidate groups and merging confirmed duplicates.
+- WebApp operator screen for reviewing stores/source configs, triggering manual syncs, and
+  inspecting sync-run items.
 - Request ID propagation and JSON access logs for backend API requests.
 - W3C `traceparent` propagation for API responses, logs, and error reports.
 - In-process backend request metrics endpoint.
