@@ -336,6 +336,50 @@ test("admin operations client lists stores and source configs", async () => {
   assert.equal(calls[1].init.method, "GET");
 });
 
+test("admin operations client creates and updates source configs", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "admin-token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, { id: "source-config-1" });
+    },
+  });
+
+  await client.createStoreSourceConfig("store-1", {
+    source_type: "http_json",
+    endpoint_url: "https://store.example.test/feed.json",
+    active: true,
+    sync_interval_minutes: 360,
+    settings: { items_path: "items" },
+  });
+  await client.updateSourceConfig("source-config-1", {
+    active: false,
+  });
+
+  assert.equal(
+    calls[0].url,
+    "https://api.example.test/v1/admin/stores/store-1/source-configs",
+  );
+  assert.equal(calls[0].init.method, "POST");
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    source_type: "http_json",
+    endpoint_url: "https://store.example.test/feed.json",
+    active: true,
+    sync_interval_minutes: 360,
+    settings: { items_path: "items" },
+  });
+  assert.equal(
+    calls[1].url,
+    "https://api.example.test/v1/admin/source-configs/source-config-1",
+  );
+  assert.equal(calls[1].init.method, "PATCH");
+  assert.deepEqual(JSON.parse(calls[1].init.body), {
+    active: false,
+  });
+});
+
 test("admin operations client manages sync runs", async () => {
   const calls = [];
   const client = createApiClient({

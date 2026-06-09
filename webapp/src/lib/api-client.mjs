@@ -163,6 +163,18 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
     listStoreSourceConfigs(storeId) {
       return request(`/admin/stores/${storeId}/source-configs`);
     },
+    createStoreSourceConfig(storeId, payload) {
+      return request(`/admin/stores/${storeId}/source-configs`, {
+        method: "POST",
+        body: payload,
+      });
+    },
+    updateSourceConfig(sourceConfigId, payload) {
+      return request(`/admin/source-configs/${sourceConfigId}`, {
+        method: "PATCH",
+        body: payload,
+      });
+    },
     listSyncRuns() {
       return request("/admin/sync-runs");
     },

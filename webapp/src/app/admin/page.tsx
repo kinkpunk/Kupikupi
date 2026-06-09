@@ -7,15 +7,32 @@ import type {
   ProductDuplicateCandidateGroup,
   ProductMergeResult,
   SourceConfig,
+  SourceConfigCreatePayload,
   Store,
   SyncRun,
   SyncRunItem,
 } from "../../lib/types";
 
 type AdminStatus = "idle" | "loading" | "merging" | "syncing" | "success" | "error";
+type SourceConfigForm = {
+  storeId: string;
+  sourceType: string;
+  endpointUrl: string;
+  syncIntervalMinutes: string;
+  settingsText: string;
+  active: boolean;
+};
 
 const adminTokenStorageKey = "kupikupi_admin_access_token";
 const webAppConfig = getWebAppConfig();
+const defaultSourceConfigForm: SourceConfigForm = {
+  storeId: "",
+  sourceType: "http_json",
+  endpointUrl: "",
+  syncIntervalMinutes: "360",
+  settingsText: "{}",
+  active: true,
+};
 
 export default function AdminPage() {
   const [adminToken, setAdminToken] = useState(() => loadAdminToken());
@@ -29,6 +46,9 @@ export default function AdminPage() {
   const [targetsByGroup, setTargetsByGroup] = useState<Record<string, string>>({});
   const [lastMerge, setLastMerge] = useState<ProductMergeResult | null>(null);
   const [lastSyncRun, setLastSyncRun] = useState<SyncRun | null>(null);
+  const [sourceConfigForm, setSourceConfigForm] = useState<SourceConfigForm>(
+    defaultSourceConfigForm,
+  );
 
   const api = useMemo(
     () =>
@@ -70,6 +90,10 @@ export default function AdminPage() {
       setSourceConfigsByStore(Object.fromEntries(sourceConfigsEntries));
       setSyncRuns(syncRunsResponse.items);
       setTargetsByGroup(defaultTargets(duplicatesResponse.items));
+      setSourceConfigForm((current) => ({
+        ...current,
+        storeId: current.storeId || storesResponse.items[0]?.id || "",
+      }));
       setStatus("success");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Не удалось загрузить данные оператора.");
@@ -131,6 +155,40 @@ export default function AdminPage() {
     }
   }
 
+  async function handleCreateSourceConfig(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus("loading");
+    setError(null);
+
+    try {
+      const payload = buildSourceConfigPayload(sourceConfigForm);
+      await api.createStoreSourceConfig(sourceConfigForm.storeId, payload);
+      setSourceConfigForm((current) => ({
+        ...defaultSourceConfigForm,
+        storeId: current.storeId,
+      }));
+      await handleLoad();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Не удалось создать source config.");
+      setStatus("error");
+    }
+  }
+
+  async function handleToggleSourceConfig(sourceConfig: SourceConfig) {
+    setStatus("loading");
+    setError(null);
+
+    try {
+      await api.updateSourceConfig(sourceConfig.id, {
+        active: !sourceConfig.active,
+      });
+      await handleLoad();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Не удалось обновить source config.");
+      setStatus("error");
+    }
+  }
+
   return (
     <main className="admin-shell">
       <header className="admin-hero">
@@ -177,6 +235,105 @@ export default function AdminPage() {
           <p>{stores.length} stores loaded for staging operations.</p>
         </div>
 
+        <form className="source-config-form" onSubmit={handleCreateSourceConfig}>
+          <label>
+            Store
+            <select
+              value={sourceConfigForm.storeId}
+              onChange={(event) =>
+                setSourceConfigForm((current) => ({
+                  ...current,
+                  storeId: event.target.value,
+                }))
+              }
+            >
+              <option value="">Select store</option>
+              {stores.map((store) => (
+                <option key={store.id} value={store.id}>
+                  {store.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Source type
+            <select
+              value={sourceConfigForm.sourceType}
+              onChange={(event) =>
+                setSourceConfigForm((current) => ({
+                  ...current,
+                  sourceType: event.target.value,
+                }))
+              }
+            >
+              <option value="http_json">http_json</option>
+              <option value="http_csv">http_csv</option>
+              <option value="static_json">static_json</option>
+            </select>
+          </label>
+          <label className="source-config-url">
+            Endpoint URL
+            <input
+              type="url"
+              value={sourceConfigForm.endpointUrl}
+              onChange={(event) =>
+                setSourceConfigForm((current) => ({
+                  ...current,
+                  endpointUrl: event.target.value,
+                }))
+              }
+              placeholder="https://store.example/feed.json"
+            />
+          </label>
+          <label>
+            Interval, min
+            <input
+              min="1"
+              type="number"
+              value={sourceConfigForm.syncIntervalMinutes}
+              onChange={(event) =>
+                setSourceConfigForm((current) => ({
+                  ...current,
+                  syncIntervalMinutes: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label className="source-config-settings">
+            Settings JSON
+            <textarea
+              rows={4}
+              value={sourceConfigForm.settingsText}
+              onChange={(event) =>
+                setSourceConfigForm((current) => ({
+                  ...current,
+                  settingsText: event.target.value,
+                }))
+              }
+              spellCheck={false}
+            />
+          </label>
+          <label className="checkbox-field">
+            <input
+              checked={sourceConfigForm.active}
+              type="checkbox"
+              onChange={(event) =>
+                setSourceConfigForm((current) => ({
+                  ...current,
+                  active: event.target.checked,
+                }))
+              }
+            />
+            Active
+          </label>
+          <button
+            type="submit"
+            disabled={!sourceConfigForm.storeId || status === "loading"}
+          >
+            Create source config
+          </button>
+        </form>
+
         {stores.length > 0 ? (
           <div className="list-stack">
             {stores.map((store) => (
@@ -206,6 +363,14 @@ export default function AdminPage() {
                           {sourceConfig.active ? "active" : "inactive"}
                         </span>
                         <span>{formatDateTime(sourceConfig.last_sync_at) || "never synced"}</span>
+                        <button
+                          className="small-button muted-button"
+                          type="button"
+                          disabled={status === "loading"}
+                          onClick={() => handleToggleSourceConfig(sourceConfig)}
+                        >
+                          {sourceConfig.active ? "Disable" : "Enable"}
+                        </button>
                         <button
                           className="small-button"
                           type="button"
@@ -398,6 +563,31 @@ function formatDateTime(value?: string | null) {
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function buildSourceConfigPayload(form: SourceConfigForm): SourceConfigCreatePayload {
+  let settings: Record<string, unknown> | null = null;
+  const settingsText = form.settingsText.trim();
+  if (settingsText) {
+    const parsed = JSON.parse(settingsText) as unknown;
+    if (!isRecord(parsed)) {
+      throw new Error("Settings JSON must be an object.");
+    }
+    settings = parsed;
+  }
+  return {
+    source_type: form.sourceType,
+    endpoint_url: form.endpointUrl.trim() || null,
+    active: form.active,
+    sync_interval_minutes: form.syncIntervalMinutes
+      ? Number(form.syncIntervalMinutes)
+      : null,
+    settings,
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function adminStatusLabel(status: AdminStatus) {

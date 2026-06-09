@@ -201,6 +201,21 @@ export type SourceConfig = {
   settings?: Record<string, unknown> | null;
 };
 
+export type SourceConfigCreatePayload = {
+  source_type: string;
+  endpoint_url?: string | null;
+  active: boolean;
+  sync_interval_minutes?: number | null;
+  settings?: Record<string, unknown> | null;
+};
+
+export type SourceConfigUpdatePayload = {
+  endpoint_url?: string | null;
+  active?: boolean | null;
+  sync_interval_minutes?: number | null;
+  settings?: Record<string, unknown> | null;
+};
+
 export type SyncRun = {
   id: string;
   store_id?: string | null;
