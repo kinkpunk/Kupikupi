@@ -246,6 +246,9 @@ python scripts/product_duplicates.py --api-base-url https://api.staging.kupikupi
   --output /tmp/kupikupi-duplicate-candidates.csv
 ```
 
+The WebApp also exposes `/admin` for operator duplicate review and confirmed product merges with
+the staging admin token.
+
 The dry run validates the config, fetches sample offers without database writes, and fails if the
 feed returns fewer than `--min-offers` offers. Its report includes offer, product, EUR price, size,
 currency, availability, and warning counts. The apply command creates or updates a store and its

@@ -151,3 +151,30 @@ export type AuthResponse = {
     last_name?: string | null;
   };
 };
+
+export type ProductDuplicateCandidate = {
+  product_id: string;
+  name: string;
+  model?: string | null;
+  sku?: string | null;
+};
+
+export type ProductDuplicateCandidateGroup = {
+  category_id: string;
+  brand_id?: string | null;
+  normalized_identity: string;
+  products: ProductDuplicateCandidate[];
+};
+
+export type ProductMergeResult = {
+  source_product_id: string;
+  target_product_id: string;
+  offers_moved: number;
+  price_analytics_moved: number;
+  recommendations_moved: number;
+  watchlists_moved: number;
+  variants_deleted: number;
+  mappings_moved: number;
+  sync_run_items_moved: number;
+  source_product_deleted: boolean;
+};

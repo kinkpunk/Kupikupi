@@ -143,6 +143,20 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
         method: "POST",
       });
     },
+    listProductDuplicateCandidates({ limit = 50 } = {}) {
+      const params = new URLSearchParams({
+        limit: String(limit),
+      });
+      return request(`/admin/product-duplicate-candidates?${params.toString()}`);
+    },
+    mergeDuplicateProduct(sourceProductId, targetProductId) {
+      return request(`/admin/products/${sourceProductId}/merge`, {
+        method: "POST",
+        body: {
+          target_product_id: targetProductId,
+        },
+      });
+    },
   };
 
   async function authRequest(path, body) {

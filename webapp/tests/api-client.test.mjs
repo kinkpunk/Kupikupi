@@ -261,6 +261,58 @@ test("archiveWatchlist posts archive endpoint", async () => {
   assert.equal(calls[0].init.method, "POST");
 });
 
+test("listProductDuplicateCandidates gets admin candidate groups", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "admin-token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, {
+        items: [{ normalized_identity: "gt 2000 13", products: [] }],
+      });
+    },
+  });
+
+  const result = await client.listProductDuplicateCandidates({ limit: 25 });
+
+  assert.equal(result.items[0].normalized_identity, "gt 2000 13");
+  assert.equal(
+    calls[0].url,
+    "https://api.example.test/v1/admin/product-duplicate-candidates?limit=25",
+  );
+  assert.equal(calls[0].init.method, "GET");
+  assert.equal(calls[0].init.headers.Authorization, "Bearer admin-token");
+});
+
+test("mergeDuplicateProduct posts target product id", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "admin-token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, {
+        source_product_id: "source-product",
+        target_product_id: "target-product",
+        source_product_deleted: true,
+      });
+    },
+  });
+
+  const result = await client.mergeDuplicateProduct("source-product", "target-product");
+
+  assert.equal(result.source_product_deleted, true);
+  assert.equal(
+    calls[0].url,
+    "https://api.example.test/v1/admin/products/source-product/merge",
+  );
+  assert.equal(calls[0].init.method, "POST");
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    target_product_id: "target-product",
+  });
+});
+
 test("client requires access token", async () => {
   const client = createApiClient({
     baseUrl: "https://api.example.test/v1",
