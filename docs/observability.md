@@ -23,7 +23,12 @@ python scripts/staging_preflight.py \
   --bot-env /tmp/kupikupi-staging-env/kupikupi-bot.env \
   --webapp-env /tmp/kupikupi-staging-env/kupikupi-webapp.env \
   --operator-env /tmp/kupikupi-staging-env/kupikupi-operator.env
+python scripts/field_test_checklist.py --env-dir /tmp/kupikupi-staging-env
 ```
+
+The field-test checklist repeats the key observability checks as separate `error-reporting`,
+`observability-dashboard`, and `alert-contact` items so the operator can see them without parsing the
+full preflight issue list.
 
 ## Runtime Signals
 

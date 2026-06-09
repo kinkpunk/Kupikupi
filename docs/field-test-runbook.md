@@ -36,8 +36,8 @@ python scripts/staging_preflight.py \
 python scripts/field_test_checklist.py --env-dir /tmp/kupikupi-staging-env
 ```
 
-The checklist is local-only: it validates env files, runs preflight, flags missing smoke tokens, and
-prints the next operator commands.
+The checklist is local-only: it validates env files, runs preflight, flags missing smoke tokens,
+checks observability links, and prints the next operator commands.
 
 Backend API, worker, and scheduler:
 

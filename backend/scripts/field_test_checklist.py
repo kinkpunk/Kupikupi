@@ -77,6 +77,8 @@ def build_field_test_checklist(
             )
         )
 
+    items.extend(_observability_items(backend_env))
+
     access_token = operator_env.get("KUPIKUPI_ACCESS_TOKEN", "")
     if access_token:
         items.append(
@@ -131,6 +133,65 @@ def build_field_test_checklist(
         )
 
     return FieldTestChecklistReport(items=items, commands=commands)
+
+
+def _observability_items(backend_env: dict[str, str]) -> list[ChecklistItem]:
+    items: list[ChecklistItem] = []
+    if backend_env.get("ERROR_REPORTING_ENABLED") in {"1", "true", "True"} and backend_env.get(
+        "ERROR_REPORTING_ENDPOINT_URL"
+    ):
+        items.append(
+            ChecklistItem(
+                name="error-reporting",
+                status="ok",
+                detail=backend_env["ERROR_REPORTING_ENDPOINT_URL"],
+            )
+        )
+    else:
+        items.append(
+            ChecklistItem(
+                name="error-reporting",
+                status="failed",
+                detail="ERROR_REPORTING_ENABLED and ERROR_REPORTING_ENDPOINT_URL are required",
+            )
+        )
+
+    dashboard_url = backend_env.get("OBSERVABILITY_DASHBOARD_URL", "")
+    if dashboard_url:
+        items.append(
+            ChecklistItem(
+                name="observability-dashboard",
+                status="ok",
+                detail=dashboard_url,
+            )
+        )
+    else:
+        items.append(
+            ChecklistItem(
+                name="observability-dashboard",
+                status="failed",
+                detail="OBSERVABILITY_DASHBOARD_URL is required",
+            )
+        )
+
+    alert_contact_url = backend_env.get("ALERT_CONTACT_URL", "")
+    if alert_contact_url:
+        items.append(
+            ChecklistItem(
+                name="alert-contact",
+                status="ok",
+                detail=alert_contact_url,
+            )
+        )
+    else:
+        items.append(
+            ChecklistItem(
+                name="alert-contact",
+                status="failed",
+                detail="ALERT_CONTACT_URL is required",
+            )
+        )
+    return items
 
 
 def parse_args() -> argparse.Namespace:

@@ -12,6 +12,9 @@ def test_field_test_checklist_passes_with_valid_operator_env(tmp_path) -> None:
     assert report.passed is True
     assert _status_by_name(report)["env-files"] == "ok"
     assert _status_by_name(report)["staging-preflight"] == "ok"
+    assert _status_by_name(report)["error-reporting"] == "ok"
+    assert _status_by_name(report)["observability-dashboard"] == "ok"
+    assert _status_by_name(report)["alert-contact"] == "ok"
     assert _status_by_name(report)["authenticated-smoke-token"] == "ok"
     assert _status_by_name(report)["admin-smoke-token"] == "ok"
     assert _status_by_name(report)["watchlist-confirmation-smoke"] == "ok"
@@ -46,12 +49,36 @@ def test_field_test_checklist_fails_when_admin_token_is_placeholder(tmp_path) ->
     assert _status_by_name(report)["admin-smoke-token"] == "failed"
 
 
+def test_field_test_checklist_fails_when_observability_values_are_missing(tmp_path) -> None:
+    _write_template(
+        tmp_path,
+        backend_overrides={
+            'ERROR_REPORTING_ENABLED="1"': 'ERROR_REPORTING_ENABLED="0"',
+            'ERROR_REPORTING_ENDPOINT_URL="https://errors.example.test/events"': (
+                'ERROR_REPORTING_ENDPOINT_URL=""'
+            ),
+            'OBSERVABILITY_DASHBOARD_URL="https://dashboards.example.test/kupikupi-staging"': (
+                'OBSERVABILITY_DASHBOARD_URL=""'
+            ),
+            'ALERT_CONTACT_URL="mailto:oncall@example.test"': 'ALERT_CONTACT_URL=""',
+        },
+    )
+
+    report = _build_report(tmp_path)
+
+    assert report.passed is False
+    assert _status_by_name(report)["error-reporting"] == "failed"
+    assert _status_by_name(report)["observability-dashboard"] == "failed"
+    assert _status_by_name(report)["alert-contact"] == "failed"
+
+
 def _write_template(
     tmp_path: Path,
     *,
     access_token: str = "",
     admin_token: str = "admin-token",
     confirm_watchlist: str = "0",
+    backend_overrides: dict[str, str] | None = None,
 ) -> None:
     template = build_staging_env_template(
         api_base_url="https://api.staging.kupikupi.example/v1",
@@ -68,7 +95,10 @@ def _write_template(
         'KUPIKUPI_CONFIRM_WATCHLIST="0"',
         f'KUPIKUPI_CONFIRM_WATCHLIST="{confirm_watchlist}"',
     )
-    (tmp_path / "kupikupi-backend.env").write_text(template.backend_env, encoding="utf-8")
+    backend_env = template.backend_env
+    for old, new in (backend_overrides or {}).items():
+        backend_env = backend_env.replace(old, new)
+    (tmp_path / "kupikupi-backend.env").write_text(backend_env, encoding="utf-8")
     (tmp_path / "kupikupi-bot.env").write_text(template.bot_env, encoding="utf-8")
     (tmp_path / "kupikupi-webapp.env").write_text(template.webapp_env, encoding="utf-8")
     (tmp_path / "kupikupi-operator.env").write_text(operator_env, encoding="utf-8")

@@ -58,7 +58,7 @@ Implemented and covered:
 - Docker Compose smoke runner for backend, worker, scheduler, WebApp, and MVP scenario.
 - Remote staging smoke script for HTTPS API/WebApp and optional authenticated shopping flow.
 - Remote staging smoke checks for support, privacy, terms, and optional admin endpoints.
-- Closed field-test checklist script for local env/preflight/smoke-token readiness.
+- Closed field-test checklist script for local env/preflight/smoke-token/observability readiness.
 - CI for backend, Telegram Bot, WebApp, OpenAPI contract checks, migrations, audit, typecheck,
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
