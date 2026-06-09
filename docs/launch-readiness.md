@@ -42,7 +42,8 @@ Implemented and covered:
 - Operator source sync script with JSON summary and non-zero failure exit codes.
 - Operator endpoint for reviewing potential product duplicate candidates.
 - Operator endpoint for merging confirmed duplicate products.
-- Operator script for listing and merging product duplicate candidates through staging API.
+- Operator script for listing, CSV-exporting, and merging product duplicate candidates through
+  staging API.
 - Request ID propagation and JSON access logs for backend API requests.
 - W3C `traceparent` propagation for API responses, logs, and error reports.
 - In-process backend request metrics endpoint.
@@ -85,7 +86,7 @@ Blocking gaps:
 - No real Telegram Bot token or deployed public bot runtime.
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
 - Product matching has deterministic cross-store reuse, duplicate candidate review, manual duplicate
-  merge, and operator duplicate scripts, but still needs robust normalization and bulk review UI.
+  merge, and operator duplicate CSV export, but still needs robust normalization and bulk review UI.
 - No full observability stack yet: tracing provider and real alerting/dashboard infrastructure still
   need setup.
 - Privacy and terms still require legal review and final hosted URLs before public beta.

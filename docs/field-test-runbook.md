@@ -133,6 +133,10 @@ python scripts/product_duplicates.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
   --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
   list
+python scripts/product_duplicates.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+  list --format csv --output /tmp/kupikupi-duplicate-candidates.csv
 ```
 
 Merge only obvious duplicates into the canonical product:

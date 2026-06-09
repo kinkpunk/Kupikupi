@@ -1,6 +1,9 @@
 import argparse
+import csv
 import json
 import os
+from io import StringIO
+from pathlib import Path
 from typing import Protocol
 
 import httpx
@@ -23,6 +26,8 @@ def list_duplicate_candidates(
     api_base_url: str,
     access_token: str,
     limit: int,
+    output_format: str = "json",
+    output_path: Path | None = None,
     client: DuplicateReviewClient | None = None,
 ) -> int:
     with _client_context(client) as active_client:
@@ -37,7 +42,23 @@ def list_duplicate_candidates(
 
     payload = response.json()
     items = payload.get("items", [])
-    print(json.dumps({"count": len(items), "items": items}, ensure_ascii=False, indent=2))
+    if output_format == "csv":
+        output = _duplicate_candidates_csv(items)
+    else:
+        output = json.dumps({"count": len(items), "items": items}, ensure_ascii=False, indent=2)
+
+    if output_path is not None:
+        output_path.write_text(output, encoding="utf-8")
+        print(
+            json.dumps(
+                {"count": len(items), "output": str(output_path)},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+    else:
+        print(output)
     return 0
 
 
@@ -79,6 +100,8 @@ def parse_args() -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
     list_parser = subparsers.add_parser("list", help="List duplicate candidates.")
     list_parser.add_argument("--limit", type=int, default=50)
+    list_parser.add_argument("--format", choices=["json", "csv"], default="json")
+    list_parser.add_argument("--output", type=Path, help="Write list output to a file.")
     merge_parser = subparsers.add_parser("merge", help="Merge one source product into a target.")
     merge_parser.add_argument("--source-product-id", required=True)
     merge_parser.add_argument("--target-product-id", required=True)
@@ -100,6 +123,8 @@ def main() -> None:
                 api_base_url=args.api_base_url,
                 access_token=args.access_token,
                 limit=args.limit,
+                output_format=args.format,
+                output_path=args.output,
             )
         )
     raise SystemExit(
@@ -131,6 +156,44 @@ def _error_report(response: httpx.Response) -> str:
         indent=2,
         sort_keys=True,
     )
+
+
+def _duplicate_candidates_csv(items: list[dict[str, object]]) -> str:
+    output = StringIO()
+    writer = csv.DictWriter(
+        output,
+        fieldnames=[
+            "group_index",
+            "category_id",
+            "brand_id",
+            "normalized_identity",
+            "product_id",
+            "name",
+            "model",
+            "sku",
+        ],
+    )
+    writer.writeheader()
+    for group_index, item in enumerate(items, start=1):
+        products = item.get("products", [])
+        if not isinstance(products, list):
+            continue
+        for product in products:
+            if not isinstance(product, dict):
+                continue
+            writer.writerow(
+                {
+                    "group_index": group_index,
+                    "category_id": item.get("category_id"),
+                    "brand_id": item.get("brand_id"),
+                    "normalized_identity": item.get("normalized_identity"),
+                    "product_id": product.get("product_id"),
+                    "name": product.get("name"),
+                    "model": product.get("model"),
+                    "sku": product.get("sku"),
+                }
+            )
+    return output.getvalue()
 
 
 class _client_context:

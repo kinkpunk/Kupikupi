@@ -230,6 +230,9 @@ python scripts/store_feed.py --config /tmp/kupikupi-store-feed.json
 python scripts/source_sync.py --due --limit 10
 python scripts/product_duplicates.py --api-base-url https://api.staging.kupikupi.example/v1 \
   --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" list
+python scripts/product_duplicates.py --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" list --format csv \
+  --output /tmp/kupikupi-duplicate-candidates.csv
 ```
 
 The dry run validates the config, fetches sample offers without database writes, and fails if the

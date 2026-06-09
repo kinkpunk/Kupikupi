@@ -303,10 +303,15 @@ python scripts/product_duplicates.py \
   --api-base-url https://api.staging.kupikupi.example/v1 \
   --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
   list
+python scripts/product_duplicates.py \
+  --api-base-url https://api.staging.kupikupi.example/v1 \
+  --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" \
+  list --format csv --output /tmp/kupikupi-duplicate-candidates.csv
 ```
 
 The command groups products by category, brand, and normalized model/name so the operator can spot
-duplicates. Merge confirmed duplicates into the canonical target product:
+duplicates. Use the CSV export for bulk review notes, then merge confirmed duplicates into the
+canonical target product:
 
 ```bash
 python scripts/product_duplicates.py \
