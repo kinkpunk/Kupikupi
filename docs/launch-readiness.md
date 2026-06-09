@@ -88,8 +88,9 @@ Blocking gaps:
 - No HTTPS public domain for WebApp/API.
 - No real Telegram Bot token or deployed public bot runtime.
 - Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
-- Product matching has deterministic cross-store reuse, duplicate candidate review, manual duplicate
-  merge, and operator duplicate CSV export, but still needs robust normalization and bulk review UI.
+- Product matching has deterministic cross-store reuse, punctuation/diacritic-aware normalization,
+  duplicate candidate review, manual duplicate merge, and operator duplicate CSV export, but still
+  needs bulk review UI and validation against real store feeds.
 - No full observability stack yet: tracing provider and real alerting/dashboard infrastructure still
   need setup.
 - Privacy and terms still require legal review and final hosted URLs before public beta.

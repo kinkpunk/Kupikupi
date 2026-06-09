@@ -550,6 +550,9 @@ async def test_source_sync_reuses_product_by_normalized_brand_category_and_model
                     _source_record_with_product_data(
                         external_id="second-asics-offer",
                         external_product_id="second-asics-gt-2000",
+                        name="Asics GT 2000 13",
+                        brand_name="ÁSICS",
+                        model="GT 2000 13",
                     )
                 ]
             ),
@@ -667,6 +670,9 @@ def _source_record_with_product_data(
     *,
     external_id: str,
     external_product_id: str,
+    name: str = "ASICS GT-2000 13",
+    brand_name: str = "ASICS",
+    model: str = "GT-2000 13",
 ) -> SourceOfferRecord:
     return SourceOfferRecord(
         external_id=external_id,
@@ -682,10 +688,10 @@ def _source_record_with_product_data(
         availability="in_stock",
         product=SourceProductRecord(
             external_product_id=external_product_id,
-            name="ASICS GT-2000 13",
-            brand_name="ASICS",
+            name=name,
+            brand_name=brand_name,
             category_slug="running-shoes",
             category_name="Running Shoes",
-            model="GT-2000 13",
+            model=model,
         ),
     )

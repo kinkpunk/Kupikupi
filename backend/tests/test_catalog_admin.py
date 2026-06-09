@@ -146,7 +146,7 @@ async def test_admin_can_list_product_duplicate_candidates(
                     brand_id=brand.id,
                     category_id=category.id,
                     name="Asics GT 2000 13",
-                    model="GT-2000 13",
+                    model="GT 2000 13",
                     sku="ASICS-GT-2000-B",
                 ),
                 Product(
@@ -169,7 +169,7 @@ async def test_admin_can_list_product_duplicate_candidates(
     body = response.json()
     assert len(body["items"]) == 1
     group = body["items"][0]
-    assert group["normalized_identity"] == "gt-2000 13"
+    assert group["normalized_identity"] == "gt 2000 13"
     assert len(group["products"]) == 2
     assert {product["sku"] for product in group["products"]} == {
         "ASICS-GT-2000-A",

@@ -1,11 +1,11 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.domains.catalog.models import Brand, Category, Product
-from app.domains.catalog.service import normalize_name
+from app.domains.catalog.service import normalize_name, normalize_product_identity
 from app.domains.fx.service import convert_to_eur
 from app.domains.offers.models import Offer, OfferAvailability
 from app.domains.offers.schemas import OfferAvailabilityCreate, OfferCreate, OfferUpdate
@@ -264,26 +264,25 @@ async def _find_product_by_normalized_identity(
         query = query.where(Product.brand_id == brand.id)
     else:
         query = query.where(Product.brand_id.is_(None))
-    query = query.where(
-        func.lower(Product.model) == identity,
-    )
-    product = await session.scalar(query)
-    if product is not None:
-        return product
-
-    return await session.scalar(
-        select(Product)
-        .where(Product.category_id == category.id)
-        .where(Product.brand_id == brand.id if brand is not None else Product.brand_id.is_(None))
-        .where(func.lower(Product.name) == normalize_name(name))
-    )
+    result = await session.execute(query.order_by(Product.created_at.asc(), Product.id.asc()))
+    for product in result.scalars().all():
+        if _product_identity_matches(product, identity=identity, name=name):
+            return product
+    return None
 
 
 def _normalized_product_identity(*, model: str | None, name: str) -> str | None:
-    value = normalize_name(model or name)
+    value = normalize_product_identity(model or name)
     if len(value) < 4:
         return None
     return value
+
+
+def _product_identity_matches(product: Product, *, identity: str, name: str) -> bool:
+    product_identity = normalize_product_identity(product.model or product.name)
+    if product_identity == identity:
+        return True
+    return normalize_product_identity(product.name) == normalize_product_identity(name)
 
 
 async def _get_or_create_brand(session: AsyncSession, name: str | None) -> Brand | None:

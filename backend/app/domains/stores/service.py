@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.domains.catalog.models import Product
-from app.domains.catalog.service import normalize_name
+from app.domains.catalog.service import normalize_product_identity
 from app.domains.stores.models import SourceConfig, SourceSyncRun, SourceSyncRunItem, Store
 from app.domains.stores.schemas import (
     SourceConfigCreate,
@@ -207,7 +207,7 @@ async def list_product_duplicate_candidates(
 
 
 def _product_duplicate_identity(product: Product) -> str | None:
-    value = normalize_name(product.model or product.name)
+    value = normalize_product_identity(product.model or product.name)
     if len(value) < 4:
         return None
     return value

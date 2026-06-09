@@ -1,3 +1,5 @@
+import re
+import unicodedata
 import uuid
 
 from sqlalchemy import delete, func, or_, select, update
@@ -17,7 +19,23 @@ from app.domains.watchlists.models import Watchlist
 
 
 def normalize_name(value: str) -> str:
-    return " ".join(value.casefold().strip().split())
+    return " ".join(_strip_diacritics(value).casefold().strip().split())
+
+
+def normalize_product_identity(value: str) -> str:
+    normalized = _PRODUCT_IDENTITY_SEPARATOR_RE.sub(" ", _strip_diacritics(value).casefold())
+    return " ".join(normalized.strip().split())
+
+
+_PRODUCT_IDENTITY_SEPARATOR_RE = re.compile(r"[^0-9a-z]+")
+
+
+def _strip_diacritics(value: str) -> str:
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", value)
+        if not unicodedata.combining(char)
+    )
 
 
 async def create_brand(session: AsyncSession, payload: BrandCreate) -> Brand:
