@@ -25,7 +25,10 @@ def validate_telegram_init_data(
     bot_token: str,
     max_age: timedelta = timedelta(days=1),
 ) -> TelegramUserData:
-    parsed = dict(parse_qsl(init_data, strict_parsing=True))
+    try:
+        parsed = dict(parse_qsl(init_data, strict_parsing=True))
+    except ValueError as exc:
+        raise TelegramAuthError("Telegram init data is malformed.") from exc
     received_hash = parsed.pop("hash", None)
     auth_date_raw = parsed.get("auth_date")
     user_raw = parsed.get("user")
@@ -60,4 +63,3 @@ def validate_telegram_init_data(
         last_name=user.get("last_name"),
         language=user.get("language_code"),
     )
-

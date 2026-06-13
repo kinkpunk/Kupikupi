@@ -156,3 +156,10 @@ def test_telegram_auth_rejects_invalid_hash(client: TestClient) -> None:
     response = client.post("/v1/auth/telegram", json={"init_data": init_data})
 
     assert response.status_code == 401
+
+
+def test_telegram_auth_rejects_malformed_init_data(client: TestClient) -> None:
+    response = client.post("/v1/auth/telegram", json={"init_data": "invalid"})
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Telegram init data is malformed."}

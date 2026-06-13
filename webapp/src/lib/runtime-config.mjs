@@ -15,17 +15,21 @@ export function getWebAppConfig(env = process.env) {
 export function validateWebAppConfig(config) {
   const issues = [];
   let parsedApiUrl;
-  try {
-    parsedApiUrl = new URL(config.apiBaseUrl);
-  } catch {
-    issues.push("NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL.");
-  }
+  const isSameOriginApiUrl = config.apiBaseUrl.startsWith("/");
+  if (!isSameOriginApiUrl) {
+    try {
+      parsedApiUrl = new URL(config.apiBaseUrl);
+    } catch {
+      issues.push(
+        "NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL or root-relative path.",
+      );
+    }
 
-  if (
-    parsedApiUrl &&
-    !["http:", "https:"].includes(parsedApiUrl.protocol)
-  ) {
-    issues.push("NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL.");
+    if (parsedApiUrl && !["http:", "https:"].includes(parsedApiUrl.protocol)) {
+      issues.push(
+        "NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL or root-relative path.",
+      );
+    }
   }
   if (config.supportContactUrl && !isAllowedPublicUrl(config.supportContactUrl)) {
     issues.push("NEXT_PUBLIC_SUPPORT_CONTACT_URL must be an absolute http(s) or mailto URL.");

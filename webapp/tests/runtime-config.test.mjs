@@ -33,17 +33,32 @@ test("validateWebAppConfig accepts local localhost API", () => {
   assert.deepEqual(issues, []);
 });
 
-test("validateWebAppConfig rejects invalid API URL", () => {
+test("validateWebAppConfig accepts a same-origin API path", () => {
   const issues = validateWebAppConfig({
-    appEnv: "local",
-    apiBaseUrl: "/v1",
+    appEnv: "staging",
+    apiBaseUrl: "/api/backend/v1",
     demoAccessToken: "",
     supportContactUrl: "",
     privacyPolicyUrl: "",
     termsUrl: "",
   });
 
-  assert.deepEqual(issues, ["NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL."]);
+  assert.deepEqual(issues, []);
+});
+
+test("validateWebAppConfig rejects invalid API URL", () => {
+  const issues = validateWebAppConfig({
+    appEnv: "local",
+    apiBaseUrl: "backend/v1",
+    demoAccessToken: "",
+    supportContactUrl: "",
+    privacyPolicyUrl: "",
+    termsUrl: "",
+  });
+
+  assert.deepEqual(issues, [
+    "NEXT_PUBLIC_API_BASE_URL must be an absolute http(s) URL or root-relative path.",
+  ]);
 });
 
 test("validateWebAppConfig rejects localhost API in production-like env", () => {
