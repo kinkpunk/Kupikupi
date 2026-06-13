@@ -1,11 +1,14 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.domains.catalog.models import Product
+
+if TYPE_CHECKING:
+    from app.domains.catalog.models import Product
 
 
 class ShoppingRequest(Base):
@@ -76,4 +79,4 @@ class Recommendation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     request: Mapped[ShoppingRequest] = relationship(back_populates="recommendations")
-    product: Mapped[Product] = relationship()
+    product: Mapped["Product"] = relationship()
