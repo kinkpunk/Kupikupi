@@ -1,6 +1,6 @@
 # Kupikupi Staging Deployment
 
-Status date: 2026-06-07
+Status date: 2026-06-13
 
 This guide defines the minimum staging environment needed before a closed user test with real
 Telegram users. It is deployment-provider neutral: the same values can be mapped to Docker Compose,
@@ -358,6 +358,6 @@ python scripts/product_duplicates.py \
 
 - Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
-- Product duplicate candidates can be reviewed and merged, but bulk review tooling is not
-  implemented yet.
+- Product duplicate candidates can be reviewed through CSV export or the WebApp admin screen and
+  confirmed duplicates can be merged.
 - Full distributed tracing is not yet complete.

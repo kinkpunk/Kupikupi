@@ -1,8 +1,12 @@
 # Kupikupi Closed Field Test Runbook
 
-Status date: 2026-06-08
+Status date: 2026-06-13
 
 Use this checklist before inviting real Telegram users to a closed staging test.
+
+The first field test is a workflow validation, not a public beta. Do not delay it for additional
+admin UI, parser improvements, store adapters, or distributed tracing when the go criteria below
+are already satisfied.
 
 ## Go Criteria
 

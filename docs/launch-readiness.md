@@ -1,6 +1,6 @@
 # Kupikupi Launch Readiness
 
-Status date: 2026-06-08
+Status date: 2026-06-13
 
 ## Current Readiness
 
@@ -83,6 +83,18 @@ The current local MVP can demonstrate:
 8. Generate personalized deals and notification records.
 9. Open WebApp locally with demo token.
 
+## Latest Local Verification
+
+Verified on 2026-06-13:
+
+- Backend lint passed and all 142 tests passed.
+- OpenAPI contract checks passed as part of the backend test suite.
+- Alembic generated the complete PostgreSQL migration SQL through `0014_fx_rates`.
+- Telegram Bot lint passed and all 37 tests passed.
+- WebApp all 32 tests, TypeScript check, production build, and npm audit passed.
+- Generated staging env files passed `scripts/field_test_checklist.py` in explicit demo-data mode.
+- Docker smoke was not run because Docker CLI is not installed on the verification machine.
+
 ## Not Ready For Public User Testing Yet
 
 Blocking gaps:
@@ -100,11 +112,13 @@ Blocking gaps:
 
 ## Recommended Next Iterations
 
-1. Run `scripts/field_test_checklist.py` against real staging env files and feed config.
-2. Configure one real Czech store feed through `scripts/store_feed.py` after dry-run validation, or
-   explicitly mark the closed test as demo-data-only.
-3. Add tracing provider and deploy real alerting/dashboard infrastructure.
-4. Run the closed field test runbook on deployed staging, including `scripts/user_data_smoke.py`.
+1. Freeze feature scope for the first closed field test.
+2. Run the full local backend, Telegram Bot, WebApp, OpenAPI, and migration checks.
+3. Generate real staging env files and run `scripts/field_test_checklist.py`.
+4. Deploy HTTPS staging with a real Telegram Bot token and tester allowlist.
+5. Run remote staging smoke and the manual Telegram scenario.
+6. Configure one real Czech store feed after the demo-data field test, unless real prices are part of
+   that first test's stated scope.
 
 ## Go/No-Go Summary
 
