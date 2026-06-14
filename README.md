@@ -222,6 +222,16 @@ python scripts/notifications.py --api-base-url https://api.staging.kupikupi.exam
   --access-token "$KUPIKUPI_ADMIN_ACCESS_TOKEN" dispatch --limit 100
 ```
 
+Direct notification cycle for a trusted scheduler or cron job:
+
+```bash
+cd backend
+python scripts/notification_cycle.py
+```
+
+The command uses the configured database and `TELEGRAM_BOT_TOKEN`, generates eligible notification
+records, dispatches them, and prints a JSON summary.
+
 User data operator commands:
 
 ```bash

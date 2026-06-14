@@ -38,6 +38,16 @@ https://api.staging.kupikupi.example/v1
 - Next.js WebApp container.
 - Telegram Bot container with either polling or webhook mode.
 
+Northflank Sandbox includes two free services and two free cron jobs. When the API and Telegram Bot
+occupy the service slots, use the cron jobs for a closed test:
+
+- `kupikupi-source-sync`: `python scripts/source_sync.py --due --limit 50`
+- `kupikupi-notifications`: `python scripts/notification_cycle.py`
+
+Set `RUN_MIGRATIONS=0` and `RUN_SEED=0` for both jobs and inject the same `DATABASE_URL`,
+`REDIS_URL`, and `TELEGRAM_BOT_TOKEN` as the API. A later paid deployment can replace these jobs
+with a Celery worker and beat scheduler without changing domain code.
+
 ## Backend Runtime Environment
 
 Set these values for the backend API, worker, and scheduler unless noted otherwise:
