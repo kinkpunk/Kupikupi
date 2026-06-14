@@ -159,6 +159,13 @@ textarea:read-only {
   background: #eef2f3;
 }
 
+textarea:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+  background: #e5eaec;
+  opacity: 1;
+}
+
 input,
 select {
   min-height: 48px;

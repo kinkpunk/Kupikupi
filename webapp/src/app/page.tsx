@@ -208,13 +208,9 @@ export default function Home() {
 
     try {
       const saved = (await withAuthRetry((client) =>
-        request && editMode
+        request && editMode === "text"
           ? client.updateShoppingRequest(request.id, {
               text,
-              constraints:
-                editMode === "constraints"
-                  ? constraintDraftPayload(constraintDraft)
-                  : undefined,
             })
           : client.createShoppingRequest(text),
       )) as ShoppingRequest;
@@ -232,6 +228,35 @@ export default function Home() {
             ? "Не удалось сохранить изменения."
             : "Не удалось создать запрос.",
       );
+      setStatus("error");
+    }
+  }
+
+  async function handleSaveConstraints() {
+    if (!request || editMode !== "constraints") {
+      return;
+    }
+
+    setStatus("submitting");
+    setError(null);
+    try {
+      const saved = (await withAuthRetry((client) =>
+        client.updateShoppingRequest(request.id, {
+          text: request.raw_text,
+          constraints: constraintDraftPayload(constraintDraft),
+        }),
+      )) as ShoppingRequest;
+      setRequest(saved);
+      setConstraintDraft(constraintsToDraft(saved));
+      setEditMode(null);
+      setRecommendations([]);
+      setOffersByProduct({});
+      setPriceHistoryByProduct({});
+      await loadRecommendations(saved.id, saved.constraints?.size_value);
+      setStatus("success");
+      await refreshDashboard();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Не удалось сохранить параметры.");
       setStatus("error");
     }
   }
@@ -423,6 +448,7 @@ export default function Home() {
             rows={5}
             placeholder={exampleText}
             readOnly={Boolean(request) && editMode !== "text"}
+            disabled={editMode === "constraints"}
           />
           <div className="form-actions">
             {request && editMode === null && request.editable ? (
@@ -594,8 +620,8 @@ export default function Home() {
               </label>
             </div>
             <button
-              form="request-form"
-              type="submit"
+              type="button"
+              onClick={handleSaveConstraints}
               disabled={status === "submitting" || text.trim().length < 8}
             >
               {status === "submitting" ? "Сохраняю..." : "Сохранить параметры"}
