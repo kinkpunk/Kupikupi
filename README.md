@@ -7,7 +7,7 @@ The service accepts natural-language shopping requests, finds suitable products,
 Example request:
 
 ```text
-Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.
+I need waterproof trail running shoes for muddy weekend runs, EU size 42, under 170 EUR.
 ```
 
 ## Current Status
