@@ -1226,6 +1226,9 @@ components:
           nullable: true
         constraints:
           $ref: "#/components/schemas/ShoppingConstraints"
+        editable:
+          type: boolean
+          description: False after a position has been confirmed from this request.
         created_at:
           type: string
           format: date-time

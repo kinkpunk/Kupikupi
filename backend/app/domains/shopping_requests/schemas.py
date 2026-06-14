@@ -50,6 +50,7 @@ class ShoppingRequestRead(BaseModel):
     display_currency: str | None
     budget_amount: float | None
     constraints: ShoppingConstraintsRead | None
+    editable: bool
     created_at: datetime
     updated_at: datetime
 

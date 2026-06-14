@@ -29,6 +29,7 @@ export type ShoppingRequest = {
   display_currency?: string | null;
   budget_amount?: number | null;
   constraints?: ShoppingRequestConstraints | null;
+  editable: boolean;
 };
 
 export type Category = {

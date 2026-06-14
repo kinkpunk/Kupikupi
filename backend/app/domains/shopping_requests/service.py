@@ -99,7 +99,10 @@ async def list_shopping_requests(
     )
     result = await session.execute(
         select(ShoppingRequest)
-        .options(selectinload(ShoppingRequest.constraints))
+        .options(
+            selectinload(ShoppingRequest.constraints),
+            selectinload(ShoppingRequest.watchlists),
+        )
         .where(ShoppingRequest.user_id == user_id)
         .order_by(ShoppingRequest.created_at.desc())
         .limit(limit)
@@ -116,7 +119,10 @@ async def get_shopping_request(
 ) -> ShoppingRequest | None:
     result = await session.execute(
         select(ShoppingRequest)
-        .options(selectinload(ShoppingRequest.constraints))
+        .options(
+            selectinload(ShoppingRequest.constraints),
+            selectinload(ShoppingRequest.watchlists),
+        )
         .where(ShoppingRequest.id == request_id, ShoppingRequest.user_id == user_id)
     )
     return result.scalar_one_or_none()

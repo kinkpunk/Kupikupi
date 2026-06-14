@@ -151,6 +151,7 @@ async def test_create_shopping_request_parses_constraints_and_recommends_product
     assert body["constraints"]["category"] == "running-shoes"
     assert body["constraints"]["size_value"] == "41"
     assert body["constraints"]["max_price_currency"] == "EUR"
+    assert body["editable"] is True
 
     list_response = client.get(
         "/v1/shopping-requests",
@@ -345,6 +346,13 @@ async def test_confirmed_shopping_request_cannot_be_edited(
         headers=headers,
     )
     assert confirm_response.status_code == 201
+
+    get_response = client.get(
+        f"/v1/shopping-requests/{request_id}",
+        headers=headers,
+    )
+    assert get_response.status_code == 200
+    assert get_response.json()["editable"] is False
 
     update_response = client.put(
         f"/v1/shopping-requests/{request_id}",

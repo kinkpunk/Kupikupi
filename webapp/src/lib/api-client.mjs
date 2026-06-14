@@ -43,7 +43,14 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
     });
 
     if (!response.ok) {
-      throw new ApiError(`Backend returned ${response.status}.`, {
+      let detail = "";
+      try {
+        const payload = await response.json();
+        detail = typeof payload?.detail === "string" ? payload.detail : "";
+      } catch {
+        detail = "";
+      }
+      throw new ApiError(detail || `Backend returned ${response.status}.`, {
         status: response.status,
       });
     }

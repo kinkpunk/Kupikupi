@@ -512,6 +512,28 @@ test("client raises ApiError for backend failures", async () => {
   });
 });
 
+test("client exposes backend error detail", async () => {
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "token",
+    fetchImpl: async () =>
+      jsonResponse(409, {
+        detail: "Confirmed shopping requests cannot be edited.",
+      }),
+  });
+
+  await assert.rejects(
+    () =>
+      client.updateShoppingRequest("request-1", {
+        text: "Edited request",
+      }),
+    (error) =>
+      error instanceof ApiError &&
+      error.status === 409 &&
+      error.message === "Confirmed shopping requests cannot be edited.",
+  );
+});
+
 function jsonResponse(status, payload) {
   return {
     ok: status >= 200 && status < 300,

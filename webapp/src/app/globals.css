@@ -315,6 +315,15 @@ button:disabled {
   background: #edf8f4;
 }
 
+.locked-text {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: #eef2f3;
+}
+
 .dashboard-section {
   display: grid;
   gap: 12px;

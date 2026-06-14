@@ -35,6 +35,8 @@ type Status =
   | "success"
   | "error";
 
+type EditMode = "text" | "constraints" | null;
+
 const exampleText =
   "I need waterproof trail running shoes for muddy weekend runs, EU size 42, under 170 EUR.";
 const webAppConfig = getWebAppConfig();
@@ -61,7 +63,7 @@ export default function Home() {
   const [refreshToken, setRefreshToken] = useState("");
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "stored" | "missing">("missing");
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
-  const [isEditingRequest, setIsEditingRequest] = useState(false);
+  const [editMode, setEditMode] = useState<EditMode>(null);
   const [constraintDraft, setConstraintDraft] =
     useState<ShoppingRequestConstraintDraft>(emptyConstraintDraft);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -206,16 +208,19 @@ export default function Home() {
 
     try {
       const saved = (await withAuthRetry((client) =>
-        request && isEditingRequest
+        request && editMode
           ? client.updateShoppingRequest(request.id, {
               text,
-              constraints: constraintDraftPayload(constraintDraft),
+              constraints:
+                editMode === "constraints"
+                  ? constraintDraftPayload(constraintDraft)
+                  : undefined,
             })
           : client.createShoppingRequest(text),
       )) as ShoppingRequest;
       setRequest(saved);
       setConstraintDraft(constraintsToDraft(saved));
-      setIsEditingRequest(false);
+      setEditMode(null);
       await loadRecommendations(saved.id, saved.constraints?.size_value);
       setStatus("success");
       await refreshDashboard();
@@ -223,7 +228,7 @@ export default function Home() {
       setError(
         caught instanceof Error
           ? caught.message
-          : isEditingRequest
+          : editMode
             ? "Не удалось сохранить изменения."
             : "Не удалось создать запрос.",
       );
@@ -242,7 +247,7 @@ export default function Home() {
     ]);
   }
 
-  async function loadShoppingRequest(requestId: string, editAfterLoad = false) {
+  async function loadShoppingRequest(requestId: string) {
     setStatus("loading");
     setError(null);
     try {
@@ -253,7 +258,7 @@ export default function Home() {
       setRequest(selected);
       setConstraintDraft(constraintsToDraft(selected));
       setWatchlist(null);
-      setIsEditingRequest(editAfterLoad);
+      setEditMode(null);
       await loadRecommendations(selected.id, selected.constraints?.size_value);
       setStatus("idle");
     } catch (caught) {
@@ -314,16 +319,16 @@ export default function Home() {
     setRecommendations([]);
     setOffersByProduct({});
     setPriceHistoryByProduct({});
-    setIsEditingRequest(false);
+    setEditMode(null);
     setConstraintDraft(emptyConstraintDraft);
   }
 
-  function startEditingRequest() {
-    if (!request) {
+  function startEditingRequest(mode: Exclude<EditMode, null>) {
+    if (!request?.editable) {
       return;
     }
     setConstraintDraft(constraintsToDraft(request));
-    setIsEditingRequest(true);
+    setEditMode(mode);
   }
 
   function updateConstraintDraft(
@@ -417,32 +422,36 @@ export default function Home() {
             onChange={(event) => setText(event.target.value)}
             rows={5}
             placeholder={exampleText}
-            readOnly={Boolean(request) && !isEditingRequest}
+            readOnly={Boolean(request) && editMode !== "text"}
           />
           <div className="form-actions">
-            {request && !isEditingRequest ? (
+            {request && editMode === null && request.editable ? (
               <button
                 className="muted-button"
                 type="button"
-                onClick={startEditingRequest}
-                disabled={Boolean(watchlist)}
+                onClick={() => startEditingRequest("text")}
               >
-                Редактировать запрос и параметры
+                Редактировать запрос
               </button>
-            ) : (
+            ) : !request || editMode === "text" ? (
               <button
                 type="submit"
                 disabled={!accessToken || status === "submitting" || text.trim().length < 8}
               >
                 {status === "submitting"
                   ? "Сохраняю..."
-                  : isEditingRequest
-                    ? "Сохранить изменения"
+                  : editMode === "text"
+                    ? "Сохранить запрос"
                     : "Разобрать запрос"}
               </button>
-            )}
+            ) : null}
             {request ? (
-              <button className="text-button" type="button" onClick={handleNewRequest}>
+              <button
+                className="text-button"
+                type="button"
+                onClick={handleNewRequest}
+                disabled={editMode === "constraints"}
+              >
                 Новый запрос
               </button>
             ) : null}
@@ -479,7 +488,7 @@ export default function Home() {
           <p>Список покупок создается только после подтверждения.</p>
         </div>
 
-        {request && isEditingRequest ? (
+        {request && editMode === "constraints" ? (
           <div className="constraint-editor">
             <label>
               Категория
@@ -602,11 +611,11 @@ export default function Home() {
               label="Бюджет"
               value={formatMoney(request.budget_amount, request.display_currency)}
             />
-            {!watchlist ? (
+            {request.editable && !watchlist ? (
               <button
                 className="small-button muted-button summary-edit-button"
                 type="button"
-                onClick={startEditingRequest}
+                onClick={() => startEditingRequest("constraints")}
               >
                 Изменить параметры
               </button>
@@ -616,7 +625,7 @@ export default function Home() {
           <p className="empty-state">Отправь запрос, чтобы увидеть распознанные параметры.</p>
         )}
 
-        {request && !watchlist && !isEditingRequest ? (
+        {request && request.editable && !watchlist && editMode === null ? (
           <button
             className="secondary-button"
             type="button"
@@ -625,6 +634,12 @@ export default function Home() {
           >
             {status === "confirming" ? "Создаю список..." : "Подтвердить список"}
           </button>
+        ) : null}
+
+        {request && !request.editable ? (
+          <p className="locked-text">
+            Запрос уже подтвержден и используется активной или архивной позицией.
+          </p>
         ) : null}
 
         {watchlist ? (
@@ -677,9 +692,9 @@ export default function Home() {
                   <button
                     className="small-button muted-button"
                     type="button"
-                    onClick={() => void loadShoppingRequest(item.id, true)}
+                    onClick={() => void loadShoppingRequest(item.id)}
                   >
-                    Изменить
+                    Открыть
                   </button>
                 </article>
               ))}

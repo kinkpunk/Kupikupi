@@ -9,6 +9,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.domains.catalog.models import Product
+    from app.domains.watchlists.models import Watchlist
 
 
 class ShoppingRequest(Base):
@@ -40,6 +41,14 @@ class ShoppingRequest(Base):
         back_populates="request",
         cascade="all, delete-orphan",
     )
+    watchlists: Mapped[list["Watchlist"]] = relationship(
+        back_populates="source_request",
+        foreign_keys="Watchlist.source_request_id",
+    )
+
+    @property
+    def editable(self) -> bool:
+        return not self.watchlists
 
 
 class ShoppingRequestConstraints(Base):

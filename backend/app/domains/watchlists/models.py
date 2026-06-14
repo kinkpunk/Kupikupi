@@ -9,6 +9,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.domains.catalog.models import Category
+    from app.domains.shopping_requests.models import ShoppingRequest
 
 
 class Watchlist(Base):
@@ -47,6 +48,10 @@ class Watchlist(Base):
     category_record: Mapped["Category | None"] = relationship(
         foreign_keys=[category_id],
         lazy="joined",
+    )
+    source_request: Mapped["ShoppingRequest | None"] = relationship(
+        back_populates="watchlists",
+        foreign_keys=[source_request_id],
     )
 
     @property
