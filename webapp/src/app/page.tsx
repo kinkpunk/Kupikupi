@@ -5,6 +5,7 @@ import { createApiClient } from "../lib/api-client.mjs";
 import { getWebAppConfig, validateWebAppConfig } from "../lib/runtime-config.mjs";
 import {
   clearStoredTokens,
+  getShoppingRequestId,
   getTelegramInitData,
   loadStoredTokens,
   notifyTelegramReady,
@@ -111,6 +112,10 @@ export default function Home() {
   useEffect(() => {
     if (accessToken) {
       void refreshDashboard();
+      const requestId = getShoppingRequestId();
+      if (requestId) {
+        void loadShoppingRequest(requestId);
+      }
     }
   }, [accessToken]);
 
@@ -190,6 +195,23 @@ export default function Home() {
       loadRecommendationOffers(response.items, size),
       loadRecommendationPriceHistory(response.items),
     ]);
+  }
+
+  async function loadShoppingRequest(requestId: string) {
+    setStatus("loading");
+    setError(null);
+    try {
+      const selected = (await withAuthRetry((client) =>
+        client.getShoppingRequest(requestId),
+      )) as ShoppingRequest;
+      setText(selected.raw_text);
+      setRequest(selected);
+      await loadRecommendations(selected.id, selected.constraints?.size_value);
+      setStatus("idle");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Не удалось загрузить запрос.");
+      setStatus("error");
+    }
   }
 
   async function loadRecommendationOffers(items: Recommendation[], size?: string | null) {

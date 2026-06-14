@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   clearStoredTokens,
+  getShoppingRequestId,
   getTelegramInitData,
   loadStoredTokens,
   notifyTelegramReady,
@@ -64,6 +65,13 @@ test("notifyTelegramReady calls Telegram ready hook", () => {
 
   assert.equal(readyCalled, true);
   delete global.window;
+});
+
+test("reads shopping request id from WebApp URL", () => {
+  assert.equal(
+    getShoppingRequestId({ search: "?v=release&request_id=request-1" }),
+    "request-1",
+  );
 });
 
 test("resolveInitialAuthSource prefers Telegram initData over stored tokens and demo token", () => {

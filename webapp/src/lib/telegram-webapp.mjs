@@ -15,6 +15,13 @@ export function notifyTelegramReady() {
   window.Telegram?.WebApp?.ready?.();
 }
 
+export function getShoppingRequestId(location = safeLocation()) {
+  if (!location) {
+    return "";
+  }
+  return new URLSearchParams(location.search).get("request_id") || "";
+}
+
 export function resolveInitialAuthSource({ initData, storedTokens, demoAccessToken }) {
   if (initData) {
     return {
@@ -72,4 +79,11 @@ function safeSessionStorage() {
     return null;
   }
   return window.sessionStorage;
+}
+
+function safeLocation() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return window.location;
 }

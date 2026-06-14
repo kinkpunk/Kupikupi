@@ -121,6 +121,21 @@ test("listRecommendations gets request recommendations", async () => {
   assert.equal(calls[0].init.method, "GET");
 });
 
+test("getShoppingRequest gets one request by id", async () => {
+  const fetchImpl = async (url, options) => {
+    assert.equal(url, "https://api.example.test/v1/shopping-requests/request-1");
+    assert.equal(options.method, "GET");
+    return jsonResponse(200, { id: "request-1" });
+  };
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "token",
+    fetchImpl,
+  });
+
+  assert.deepEqual(await client.getShoppingRequest("request-1"), { id: "request-1" });
+});
+
 test("listProductOffers gets offers with size and stock filters", async () => {
   const calls = [];
   const client = createApiClient({

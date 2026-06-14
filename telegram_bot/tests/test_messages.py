@@ -110,7 +110,10 @@ def test_shopping_text_reply_trims_and_previews_request() -> None:
 
 def test_shopping_request_created_reply_summarizes_constraints() -> None:
     reply = shopping_request_created_reply(
-        BotSettings(telegram_bot_token="token"),
+        BotSettings(
+            telegram_bot_token="token",
+            telegram_webapp_url="https://kupikupi.example/app?v=release",
+        ),
         ShoppingRequestResult(
             id="request-1",
             status="parsed",
@@ -125,6 +128,9 @@ def test_shopping_request_created_reply_summarizes_constraints() -> None:
     assert "running-shoes" in reply.text
     assert "41" in reply.text
     assert "150 EUR" in reply.text
+    assert reply.webapp_url == (
+        "https://kupikupi.example/app?v=release&request_id=request-1"
+    )
 
 
 def test_shopping_request_failed_reply_points_to_webapp() -> None:

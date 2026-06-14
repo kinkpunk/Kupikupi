@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from bot.backend_client import ShoppingRequestResult, ShoppingRequestSummary, WatchlistSummary
 from bot.config import BotSettings
@@ -87,7 +88,10 @@ def shopping_request_created_reply(
     if details:
         parts.append("Распознал: " + ", ".join(details) + ".")
     parts.append("Открой WebApp, чтобы проверить параметры и подтвердить список.")
-    return BotReply(text="\n".join(parts), webapp_url=settings.telegram_webapp_url)
+    return BotReply(
+        text="\n".join(parts),
+        webapp_url=_webapp_url_for_request(settings.telegram_webapp_url, result.id),
+    )
 
 
 def shopping_request_failed_reply(settings: BotSettings, text: str) -> BotReply:
@@ -218,6 +222,15 @@ def _shopping_request_details(request: ShoppingRequestSummary) -> str:
     if not details:
         return ""
     return f" ({', '.join(details)})"
+
+
+def _webapp_url_for_request(webapp_url: str | None, request_id: str) -> str | None:
+    if not webapp_url:
+        return None
+    parsed = urlsplit(webapp_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query["request_id"] = request_id
+    return urlunsplit(parsed._replace(query=urlencode(query)))
 
 
 def _watchlist_details(watchlist: WatchlistSummary) -> str:

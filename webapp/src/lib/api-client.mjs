@@ -116,6 +116,9 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
       });
       return request(`/shopping-requests?${params.toString()}`);
     },
+    getShoppingRequest(requestId) {
+      return request(`/shopping-requests/${requestId}`);
+    },
     listWatchlists({ limit = 10, offset = 0, archived = false } = {}) {
       const params = new URLSearchParams({
         limit: String(limit),
