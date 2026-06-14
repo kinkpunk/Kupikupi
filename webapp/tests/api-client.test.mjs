@@ -26,7 +26,7 @@ test("createShoppingRequest posts text without creating watchlist", async () => 
   });
 });
 
-test("updateShoppingRequest puts edited text", async () => {
+test("updateShoppingRequest puts edited text and constraints", async () => {
   const calls = [];
   const client = createApiClient({
     baseUrl: "https://api.example.test/v1",
@@ -37,11 +37,40 @@ test("updateShoppingRequest puts edited text", async () => {
     },
   });
 
-  await client.updateShoppingRequest("request-1", "Edited request");
+  await client.updateShoppingRequest("request-1", {
+    text: "Edited request",
+    constraints: {
+      category: "running-shoes",
+      size_value: "42",
+    },
+  });
 
   assert.equal(calls[0].url, "https://api.example.test/v1/shopping-requests/request-1");
   assert.equal(calls[0].init.method, "PUT");
-  assert.deepEqual(JSON.parse(calls[0].init.body), { text: "Edited request" });
+  assert.deepEqual(JSON.parse(calls[0].init.body), {
+    text: "Edited request",
+    constraints: {
+      category: "running-shoes",
+      size_value: "42",
+    },
+  });
+});
+
+test("listCategories gets available shopping categories", async () => {
+  const calls = [];
+  const client = createApiClient({
+    baseUrl: "https://api.example.test/v1",
+    accessToken: "token",
+    fetchImpl: async (url, init) => {
+      calls.push({ url, init });
+      return jsonResponse(200, [{ id: "category-1", slug: "running-shoes" }]);
+    },
+  });
+
+  await client.listCategories();
+
+  assert.equal(calls[0].url, "https://api.example.test/v1/categories");
+  assert.equal(calls[0].init.method, "GET");
 });
 
 test("authenticateTelegram posts init data without bearer token", async () => {

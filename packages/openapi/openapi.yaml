@@ -1169,6 +1169,38 @@ components:
       properties:
         text:
           type: string
+          minLength: 8
+        constraints:
+          $ref: "#/components/schemas/ShoppingConstraintsUpdate"
+
+    ShoppingConstraintsUpdate:
+      type: object
+      properties:
+        category:
+          type: string
+          nullable: true
+        use_case:
+          type: string
+          nullable: true
+        size_value:
+          type: string
+          nullable: true
+        size_system:
+          type: string
+          nullable: true
+        preferred_brand:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        max_price:
+          type: number
+          minimum: 0
+          nullable: true
+        max_price_currency:
+          type: string
+          nullable: true
 
     ShoppingRequest:
       type: object

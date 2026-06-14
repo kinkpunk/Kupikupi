@@ -14,12 +14,14 @@ import {
 } from "../lib/telegram-webapp.mjs";
 import type {
   AuthResponse,
+  Category,
   Notification,
   Offer,
   PaginatedResponse,
   PriceHistory,
   Recommendation,
   ShoppingRequest,
+  ShoppingRequestConstraintDraft,
   Watchlist,
 } from "../lib/types";
 
@@ -40,6 +42,16 @@ const apiBaseUrl = webAppConfig.apiBaseUrl;
 const supportContactUrl = webAppConfig.supportContactUrl;
 const privacyPolicyUrl = webAppConfig.privacyPolicyUrl;
 const termsUrl = webAppConfig.termsUrl;
+const emptyConstraintDraft: ShoppingRequestConstraintDraft = {
+  category: "",
+  use_case: "",
+  size_value: "",
+  size_system: "",
+  preferred_brand: "",
+  color: "",
+  max_price: "",
+  max_price_currency: "EUR",
+};
 
 export default function Home() {
   const [text, setText] = useState(exampleText);
@@ -50,6 +62,9 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "stored" | "missing">("missing");
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
   const [isEditingRequest, setIsEditingRequest] = useState(false);
+  const [constraintDraft, setConstraintDraft] =
+    useState<ShoppingRequestConstraintDraft>(emptyConstraintDraft);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [offersByProduct, setOffersByProduct] = useState<Record<string, Offer[]>>({});
@@ -158,11 +173,13 @@ export default function Home() {
         watchlistsResponse,
         archivedWatchlistsResponse,
         notificationsResponse,
+        categoriesResponse,
       ] = await Promise.all([
         withAuthRetry((client) => client.listShoppingRequests({ limit: 5 })),
         withAuthRetry((client) => client.listWatchlists({ limit: 5 })),
         withAuthRetry((client) => client.listWatchlists({ limit: 20, archived: true })),
         withAuthRetry((client) => client.listNotifications({ limit: 5 })),
+        withAuthRetry((client) => client.listCategories()),
       ]);
       setRecentRequests((requestsResponse as PaginatedResponse<ShoppingRequest>).items);
       setWatchlists((watchlistsResponse as PaginatedResponse<Watchlist>).items);
@@ -170,6 +187,7 @@ export default function Home() {
         (archivedWatchlistsResponse as PaginatedResponse<Watchlist>).items,
       );
       setNotifications((notificationsResponse as PaginatedResponse<Notification>).items);
+      setCategories(categoriesResponse as Category[]);
       setStatus((current) => (current === "loading" ? "idle" : current));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Не удалось загрузить данные.");
@@ -189,16 +207,26 @@ export default function Home() {
     try {
       const saved = (await withAuthRetry((client) =>
         request && isEditingRequest
-          ? client.updateShoppingRequest(request.id, text)
+          ? client.updateShoppingRequest(request.id, {
+              text,
+              constraints: constraintDraftPayload(constraintDraft),
+            })
           : client.createShoppingRequest(text),
       )) as ShoppingRequest;
       setRequest(saved);
+      setConstraintDraft(constraintsToDraft(saved));
       setIsEditingRequest(false);
       await loadRecommendations(saved.id, saved.constraints?.size_value);
       setStatus("success");
       await refreshDashboard();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Не удалось создать запрос.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : isEditingRequest
+            ? "Не удалось сохранить изменения."
+            : "Не удалось создать запрос.",
+      );
       setStatus("error");
     }
   }
@@ -223,6 +251,7 @@ export default function Home() {
       )) as ShoppingRequest;
       setText(selected.raw_text);
       setRequest(selected);
+      setConstraintDraft(constraintsToDraft(selected));
       setWatchlist(null);
       setIsEditingRequest(editAfterLoad);
       await loadRecommendations(selected.id, selected.constraints?.size_value);
@@ -286,6 +315,22 @@ export default function Home() {
     setOffersByProduct({});
     setPriceHistoryByProduct({});
     setIsEditingRequest(false);
+    setConstraintDraft(emptyConstraintDraft);
+  }
+
+  function startEditingRequest() {
+    if (!request) {
+      return;
+    }
+    setConstraintDraft(constraintsToDraft(request));
+    setIsEditingRequest(true);
+  }
+
+  function updateConstraintDraft(
+    field: keyof ShoppingRequestConstraintDraft,
+    value: string,
+  ) {
+    setConstraintDraft((current) => ({ ...current, [field]: value }));
   }
 
   async function handleWatchlistAction(
@@ -364,7 +409,7 @@ export default function Home() {
           </div>
         </header>
 
-        <form className="request-form" onSubmit={handleSubmit}>
+        <form className="request-form" id="request-form" onSubmit={handleSubmit}>
           <label htmlFor="request-text">Что ищем</label>
           <textarea
             id="request-text"
@@ -379,10 +424,10 @@ export default function Home() {
               <button
                 className="muted-button"
                 type="button"
-                onClick={() => setIsEditingRequest(true)}
+                onClick={startEditingRequest}
                 disabled={Boolean(watchlist)}
               >
-                Редактировать
+                Редактировать запрос и параметры
               </button>
             ) : (
               <button
@@ -434,7 +479,120 @@ export default function Home() {
           <p>Список покупок создается только после подтверждения.</p>
         </div>
 
-        {request ? (
+        {request && isEditingRequest ? (
+          <div className="constraint-editor">
+            <label>
+              Категория
+              <select
+                value={constraintDraft.category}
+                onChange={(event) =>
+                  updateConstraintDraft("category", event.target.value)
+                }
+              >
+                <option value="">Не выбрана</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Назначение
+              <input
+                value={constraintDraft.use_case}
+                onChange={(event) =>
+                  updateConstraintDraft("use_case", event.target.value)
+                }
+                placeholder="daily training"
+              />
+            </label>
+            <div className="constraint-row">
+              <label>
+                Размер
+                <input
+                  value={constraintDraft.size_value}
+                  onChange={(event) =>
+                    updateConstraintDraft("size_value", event.target.value)
+                  }
+                  placeholder="42"
+                />
+              </label>
+              <label>
+                Система
+                <select
+                  value={constraintDraft.size_system}
+                  onChange={(event) =>
+                    updateConstraintDraft("size_system", event.target.value)
+                  }
+                >
+                  <option value="">Не выбрана</option>
+                  <option value="EU">EU</option>
+                  <option value="US">US</option>
+                  <option value="UK">UK</option>
+                  <option value="INT">INT</option>
+                </select>
+              </label>
+            </div>
+            <div className="constraint-row">
+              <label>
+                Бренд
+                <input
+                  value={constraintDraft.preferred_brand}
+                  onChange={(event) =>
+                    updateConstraintDraft("preferred_brand", event.target.value)
+                  }
+                  placeholder="New Balance"
+                />
+              </label>
+              <label>
+                Цвет
+                <input
+                  value={constraintDraft.color}
+                  onChange={(event) =>
+                    updateConstraintDraft("color", event.target.value)
+                  }
+                  placeholder="green"
+                />
+              </label>
+            </div>
+            <div className="constraint-row">
+              <label>
+                Бюджет
+                <input
+                  min="0"
+                  step="0.01"
+                  type="number"
+                  value={constraintDraft.max_price}
+                  onChange={(event) =>
+                    updateConstraintDraft("max_price", event.target.value)
+                  }
+                />
+              </label>
+              <label>
+                Валюта
+                <select
+                  value={constraintDraft.max_price_currency}
+                  onChange={(event) =>
+                    updateConstraintDraft("max_price_currency", event.target.value)
+                  }
+                >
+                  <option value="EUR">EUR</option>
+                  <option value="CZK">CZK</option>
+                  <option value="USD">USD</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </label>
+            </div>
+            <button
+              form="request-form"
+              type="submit"
+              disabled={status === "submitting" || text.trim().length < 8}
+            >
+              {status === "submitting" ? "Сохраняю..." : "Сохранить параметры"}
+            </button>
+          </div>
+        ) : request ? (
           <div className="summary-grid">
             <SummaryItem label="Статус" value={request.status} />
             <SummaryItem label="Категория" value={constraints?.category} />
@@ -444,12 +602,21 @@ export default function Home() {
               label="Бюджет"
               value={formatMoney(request.budget_amount, request.display_currency)}
             />
+            {!watchlist ? (
+              <button
+                className="small-button muted-button summary-edit-button"
+                type="button"
+                onClick={startEditingRequest}
+              >
+                Изменить параметры
+              </button>
+            ) : null}
           </div>
         ) : (
           <p className="empty-state">Отправь запрос, чтобы увидеть распознанные параметры.</p>
         )}
 
-        {request && !watchlist ? (
+        {request && !watchlist && !isEditingRequest ? (
           <button
             className="secondary-button"
             type="button"
@@ -642,6 +809,39 @@ function SummaryItem({ label, value }: { label: string; value?: string | null })
       <strong>{value || "Не указано"}</strong>
     </div>
   );
+}
+
+function constraintsToDraft(
+  request: ShoppingRequest,
+): ShoppingRequestConstraintDraft {
+  const constraints = request.constraints;
+  return {
+    category: constraints?.category || "",
+    use_case: constraints?.use_case || "",
+    size_value: constraints?.size_value || "",
+    size_system: constraints?.size_system || "",
+    preferred_brand: constraints?.preferred_brand || "",
+    color: constraints?.color || "",
+    max_price:
+      constraints?.max_price !== null && constraints?.max_price !== undefined
+        ? String(constraints.max_price)
+        : "",
+    max_price_currency:
+      constraints?.max_price_currency || request.display_currency || "EUR",
+  };
+}
+
+function constraintDraftPayload(draft: ShoppingRequestConstraintDraft) {
+  return {
+    category: draft.category || null,
+    use_case: draft.use_case || null,
+    size_value: draft.size_value || null,
+    size_system: draft.size_system || null,
+    preferred_brand: draft.preferred_brand || null,
+    color: draft.color || null,
+    max_price: draft.max_price === "" ? null : Number(draft.max_price),
+    max_price_currency: draft.max_price_currency || null,
+  };
 }
 
 function formatMoney(amount?: number | null, currency?: string | null) {

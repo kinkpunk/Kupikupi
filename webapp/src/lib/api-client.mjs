@@ -75,11 +75,14 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
         },
       });
     },
-    updateShoppingRequest(requestId, text) {
+    updateShoppingRequest(requestId, payload) {
       return request(`/shopping-requests/${requestId}`, {
         method: "PUT",
-        body: { text },
+        body: payload,
       });
+    },
+    listCategories() {
+      return request("/categories");
     },
     confirmWatchlistFromShoppingRequest(requestId) {
       return request(`/shopping-requests/${requestId}/watchlist`, {

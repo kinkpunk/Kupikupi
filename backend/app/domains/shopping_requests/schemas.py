@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domains.catalog.schemas import ProductRead
 
@@ -11,8 +11,20 @@ class ShoppingRequestCreate(BaseModel):
     create_watchlist_after_confirmation: bool = False
 
 
+class ShoppingConstraintsUpdate(BaseModel):
+    category: str | None = None
+    use_case: str | None = None
+    size_value: str | None = None
+    size_system: str | None = None
+    preferred_brand: str | None = None
+    color: str | None = None
+    max_price: float | None = Field(default=None, ge=0)
+    max_price_currency: str | None = None
+
+
 class ShoppingRequestUpdate(BaseModel):
-    text: str
+    text: str = Field(min_length=8)
+    constraints: ShoppingConstraintsUpdate | None = None
 
 
 class ShoppingConstraintsRead(BaseModel):

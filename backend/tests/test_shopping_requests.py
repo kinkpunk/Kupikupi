@@ -248,6 +248,85 @@ async def test_user_can_edit_unconfirmed_shopping_request(
     assert recommendations[0]["product"]["name"] == "New Balance Fresh Foam 1080"
 
 
+async def test_user_can_override_parsed_constraints(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    user = await create_user_and_catalog(db_session_factory)
+    token = create_access_token(str(user.id))
+    headers = {"Authorization": f"Bearer {token}"}
+    create_response = client.post(
+        "/v1/shopping-requests",
+        headers=headers,
+        json={"text": "Хочу кофе. Бюджет 20 евро."},
+    )
+    request_id = create_response.json()["id"]
+
+    update_response = client.put(
+        f"/v1/shopping-requests/{request_id}",
+        headers=headers,
+        json={
+            "text": "Хочу кофе. Бюджет 20 евро.",
+            "constraints": {
+                "category": "running-shoes",
+                "use_case": "trail running",
+                "size_value": "42",
+                "size_system": "EU",
+                "preferred_brand": "Nike",
+                "color": "green",
+                "max_price": 175,
+                "max_price_currency": "eur",
+            },
+        },
+    )
+
+    assert update_response.status_code == 200
+    constraints = update_response.json()["constraints"]
+    assert constraints["category"] == "running-shoes"
+    assert constraints["use_case"] == "trail running"
+    assert constraints["size_value"] == "42"
+    assert constraints["preferred_brand"] == "Nike"
+    assert constraints["color"] == "green"
+    assert constraints["max_price"] == 175
+    assert constraints["max_price_currency"] == "EUR"
+    assert constraints["attributes"]["manual_override_fields"] == [
+        "category",
+        "color",
+        "max_price",
+        "max_price_currency",
+        "preferred_brand",
+        "size_system",
+        "size_value",
+        "use_case",
+    ]
+
+
+async def test_user_cannot_select_unknown_category(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    user = await create_user_and_catalog(db_session_factory)
+    token = create_access_token(str(user.id))
+    headers = {"Authorization": f"Bearer {token}"}
+    create_response = client.post(
+        "/v1/shopping-requests",
+        headers=headers,
+        json={"text": "Хочу кофе. Бюджет 20 евро."},
+    )
+
+    update_response = client.put(
+        f"/v1/shopping-requests/{create_response.json()['id']}",
+        headers=headers,
+        json={
+            "text": "Хочу кофе. Бюджет 20 евро.",
+            "constraints": {"category": "unknown-category"},
+        },
+    )
+
+    assert update_response.status_code == 422
+    assert update_response.json()["detail"] == "Unknown shopping category."
+
+
 async def test_confirmed_shopping_request_cannot_be_edited(
     client: TestClient,
     db_session_factory,

@@ -222,6 +222,33 @@ button:disabled {
   gap: 10px;
 }
 
+.constraint-editor {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.constraint-editor label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.constraint-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-edit-button {
+  width: 100%;
+}
+
 .summary-item {
   display: grid;
   gap: 6px;
@@ -819,6 +846,10 @@ button:disabled {
   .sync-run-row,
   .source-config-form {
     display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .constraint-row {
     grid-template-columns: 1fr;
   }
 }

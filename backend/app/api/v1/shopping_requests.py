@@ -11,6 +11,7 @@ from app.domains.shopping_requests.schemas import (
     ShoppingRequestUpdate,
 )
 from app.domains.shopping_requests.service import (
+    InvalidShoppingRequestConstraintsError,
     ShoppingRequestLockedError,
     create_shopping_request,
     get_shopping_request,
@@ -86,11 +87,25 @@ async def update_my_shopping_request(
             detail="Shopping request not found.",
         )
     try:
-        await update_shopping_request(session, request=request, raw_text=payload.text)
+        await update_shopping_request(
+            session,
+            request=request,
+            raw_text=payload.text,
+            constraint_overrides=(
+                payload.constraints.model_dump(exclude_unset=True)
+                if payload.constraints
+                else None
+            ),
+        )
     except ShoppingRequestLockedError as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Confirmed shopping requests cannot be edited.",
+        ) from error
+    except InvalidShoppingRequestConstraintsError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(error),
         ) from error
     await session.commit()
     updated = await get_shopping_request(

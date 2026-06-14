@@ -1,4 +1,6 @@
 import uuid
+from dataclasses import replace
+from typing import Any
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +25,10 @@ from app.integrations.ollama import parse_with_ollama
 
 
 class ShoppingRequestLockedError(Exception):
+    pass
+
+
+class InvalidShoppingRequestConstraintsError(Exception):
     pass
 
 
@@ -55,6 +61,7 @@ async def update_shopping_request(
     *,
     request: ShoppingRequest,
     raw_text: str,
+    constraint_overrides: dict[str, Any] | None = None,
 ) -> ShoppingRequest:
     linked_watchlist_id = await session.scalar(
         select(Watchlist.id).where(Watchlist.source_request_id == request.id).limit(1)
@@ -63,6 +70,11 @@ async def update_shopping_request(
         raise ShoppingRequestLockedError
 
     parsed = await _parse_request(raw_text)
+    parsed = await _apply_constraint_overrides(
+        session,
+        parsed=parsed,
+        overrides=constraint_overrides or {},
+    )
     request.raw_text = raw_text
     request.status = "parsed"
     request.display_currency = parsed.max_price_currency or request.display_currency
@@ -163,6 +175,46 @@ async def _parse_request(raw_text: str) -> ParsedShoppingRequest:
     deterministic = parse_shopping_request(raw_text)
     llm = await parse_with_ollama(raw_text, settings=settings)
     return merge_parsed_requests(deterministic, llm)
+
+
+async def _apply_constraint_overrides(
+    session: AsyncSession,
+    *,
+    parsed: ParsedShoppingRequest,
+    overrides: dict[str, Any],
+) -> ParsedShoppingRequest:
+    if not overrides:
+        return parsed
+
+    category = overrides.get("category")
+    if category is not None:
+        category_exists = await session.scalar(
+            select(Category.id).where(Category.slug == category).limit(1)
+        )
+        if category_exists is None:
+            raise InvalidShoppingRequestConstraintsError("Unknown shopping category.")
+
+    normalized = {
+        field: _normalize_override(field, value)
+        for field, value in overrides.items()
+    }
+    manual_fields = sorted(normalized)
+    return replace(
+        parsed,
+        **normalized,
+        attributes={
+            **parsed.attributes,
+            "manual_override_fields": manual_fields,
+        },
+    )
+
+
+def _normalize_override(field: str, value: Any) -> Any:
+    if isinstance(value, str):
+        value = value.strip() or None
+    if field == "max_price_currency" and value:
+        return value.upper()
+    return value
 
 
 async def _create_recommendation_drafts(

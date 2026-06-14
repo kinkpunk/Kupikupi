@@ -10,6 +10,17 @@ export type ShoppingRequestConstraints = {
   attributes?: Record<string, unknown> | null;
 };
 
+export type ShoppingRequestConstraintDraft = {
+  category: string;
+  use_case: string;
+  size_value: string;
+  size_system: string;
+  preferred_brand: string;
+  color: string;
+  max_price: string;
+  max_price_currency: string;
+};
+
 export type ShoppingRequest = {
   id: string;
   raw_text: string;
@@ -18,6 +29,13 @@ export type ShoppingRequest = {
   display_currency?: string | null;
   budget_amount?: number | null;
   constraints?: ShoppingRequestConstraints | null;
+};
+
+export type Category = {
+  id: string;
+  parent_id?: string | null;
+  slug: string;
+  name: string;
 };
 
 export type Product = {
