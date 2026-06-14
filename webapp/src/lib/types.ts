@@ -128,6 +128,7 @@ export type Watchlist = {
   color?: string | null;
   target_price?: number | null;
   target_price_currency?: string | null;
+  created_at: string;
 };
 
 export type PaginatedResponse<T> = {

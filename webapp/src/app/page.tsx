@@ -546,8 +546,8 @@ export default function Home() {
 
         <section className="dashboard-section">
           <div className="section-heading compact-heading">
-            <h2>Списки покупок</h2>
-            <p>Управление списками покупок без выхода из WebApp.</p>
+            <h2>Позиции</h2>
+            <p>Управление позициями для поиска выгодных предложений.</p>
           </div>
           <div className="segmented-control" aria-label="Фильтр списков">
             <button
@@ -555,7 +555,7 @@ export default function Home() {
               type="button"
               onClick={() => setWatchlistView("active")}
             >
-              Активные {watchlists.length}
+              Активные позиции {watchlists.length}
             </button>
             <button
               className={watchlistView === "archived" ? "selected" : ""}
@@ -606,7 +606,7 @@ export default function Home() {
               ))}
             </div>
           ) : watchlistView === "active" ? (
-            <p className="empty-state">Активных списков пока нет.</p>
+            <p className="empty-state">Активных позиций пока нет.</p>
           ) : archivedWatchlists.length > 0 ? (
             <div className="list-stack">
               {archivedWatchlists.map((item) => (
@@ -735,17 +735,23 @@ function formatScore(score: number) {
 }
 
 function watchlistTitle(watchlist: Watchlist) {
-  return watchlist.model || watchlist.category || watchlist.type;
+  return watchlist.category || watchlist.model || "Позиция";
 }
 
 function watchlistDescription(watchlist: Watchlist) {
   const parts = [
-    watchlist.id.slice(0, 8),
-    watchlist.archived ? "архив" : watchlist.active ? "активен" : "пауза",
+    `создана ${formatDate(watchlist.created_at)}`,
+    watchlist.archived ? "архив" : watchlist.active ? "активна" : "пауза",
     watchlist.size_value ? `размер ${watchlist.size_value}` : null,
     formatMoney(watchlist.target_price, watchlist.target_price_currency),
   ].filter(Boolean);
   return parts.join(" · ");
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "medium",
+  }).format(new Date(value));
 }
 
 function notificationTitle(notification: Notification) {

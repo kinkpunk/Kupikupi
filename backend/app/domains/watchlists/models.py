@@ -1,10 +1,14 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.domains.catalog.models import Category
 
 
 class Watchlist(Base):
@@ -40,3 +44,11 @@ class Watchlist(Base):
         onupdate=func.now(),
     )
 
+    category_record: Mapped["Category | None"] = relationship(
+        foreign_keys=[category_id],
+        lazy="joined",
+    )
+
+    @property
+    def category(self) -> str | None:
+        return self.category_record.slug if self.category_record else None

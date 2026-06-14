@@ -49,6 +49,7 @@ async def test_watchlist_crud_pause_archive_delete(client: TestClient, db_sessio
     watchlist = create_response.json()
     assert watchlist["active"] is True
     assert watchlist["archived"] is False
+    assert watchlist["category"] == "running-shoes"
 
     list_response = client.get("/v1/watchlists", headers=headers)
     assert list_response.status_code == 200
@@ -124,6 +125,7 @@ async def test_create_watchlist_from_shopping_request_requires_confirmation(
     assert watchlist["type"] == "agent_request"
     assert watchlist["source_request_id"] == request_id
     assert watchlist["category_id"] == str(category.id)
+    assert watchlist["category"] == "running-shoes"
     assert watchlist["size_value"] == "41"
     assert watchlist["target_price"] == 150
     assert watchlist["target_price_currency"] == "EUR"

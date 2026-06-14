@@ -1342,6 +1342,9 @@ components:
             user_id:
               type: string
               format: uuid
+            category:
+              type: string
+              nullable: true
             created_at:
               type: string
               format: date-time

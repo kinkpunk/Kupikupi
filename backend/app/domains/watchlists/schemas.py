@@ -52,6 +52,7 @@ class WatchlistRead(BaseModel):
     product_id: uuid.UUID | None
     brand_id: uuid.UUID | None
     category_id: uuid.UUID | None
+    category: str | None
     source_request_id: uuid.UUID | None
     model: str | None
     size_value: str | None
@@ -72,4 +73,3 @@ class WatchlistRead(BaseModel):
 class WatchlistList(BaseModel):
     items: list[WatchlistRead]
     total: int
-
