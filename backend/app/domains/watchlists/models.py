@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.domains.catalog.models import Category
+    from app.domains.catalog.models import Brand, Category
     from app.domains.shopping_requests.models import ShoppingRequest
 
 
@@ -49,6 +49,10 @@ class Watchlist(Base):
         foreign_keys=[category_id],
         lazy="joined",
     )
+    brand_record: Mapped["Brand | None"] = relationship(
+        foreign_keys=[brand_id],
+        lazy="joined",
+    )
     source_request: Mapped["ShoppingRequest | None"] = relationship(
         back_populates="watchlists",
         foreign_keys=[source_request_id],
@@ -56,4 +60,22 @@ class Watchlist(Base):
 
     @property
     def category(self) -> str | None:
-        return self.category_record.slug if self.category_record else None
+        if self.category_record:
+            return self.category_record.slug
+        if self.source_request and self.source_request.constraints:
+            return self.source_request.constraints.category
+        return None
+
+    @property
+    def brand(self) -> str | None:
+        if self.brand_record:
+            return self.brand_record.name
+        if self.source_request and self.source_request.constraints:
+            return self.source_request.constraints.preferred_brand
+        return None
+
+    @property
+    def use_case(self) -> str | None:
+        if self.source_request and self.source_request.constraints:
+            return self.source_request.constraints.use_case
+        return None

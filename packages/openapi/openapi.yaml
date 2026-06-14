@@ -1380,6 +1380,12 @@ components:
             category:
               type: string
               nullable: true
+            brand:
+              type: string
+              nullable: true
+            use_case:
+              type: string
+              nullable: true
             created_at:
               type: string
               format: date-time

@@ -20,7 +20,10 @@ from app.domains.shopping_requests.service import (
     update_shopping_request,
 )
 from app.domains.watchlists.schemas import WatchlistRead
-from app.domains.watchlists.service import create_watchlist_from_shopping_request
+from app.domains.watchlists.service import (
+    create_watchlist_from_shopping_request,
+    get_watchlist,
+)
 
 router = APIRouter(prefix="/shopping-requests")
 
@@ -162,5 +165,10 @@ async def confirm_watchlist_from_shopping_request(
         request=request,
     )
     await session.commit()
-    await session.refresh(watchlist)
-    return watchlist
+    created = await get_watchlist(
+        session,
+        user_id=current_user.id,
+        watchlist_id=watchlist.id,
+    )
+    assert created is not None
+    return created

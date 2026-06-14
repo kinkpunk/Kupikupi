@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.domains.catalog.models import Brand, Category
 from app.domains.shopping_requests.models import ShoppingRequest
@@ -47,6 +48,7 @@ async def create_watchlist_from_shopping_request(
         category_id=category_id,
         brand_id=brand_id,
         source_request_id=request.id,
+        source_request=request,
         size_value=constraints.size_value if constraints else None,
         size_system=constraints.size_system if constraints else None,
         color=constraints.color if constraints else None,
@@ -81,6 +83,9 @@ async def list_watchlists(
     total_result = await session.execute(select(func.count(Watchlist.id)).where(*filters))
     result = await session.execute(
         select(Watchlist)
+        .options(
+            selectinload(Watchlist.source_request).selectinload(ShoppingRequest.constraints),
+        )
         .where(*filters)
         .order_by(Watchlist.created_at.desc())
         .limit(limit)
@@ -96,7 +101,11 @@ async def get_watchlist(
     watchlist_id: uuid.UUID,
 ) -> Watchlist | None:
     return await session.scalar(
-        select(Watchlist).where(Watchlist.id == watchlist_id, Watchlist.user_id == user_id)
+        select(Watchlist)
+        .options(
+            selectinload(Watchlist.source_request).selectinload(ShoppingRequest.constraints),
+        )
+        .where(Watchlist.id == watchlist_id, Watchlist.user_id == user_id)
     )
 
 
@@ -115,4 +124,3 @@ async def update_watchlist(
 async def delete_watchlist(session: AsyncSession, watchlist: Watchlist) -> None:
     await session.delete(watchlist)
     await session.flush()
-

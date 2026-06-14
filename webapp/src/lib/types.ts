@@ -30,6 +30,7 @@ export type ShoppingRequest = {
   budget_amount?: number | null;
   constraints?: ShoppingRequestConstraints | null;
   editable: boolean;
+  created_at: string;
 };
 
 export type Category = {
@@ -142,6 +143,8 @@ export type Watchlist = {
   archived: boolean;
   model?: string | null;
   category?: string | null;
+  brand?: string | null;
+  use_case?: string | null;
   size_value?: string | null;
   size_system?: string | null;
   color?: string | null;

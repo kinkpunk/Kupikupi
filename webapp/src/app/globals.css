@@ -224,6 +224,13 @@ button:disabled {
   color: var(--muted);
 }
 
+.result-panel > .section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .summary-grid {
   display: grid;
   gap: 10px;
@@ -360,7 +367,7 @@ button:disabled {
   background: var(--panel);
 }
 
-.list-item div:first-child {
+.list-item > div:first-child {
   display: grid;
   min-width: 0;
   gap: 6px;
@@ -378,6 +385,49 @@ button:disabled {
 .list-item span {
   color: var(--muted);
   font-size: 13px;
+}
+
+.parameter-card {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 12px;
+}
+
+.parameter-card-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.parameter-card-heading span {
+  flex-shrink: 0;
+}
+
+.parameter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin: 0;
+}
+
+.parameter-grid div {
+  display: grid;
+  gap: 3px;
+}
+
+.parameter-grid dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.parameter-grid dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .watchlist-item {
@@ -867,5 +917,15 @@ button:disabled {
 
   .constraint-row {
     grid-template-columns: 1fr;
+  }
+
+  .parameter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .parameter-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 }

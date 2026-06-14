@@ -53,6 +53,8 @@ class WatchlistRead(BaseModel):
     brand_id: uuid.UUID | None
     category_id: uuid.UUID | None
     category: str | None
+    brand: str | None
+    use_case: str | None
     source_request_id: uuid.UUID | None
     model: str | None
     size_value: str | None

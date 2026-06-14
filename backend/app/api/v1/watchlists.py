@@ -48,8 +48,13 @@ async def create_my_watchlist(
 ) -> WatchlistRead:
     watchlist = await create_watchlist(session, user_id=current_user.id, payload=payload)
     await session.commit()
-    await session.refresh(watchlist)
-    return watchlist
+    created = await get_watchlist(
+        session,
+        user_id=current_user.id,
+        watchlist_id=watchlist.id,
+    )
+    assert created is not None
+    return created
 
 
 @router.get("/{watchlist_id}", response_model=WatchlistRead)
@@ -77,8 +82,13 @@ async def update_my_watchlist(
 
     updated = await update_watchlist(session, watchlist=watchlist, payload=payload)
     await session.commit()
-    await session.refresh(updated)
-    return updated
+    reloaded = await get_watchlist(
+        session,
+        user_id=current_user.id,
+        watchlist_id=updated.id,
+    )
+    assert reloaded is not None
+    return reloaded
 
 
 @router.post("/{watchlist_id}/pause", response_model=WatchlistRead)
@@ -97,8 +107,13 @@ async def pause_my_watchlist(
         payload=WatchlistUpdate(active=False),
     )
     await session.commit()
-    await session.refresh(updated)
-    return updated
+    reloaded = await get_watchlist(
+        session,
+        user_id=current_user.id,
+        watchlist_id=updated.id,
+    )
+    assert reloaded is not None
+    return reloaded
 
 
 @router.post("/{watchlist_id}/archive", response_model=WatchlistRead)
@@ -117,8 +132,13 @@ async def archive_my_watchlist(
         payload=WatchlistUpdate(active=False, archived=True),
     )
     await session.commit()
-    await session.refresh(updated)
-    return updated
+    reloaded = await get_watchlist(
+        session,
+        user_id=current_user.id,
+        watchlist_id=updated.id,
+    )
+    assert reloaded is not None
+    return reloaded
 
 
 @router.post("/{watchlist_id}/restore", response_model=WatchlistRead)
@@ -137,8 +157,13 @@ async def restore_my_watchlist(
         payload=WatchlistUpdate(active=True, archived=False),
     )
     await session.commit()
-    await session.refresh(updated)
-    return updated
+    reloaded = await get_watchlist(
+        session,
+        user_id=current_user.id,
+        watchlist_id=updated.id,
+    )
+    assert reloaded is not None
+    return reloaded
 
 
 @router.delete("/{watchlist_id}", status_code=status.HTTP_204_NO_CONTENT)

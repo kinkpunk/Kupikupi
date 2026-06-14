@@ -439,50 +439,26 @@ export default function Home() {
           </div>
         </header>
 
-        <form className="request-form" id="request-form" onSubmit={handleSubmit}>
-          <label htmlFor="request-text">Что ищем</label>
-          <textarea
-            id="request-text"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            rows={5}
-            placeholder={exampleText}
-            readOnly={Boolean(request) && editMode !== "text"}
-            disabled={editMode === "constraints"}
-          />
-          <div className="form-actions">
-            {request && editMode === null && request.editable ? (
-              <button
-                className="muted-button"
-                type="button"
-                onClick={() => startEditingRequest("text")}
-              >
-                Редактировать запрос
-              </button>
-            ) : !request || editMode === "text" ? (
+        {!request ? (
+          <form className="request-form" id="request-form" onSubmit={handleSubmit}>
+            <label htmlFor="request-text">Что ищем</label>
+            <textarea
+              id="request-text"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              rows={5}
+              placeholder={exampleText}
+            />
+            <div className="form-actions">
               <button
                 type="submit"
                 disabled={!accessToken || status === "submitting" || text.trim().length < 8}
               >
-                {status === "submitting"
-                  ? "Сохраняю..."
-                  : editMode === "text"
-                    ? "Сохранить запрос"
-                    : "Разобрать запрос"}
+                {status === "submitting" ? "Сохраняю..." : "Разобрать запрос"}
               </button>
-            ) : null}
-            {request ? (
-              <button
-                className="text-button"
-                type="button"
-                onClick={handleNewRequest}
-                disabled={editMode === "constraints"}
-              >
-                Новый запрос
-              </button>
-            ) : null}
-          </div>
-        </form>
+            </div>
+          </form>
+        ) : null}
 
         {error ? <p className="error-text">{error}</p> : null}
 
@@ -510,8 +486,15 @@ export default function Home() {
 
       <section className="result-panel">
         <div className="section-heading">
-          <h2>Результат разбора</h2>
-          <p>Список покупок создается только после подтверждения.</p>
+          <div>
+            <h2>Результат разбора</h2>
+            <p>Список покупок создается только после подтверждения.</p>
+          </div>
+          {request && editMode === null ? (
+            <button className="small-button text-button" type="button" onClick={handleNewRequest}>
+              Новый запрос
+            </button>
+          ) : null}
         </div>
 
         {request && editMode === "constraints" ? (
@@ -711,10 +694,15 @@ export default function Home() {
             <div className="list-stack">
               {recentRequests.map((item) => (
                 <article className="list-item" key={item.id}>
-                  <div>
-                    <strong>{item.raw_text}</strong>
-                    <span>{requestDescription(item)}</span>
-                  </div>
+                  <ParameterCard
+                    budget={formatMoney(item.budget_amount, item.display_currency)}
+                    brand={item.constraints?.preferred_brand}
+                    category={item.constraints?.category}
+                    color={item.constraints?.color}
+                    createdAt={item.created_at}
+                    size={formatSize(item.constraints?.size_value, item.constraints?.size_system)}
+                    useCase={item.constraints?.use_case}
+                  />
                   <button
                     className="small-button muted-button"
                     type="button"
@@ -777,10 +765,15 @@ export default function Home() {
             <div className="list-stack">
               {watchlists.map((item) => (
                 <article className="list-item watchlist-item" key={item.id}>
-                  <div>
-                    <strong>{watchlistTitle(item)}</strong>
-                    <span>{watchlistDescription(item)}</span>
-                  </div>
+                  <ParameterCard
+                    budget={formatMoney(item.target_price, item.target_price_currency)}
+                    brand={item.brand}
+                    category={item.category}
+                    color={item.color}
+                    createdAt={item.created_at}
+                    size={formatSize(item.size_value, item.size_system)}
+                    useCase={item.use_case}
+                  />
                   <div className="button-row">
                     {item.active ? (
                       <button
@@ -819,10 +812,15 @@ export default function Home() {
             <div className="list-stack">
               {archivedWatchlists.map((item) => (
                 <article className="list-item watchlist-item" key={item.id}>
-                  <div>
-                    <strong>{watchlistTitle(item)}</strong>
-                    <span>{watchlistDescription(item)}</span>
-                  </div>
+                  <ParameterCard
+                    budget={formatMoney(item.target_price, item.target_price_currency)}
+                    brand={item.brand}
+                    category={item.category}
+                    color={item.color}
+                    createdAt={item.created_at}
+                    size={formatSize(item.size_value, item.size_system)}
+                    useCase={item.use_case}
+                  />
                   <button
                     className="small-button"
                     type="button"
@@ -848,6 +846,50 @@ function SummaryItem({ label, value }: { label: string; value?: string | null })
     <div className="summary-item">
       <span>{label}</span>
       <strong>{value || "Не указано"}</strong>
+    </div>
+  );
+}
+
+function ParameterCard({
+  budget,
+  brand,
+  category,
+  color,
+  createdAt,
+  size,
+  useCase,
+}: {
+  budget?: string | null;
+  brand?: string | null;
+  category?: string | null;
+  color?: string | null;
+  createdAt: string;
+  size?: string | null;
+  useCase?: string | null;
+}) {
+  const parameters = [
+    ["Категория", formatCategory(category)],
+    ["Бренд", brand],
+    ["Назначение", useCase],
+    ["Цвет", color],
+    ["Размер", size],
+    ["Бюджет", budget],
+  ];
+
+  return (
+    <div className="parameter-card">
+      <div className="parameter-card-heading">
+        <strong>{formatCategory(category) || "Категория не указана"}</strong>
+        <span>{formatDate(createdAt)}</span>
+      </div>
+      <dl className="parameter-grid">
+        {parameters.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value || "Не указано"}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -890,16 +932,6 @@ function formatMoney(amount?: number | null, currency?: string | null) {
     return null;
   }
   return `${amount.toLocaleString("ru-RU")} ${currency || "EUR"}`;
-}
-
-function requestDescription(request: ShoppingRequest) {
-  const parts = [
-    request.status,
-    request.constraints?.category,
-    request.constraints?.size_value ? `размер ${request.constraints.size_value}` : null,
-    formatMoney(request.budget_amount, request.display_currency),
-  ].filter(Boolean);
-  return parts.join(" · ");
 }
 
 function recommendationDescription(recommendation: Recommendation) {
@@ -975,18 +1007,21 @@ function formatScore(score: number) {
   });
 }
 
-function watchlistTitle(watchlist: Watchlist) {
-  return watchlist.category || watchlist.model || "Позиция";
+function formatSize(value?: string | null, system?: string | null) {
+  if (!value) {
+    return null;
+  }
+  return system ? `${system} ${value}` : value;
 }
 
-function watchlistDescription(watchlist: Watchlist) {
-  const parts = [
-    `создана ${formatDate(watchlist.created_at)}`,
-    watchlist.archived ? "архив" : watchlist.active ? "активна" : "пауза",
-    watchlist.size_value ? `размер ${watchlist.size_value}` : null,
-    formatMoney(watchlist.target_price, watchlist.target_price_currency),
-  ].filter(Boolean);
-  return parts.join(" · ");
+function formatCategory(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+  return value
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function formatDate(value: string) {
