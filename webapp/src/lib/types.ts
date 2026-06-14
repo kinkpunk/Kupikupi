@@ -118,6 +118,7 @@ export type Notification = {
 export type Watchlist = {
   id: string;
   type: string;
+  source_request_id?: string | null;
   active: boolean;
   archived: boolean;
   model?: string | null;

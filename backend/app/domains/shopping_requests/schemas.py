@@ -11,6 +11,10 @@ class ShoppingRequestCreate(BaseModel):
     create_watchlist_after_confirmation: bool = False
 
 
+class ShoppingRequestUpdate(BaseModel):
+    text: str
+
+
 class ShoppingConstraintsRead(BaseModel):
     category: str | None
     use_case: str | None

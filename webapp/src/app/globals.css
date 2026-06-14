@@ -117,6 +117,26 @@ h2 {
   font-weight: 700;
 }
 
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.form-actions button {
+  flex: 1 1 180px;
+}
+
+.text-button {
+  color: var(--primary-dark);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.text-button:hover:not(:disabled) {
+  background: #eef4f2;
+}
+
 textarea {
   width: 100%;
   min-height: 180px;
@@ -132,6 +152,11 @@ textarea {
 textarea:focus {
   outline: 3px solid #b6e8da;
   border-color: var(--primary);
+}
+
+textarea:read-only {
+  color: var(--muted);
+  background: #eef2f3;
 }
 
 input,
@@ -458,6 +483,29 @@ button:disabled {
   display: flex;
   flex-shrink: 0;
   gap: 8px;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #eef2f3;
+}
+
+.segmented-control button {
+  min-height: 38px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 13px;
+}
+
+.segmented-control button:hover:not(:disabled),
+.segmented-control button.selected {
+  color: var(--primary-dark);
+  background: var(--panel);
 }
 
 .small-button {

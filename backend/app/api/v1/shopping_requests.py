@@ -8,12 +8,15 @@ from app.domains.shopping_requests.schemas import (
     ShoppingRequestCreate,
     ShoppingRequestList,
     ShoppingRequestRead,
+    ShoppingRequestUpdate,
 )
 from app.domains.shopping_requests.service import (
+    ShoppingRequestLockedError,
     create_shopping_request,
     get_shopping_request,
     list_recommendations,
     list_shopping_requests,
+    update_shopping_request,
 )
 from app.domains.watchlists.schemas import WatchlistRead
 from app.domains.watchlists.service import create_watchlist_from_shopping_request
@@ -67,6 +70,40 @@ async def get_my_shopping_request(
             detail="Shopping request not found.",
         )
     return request
+
+
+@router.put("/{request_id}", response_model=ShoppingRequestRead)
+async def update_my_shopping_request(
+    request_id: uuid.UUID,
+    payload: ShoppingRequestUpdate,
+    session: DbSessionDep,
+    current_user: CurrentUserDep,
+) -> ShoppingRequestRead:
+    request = await get_shopping_request(session, user_id=current_user.id, request_id=request_id)
+    if request is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Shopping request not found.",
+        )
+    try:
+        await update_shopping_request(session, request=request, raw_text=payload.text)
+    except ShoppingRequestLockedError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Confirmed shopping requests cannot be edited.",
+        ) from error
+    await session.commit()
+    updated = await get_shopping_request(
+        session,
+        user_id=current_user.id,
+        request_id=request_id,
+    )
+    if updated is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Updated request could not be loaded.",
+        )
+    return updated
 
 
 @router.get("/{request_id}/recommendations", response_model=RecommendationList)

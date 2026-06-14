@@ -34,7 +34,7 @@ type Status =
   | "error";
 
 const exampleText =
-  "Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.";
+  "I need waterproof trail running shoes for muddy weekend runs, EU size 42, under 170 EUR.";
 const webAppConfig = getWebAppConfig();
 const apiBaseUrl = webAppConfig.apiBaseUrl;
 const supportContactUrl = webAppConfig.supportContactUrl;
@@ -49,12 +49,15 @@ export default function Home() {
   const [refreshToken, setRefreshToken] = useState("");
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "stored" | "missing">("missing");
   const [request, setRequest] = useState<ShoppingRequest | null>(null);
+  const [isEditingRequest, setIsEditingRequest] = useState(false);
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [offersByProduct, setOffersByProduct] = useState<Record<string, Offer[]>>({});
   const [priceHistoryByProduct, setPriceHistoryByProduct] = useState<Record<string, PriceHistory>>({});
   const [recentRequests, setRecentRequests] = useState<ShoppingRequest[]>([]);
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
+  const [archivedWatchlists, setArchivedWatchlists] = useState<Watchlist[]>([]);
+  const [watchlistView, setWatchlistView] = useState<"active" | "archived">("active");
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const demoAccessToken = webAppConfig.demoAccessToken;
@@ -150,13 +153,22 @@ export default function Home() {
     setError(null);
 
     try {
-      const [requestsResponse, watchlistsResponse, notificationsResponse] = await Promise.all([
+      const [
+        requestsResponse,
+        watchlistsResponse,
+        archivedWatchlistsResponse,
+        notificationsResponse,
+      ] = await Promise.all([
         withAuthRetry((client) => client.listShoppingRequests({ limit: 5 })),
         withAuthRetry((client) => client.listWatchlists({ limit: 5 })),
+        withAuthRetry((client) => client.listWatchlists({ limit: 20, archived: true })),
         withAuthRetry((client) => client.listNotifications({ limit: 5 })),
       ]);
       setRecentRequests((requestsResponse as PaginatedResponse<ShoppingRequest>).items);
       setWatchlists((watchlistsResponse as PaginatedResponse<Watchlist>).items);
+      setArchivedWatchlists(
+        (archivedWatchlistsResponse as PaginatedResponse<Watchlist>).items,
+      );
       setNotifications((notificationsResponse as PaginatedResponse<Notification>).items);
       setStatus((current) => (current === "loading" ? "idle" : current));
     } catch (caught) {
@@ -175,9 +187,14 @@ export default function Home() {
     setPriceHistoryByProduct({});
 
     try {
-      const created = (await withAuthRetry((client) => client.createShoppingRequest(text))) as ShoppingRequest;
-      setRequest(created);
-      await loadRecommendations(created.id, created.constraints?.size_value);
+      const saved = (await withAuthRetry((client) =>
+        request && isEditingRequest
+          ? client.updateShoppingRequest(request.id, text)
+          : client.createShoppingRequest(text),
+      )) as ShoppingRequest;
+      setRequest(saved);
+      setIsEditingRequest(false);
+      await loadRecommendations(saved.id, saved.constraints?.size_value);
       setStatus("success");
       await refreshDashboard();
     } catch (caught) {
@@ -197,7 +214,7 @@ export default function Home() {
     ]);
   }
 
-  async function loadShoppingRequest(requestId: string) {
+  async function loadShoppingRequest(requestId: string, editAfterLoad = false) {
     setStatus("loading");
     setError(null);
     try {
@@ -206,6 +223,8 @@ export default function Home() {
       )) as ShoppingRequest;
       setText(selected.raw_text);
       setRequest(selected);
+      setWatchlist(null);
+      setIsEditingRequest(editAfterLoad);
       await loadRecommendations(selected.id, selected.constraints?.size_value);
       setStatus("idle");
     } catch (caught) {
@@ -259,7 +278,20 @@ export default function Home() {
     }
   }
 
-  async function handleWatchlistAction(action: "pause" | "resume" | "archive", watchlistId: string) {
+  function handleNewRequest() {
+    setText(exampleText);
+    setRequest(null);
+    setWatchlist(null);
+    setRecommendations([]);
+    setOffersByProduct({});
+    setPriceHistoryByProduct({});
+    setIsEditingRequest(false);
+  }
+
+  async function handleWatchlistAction(
+    action: "pause" | "resume" | "archive" | "restore",
+    watchlistId: string,
+  ) {
     setStatus("updating");
     setError(null);
 
@@ -268,6 +300,8 @@ export default function Home() {
         await withAuthRetry((client) => client.pauseWatchlist(watchlistId));
       } else if (action === "resume") {
         await withAuthRetry((client) => client.resumeWatchlist(watchlistId));
+      } else if (action === "restore") {
+        await withAuthRetry((client) => client.restoreWatchlist(watchlistId));
       } else {
         await withAuthRetry((client) => client.archiveWatchlist(watchlistId));
       }
@@ -338,13 +372,36 @@ export default function Home() {
             onChange={(event) => setText(event.target.value)}
             rows={5}
             placeholder={exampleText}
+            readOnly={Boolean(request) && !isEditingRequest}
           />
-          <button
-            type="submit"
-            disabled={!accessToken || status === "submitting" || text.trim().length < 8}
-          >
-            {status === "submitting" ? "Создаю запрос..." : "Разобрать запрос"}
-          </button>
+          <div className="form-actions">
+            {request && !isEditingRequest ? (
+              <button
+                className="muted-button"
+                type="button"
+                onClick={() => setIsEditingRequest(true)}
+                disabled={Boolean(watchlist)}
+              >
+                Редактировать
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!accessToken || status === "submitting" || text.trim().length < 8}
+              >
+                {status === "submitting"
+                  ? "Сохраняю..."
+                  : isEditingRequest
+                    ? "Сохранить изменения"
+                    : "Разобрать запрос"}
+              </button>
+            )}
+            {request ? (
+              <button className="text-button" type="button" onClick={handleNewRequest}>
+                Новый запрос
+              </button>
+            ) : null}
+          </div>
         </form>
 
         {error ? <p className="error-text">{error}</p> : null}
@@ -450,6 +507,13 @@ export default function Home() {
                     <strong>{item.raw_text}</strong>
                     <span>{requestDescription(item)}</span>
                   </div>
+                  <button
+                    className="small-button muted-button"
+                    type="button"
+                    onClick={() => void loadShoppingRequest(item.id, true)}
+                  >
+                    Изменить
+                  </button>
                 </article>
               ))}
             </div>
@@ -482,10 +546,26 @@ export default function Home() {
 
         <section className="dashboard-section">
           <div className="section-heading compact-heading">
-            <h2>Активные списки</h2>
+            <h2>Списки покупок</h2>
             <p>Управление списками покупок без выхода из WebApp.</p>
           </div>
-          {watchlists.length > 0 ? (
+          <div className="segmented-control" aria-label="Фильтр списков">
+            <button
+              className={watchlistView === "active" ? "selected" : ""}
+              type="button"
+              onClick={() => setWatchlistView("active")}
+            >
+              Активные {watchlists.length}
+            </button>
+            <button
+              className={watchlistView === "archived" ? "selected" : ""}
+              type="button"
+              onClick={() => setWatchlistView("archived")}
+            >
+              Архив {archivedWatchlists.length}
+            </button>
+          </div>
+          {watchlistView === "active" && watchlists.length > 0 ? (
             <div className="list-stack">
               {watchlists.map((item) => (
                 <article className="list-item watchlist-item" key={item.id}>
@@ -525,8 +605,29 @@ export default function Home() {
                 </article>
               ))}
             </div>
-          ) : (
+          ) : watchlistView === "active" ? (
             <p className="empty-state">Активных списков пока нет.</p>
+          ) : archivedWatchlists.length > 0 ? (
+            <div className="list-stack">
+              {archivedWatchlists.map((item) => (
+                <article className="list-item watchlist-item" key={item.id}>
+                  <div>
+                    <strong>{watchlistTitle(item)}</strong>
+                    <span>{watchlistDescription(item)}</span>
+                  </div>
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={() => handleWatchlistAction("restore", item.id)}
+                    disabled={status === "updating"}
+                  >
+                    Восстановить
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Архив пуст.</p>
           )}
         </section>
       </section>
@@ -640,7 +741,7 @@ function watchlistTitle(watchlist: Watchlist) {
 function watchlistDescription(watchlist: Watchlist) {
   const parts = [
     watchlist.id.slice(0, 8),
-    watchlist.active ? "активен" : "пауза",
+    watchlist.archived ? "архив" : watchlist.active ? "активен" : "пауза",
     watchlist.size_value ? `размер ${watchlist.size_value}` : null,
     formatMoney(watchlist.target_price, watchlist.target_price_currency),
   ].filter(Boolean);

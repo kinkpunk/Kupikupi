@@ -34,6 +34,7 @@ async def client(
 ) -> AsyncGenerator[TestClient, None]:
     settings.telegram_bot_token = "test-bot-token"
     settings.jwt_secret_key = "test-jwt-secret"
+    settings.ollama_enabled = False
 
     async def override_db_session() -> AsyncGenerator[AsyncSession, None]:
         async with db_session_factory() as session:

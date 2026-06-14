@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     fx_rate_currencies: str = "CZK"
     error_reporting_enabled: bool = False
     error_reporting_endpoint_url: str | None = None
+    ollama_enabled: bool = False
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen2.5:0.5b"
+    ollama_timeout_seconds: float = 8.0
 
     @property
     def cors_origins(self) -> list[str]:
@@ -101,6 +105,8 @@ class Settings(BaseSettings):
             self.error_reporting_endpoint_url
         ):
             issues.append("ERROR_REPORTING_ENDPOINT_URL must be an absolute http(s) URL.")
+        if self.ollama_enabled and not _is_http_url(self.ollama_base_url):
+            issues.append("OLLAMA_BASE_URL must be an absolute http(s) URL when Ollama is enabled.")
         try:
             _ = self.allowed_telegram_user_ids
         except ValueError:

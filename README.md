@@ -22,7 +22,8 @@ CI validates backend lint/tests/migrations, Telegram Bot lint/tests, and WebApp 
 
 ## MVP Decisions
 
-- Phase 1 uses a deterministic parser for shopping requests.
+- Shopping requests use deterministic parsing by default. An optional Ollama integration can
+  supplement missing constraints while retaining deterministic fallback behavior.
 - Prices are stored in original source currency and normalized to EUR.
 - Shopping requests create watchlists only after explicit user confirmation.
 - Telegram WebApp is the primary user interface.
@@ -104,6 +105,19 @@ replace the default `JWT_SECRET_KEY`, configure `TELEGRAM_BOT_TOKEN`, and use no
 Set `TELEGRAM_ALLOWED_USER_IDS` to a comma-separated list of numeric Telegram IDs when backend
 Telegram auth should be limited to closed-test participants.
 If `ERROR_REPORTING_ENABLED=1`, set an absolute `ERROR_REPORTING_ENDPOINT_URL`.
+
+Optional Ollama-assisted parsing:
+
+```bash
+ollama pull qwen2.5:0.5b
+ollama serve
+```
+
+Set `OLLAMA_ENABLED=1`, `OLLAMA_BASE_URL=http://host.docker.internal:11434`, and optionally
+`OLLAMA_MODEL`. Ollama supplements fields missed by the deterministic parser; timeout, transport,
+schema, or model errors fall back to deterministic results. In staging, run Ollama as a separate
+service with persistent model storage and at least 1 GB RAM instead of adding it to the API
+container.
 
 Migrations and seed data:
 

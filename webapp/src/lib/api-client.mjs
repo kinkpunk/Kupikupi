@@ -75,6 +75,12 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
         },
       });
     },
+    updateShoppingRequest(requestId, text) {
+      return request(`/shopping-requests/${requestId}`, {
+        method: "PUT",
+        body: { text },
+      });
+    },
     confirmWatchlistFromShoppingRequest(requestId) {
       return request(`/shopping-requests/${requestId}/watchlist`, {
         method: "POST",
@@ -143,6 +149,11 @@ export function createApiClient({ baseUrl, accessToken, getAccessToken, fetchImp
     },
     archiveWatchlist(watchlistId) {
       return request(`/watchlists/${watchlistId}/archive`, {
+        method: "POST",
+      });
+    },
+    restoreWatchlist(watchlistId) {
+      return request(`/watchlists/${watchlistId}/restore`, {
         method: "POST",
       });
     },

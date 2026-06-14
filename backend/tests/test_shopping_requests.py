@@ -112,6 +112,19 @@ def test_deterministic_parser_extracts_running_shoe_constraints() -> None:
     assert parsed.attributes["parser"] == "deterministic-v1"
 
 
+def test_deterministic_parser_extracts_new_english_example() -> None:
+    parsed = parse_shopping_request(
+        "I need waterproof trail running shoes for muddy weekend runs, "
+        "EU size 42, under 170 EUR."
+    )
+
+    assert parsed.category == "running-shoes"
+    assert parsed.use_case == "trail running"
+    assert parsed.size_value == "42"
+    assert parsed.max_price == 170
+    assert parsed.max_price_currency == "EUR"
+
+
 async def test_create_shopping_request_parses_constraints_and_recommends_product(
     client: TestClient,
     db_session_factory,
@@ -192,6 +205,76 @@ async def test_recommendations_boost_preferred_brand_match(
     assert recommendations[0]["reason"] == (
         "Matched by category, brand, model/text, use case, size in stock, within budget."
     )
+
+
+async def test_user_can_edit_unconfirmed_shopping_request(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    user = await create_user_and_catalog(db_session_factory)
+    token = create_access_token(str(user.id))
+    headers = {"Authorization": f"Bearer {token}"}
+    create_response = client.post(
+        "/v1/shopping-requests",
+        headers=headers,
+        json={"text": "Хочу кофе. Бюджет 20 евро."},
+    )
+    request_id = create_response.json()["id"]
+
+    update_response = client.put(
+        f"/v1/shopping-requests/{request_id}",
+        headers=headers,
+        json={
+            "text": (
+                "Хочу New Balance беговые кроссовки для ежедневных тренировок. "
+                "Размер 41. Бюджет 140 евро."
+            )
+        },
+    )
+
+    assert update_response.status_code == 200
+    body = update_response.json()
+    assert body["raw_text"].startswith("Хочу New Balance")
+    assert body["budget_amount"] == 140
+    assert body["constraints"]["category"] == "running-shoes"
+    assert body["constraints"]["preferred_brand"] == "New Balance"
+
+    recommendations_response = client.get(
+        f"/v1/shopping-requests/{request_id}/recommendations",
+        headers=headers,
+    )
+    recommendations = recommendations_response.json()["items"]
+    assert len(recommendations) == 2
+    assert recommendations[0]["product"]["name"] == "New Balance Fresh Foam 1080"
+
+
+async def test_confirmed_shopping_request_cannot_be_edited(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    user = await create_user_and_catalog(db_session_factory)
+    token = create_access_token(str(user.id))
+    headers = {"Authorization": f"Bearer {token}"}
+    create_response = client.post(
+        "/v1/shopping-requests",
+        headers=headers,
+        json={"text": "Хочу кроссовки. Размер 41. Бюджет 150 евро."},
+    )
+    request_id = create_response.json()["id"]
+    confirm_response = client.post(
+        f"/v1/shopping-requests/{request_id}/watchlist",
+        headers=headers,
+    )
+    assert confirm_response.status_code == 201
+
+    update_response = client.put(
+        f"/v1/shopping-requests/{request_id}",
+        headers=headers,
+        json={"text": "Хочу кофе. Бюджет 20 евро."},
+    )
+
+    assert update_response.status_code == 409
+    assert update_response.json()["detail"] == "Confirmed shopping requests cannot be edited."
 
 
 async def test_user_cannot_read_other_users_shopping_request(

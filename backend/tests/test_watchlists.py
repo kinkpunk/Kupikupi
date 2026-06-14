@@ -71,6 +71,18 @@ async def test_watchlist_crud_pause_archive_delete(client: TestClient, db_sessio
     assert archive_response.status_code == 200
     assert archive_response.json()["archived"] is True
 
+    archived_list_response = client.get("/v1/watchlists?archived=true", headers=headers)
+    assert archived_list_response.status_code == 200
+    assert archived_list_response.json()["total"] == 1
+
+    restore_response = client.post(
+        f"/v1/watchlists/{watchlist['id']}/restore",
+        headers=headers,
+    )
+    assert restore_response.status_code == 200
+    assert restore_response.json()["active"] is True
+    assert restore_response.json()["archived"] is False
+
     delete_response = client.delete(f"/v1/watchlists/{watchlist['id']}", headers=headers)
     assert delete_response.status_code == 204
 

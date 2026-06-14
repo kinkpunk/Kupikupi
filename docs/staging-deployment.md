@@ -71,6 +71,10 @@ Set these values for the backend API, worker, and scheduler unless noted otherwi
 | `FX_RATE_CURRENCIES` | no | yes | yes | `CZK` |
 | `ERROR_REPORTING_ENABLED` | yes | no | no | `1` |
 | `ERROR_REPORTING_ENDPOINT_URL` | yes | no | no | absolute HTTPS error event collector URL |
+| `OLLAMA_ENABLED` | yes | no | no | `0` until a separate Ollama service is available |
+| `OLLAMA_BASE_URL` | yes | no | no | internal absolute URL of the Ollama service |
+| `OLLAMA_MODEL` | yes | no | no | `qwen2.5:0.5b` |
+| `OLLAMA_TIMEOUT_SECONDS` | yes | no | no | `8` |
 | `OBSERVABILITY_DASHBOARD_URL` | operator | operator | operator | absolute HTTPS dashboard URL |
 | `ALERT_CONTACT_URL` | operator | operator | operator | absolute HTTPS or `mailto:` incident contact |
 
@@ -83,6 +87,9 @@ curl https://api.staging.kupikupi.example/v1/ready
 For `ENVIRONMENT=staging`, readiness fails if `JWT_SECRET_KEY`, `TELEGRAM_BOT_TOKEN`,
 `DATABASE_URL`, `REDIS_URL`, or `CORS_ALLOWED_ORIGINS` use local/default values.
 Readiness also requires an absolute `ERROR_REPORTING_ENDPOINT_URL` when error reporting is enabled.
+When Ollama parsing is enabled, deploy it as a separate service with persistent model storage and
+at least 1 GB RAM. Keep `OLLAMA_ENABLED=0` on the API until that service is healthy; parsing always
+retains deterministic fallback.
 Before deployment, use `backend/scripts/staging_preflight.py` to validate backend, bot, WebApp,
 operator smoke, and operator observability values together.
 Use `backend/scripts/staging_env_template.py` to generate starter env files for that preflight.

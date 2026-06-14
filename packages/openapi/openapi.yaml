@@ -165,7 +165,7 @@ paths:
     post:
       tags: [Shopping Requests]
       summary: Create a natural-language shopping request
-      description: Parses user intent deterministically and returns initial recommendations when available.
+      description: Parses user intent and returns initial recommendations when available. An optional Ollama parser can supplement deterministic extraction.
       requestBody:
         required: true
         content:
@@ -195,6 +195,26 @@ paths:
                 $ref: "#/components/schemas/ShoppingRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Shopping Requests]
+      summary: Edit and reparse an unconfirmed shopping request
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShoppingRequestUpdate"
+      responses:
+        "200":
+          description: Updated shopping request with rebuilt recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShoppingRequest"
+        "409":
+          description: Request already has a confirmed watchlist
 
   /shopping-requests/{request_id}/recommendations:
     get:
@@ -230,6 +250,10 @@ paths:
       summary: List watchlists
       parameters:
         - name: active
+          in: query
+          schema:
+            type: boolean
+        - name: archived
           in: query
           schema:
             type: boolean
@@ -324,6 +348,20 @@ paths:
       responses:
         "200":
           description: Archived watchlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Watchlist"
+
+  /watchlists/{watchlist_id}/restore:
+    post:
+      tags: [Watchlists]
+      summary: Restore and activate an archived watchlist
+      parameters:
+        - $ref: "#/components/parameters/WatchlistId"
+      responses:
+        "200":
+          description: Restored watchlist
           content:
             application/json:
               schema:
@@ -1120,10 +1158,17 @@ components:
       properties:
         text:
           type: string
-          example: Хочу беговые кроссовки для ежедневных тренировок. Размер 41. Бюджет 150 евро.
+          example: I need waterproof trail running shoes for muddy weekend runs, EU size 42, under 170 EUR.
         create_watchlist_after_confirmation:
           type: boolean
           default: false
+
+    ShoppingRequestUpdate:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
 
     ShoppingRequest:
       type: object

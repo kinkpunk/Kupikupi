@@ -121,6 +121,26 @@ async def archive_my_watchlist(
     return updated
 
 
+@router.post("/{watchlist_id}/restore", response_model=WatchlistRead)
+async def restore_my_watchlist(
+    watchlist_id: uuid.UUID,
+    session: DbSessionDep,
+    current_user: CurrentUserDep,
+) -> WatchlistRead:
+    watchlist = await get_watchlist(session, user_id=current_user.id, watchlist_id=watchlist_id)
+    if watchlist is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Watchlist not found.")
+
+    updated = await update_watchlist(
+        session,
+        watchlist=watchlist,
+        payload=WatchlistUpdate(active=True, archived=False),
+    )
+    await session.commit()
+    await session.refresh(updated)
+    return updated
+
+
 @router.delete("/{watchlist_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_my_watchlist(
     watchlist_id: uuid.UUID,

@@ -85,6 +85,23 @@ def test_runtime_configuration_requires_error_reporting_endpoint_when_enabled() 
     ]
 
 
+def test_runtime_configuration_requires_absolute_ollama_url_when_enabled() -> None:
+    settings = Settings(
+        environment="staging",
+        jwt_secret_key="custom-secret",
+        telegram_bot_token="bot-token",
+        database_url="postgresql+asyncpg://user:pass@db.example.test:5432/kupikupi",
+        redis_url="redis://redis.example.test:6379/0",
+        cors_allowed_origins="https://app.example.test",
+        ollama_enabled=True,
+        ollama_base_url="ollama.internal",
+    )
+
+    assert settings.validate_runtime_configuration() == [
+        "OLLAMA_BASE_URL must be an absolute http(s) URL when Ollama is enabled."
+    ]
+
+
 def test_runtime_configuration_rejects_invalid_error_reporting_endpoint() -> None:
     settings = Settings(
         environment="staging",

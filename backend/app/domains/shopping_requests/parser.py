@@ -14,7 +14,16 @@ CURRENCY_ALIASES = {
 }
 
 CATEGORY_KEYWORDS = [
-    ("running-shoes", ["беговые кроссовки", "running shoes", "run shoes", "для бега"]),
+    (
+        "running-shoes",
+        [
+            "беговые кроссовки",
+            "running shoes",
+            "run shoes",
+            "trail running shoes",
+            "для бега",
+        ],
+    ),
     ("sneakers", ["кроссовки", "sneakers"]),
     ("clothing", ["одежда", "clothing", "куртка", "футболка", "штаны"]),
     ("cosmetics", ["косметика", "cosmetics", "крем", "сыворотка"]),
@@ -24,6 +33,7 @@ CATEGORY_KEYWORDS = [
 USE_CASE_KEYWORDS = [
     ("daily training", ["ежедневных тренировок", "daily training", "каждый день"]),
     ("marathon training", ["марафон", "marathon"]),
+    ("trail running", ["trail running", "trail run", "трейл"]),
     ("lifestyle", ["повседнев", "lifestyle"]),
 ]
 
@@ -67,6 +77,30 @@ def parse_shopping_request(text: str) -> ParsedShoppingRequest:
         max_price=max_price,
         max_price_currency=currency,
         attributes={"parser": "deterministic-v1"},
+    )
+
+
+def merge_parsed_requests(
+    deterministic: ParsedShoppingRequest,
+    llm: ParsedShoppingRequest | None,
+) -> ParsedShoppingRequest:
+    if llm is None:
+        return deterministic
+
+    return ParsedShoppingRequest(
+        category=deterministic.category or llm.category,
+        use_case=deterministic.use_case or llm.use_case,
+        size_value=deterministic.size_value or llm.size_value,
+        size_system=deterministic.size_system or llm.size_system,
+        preferred_brand=deterministic.preferred_brand or llm.preferred_brand,
+        color=deterministic.color or llm.color,
+        max_price=deterministic.max_price or llm.max_price,
+        max_price_currency=deterministic.max_price_currency or llm.max_price_currency,
+        attributes={
+            **deterministic.attributes,
+            "parser": "hybrid-v1",
+            "llm_model": llm.attributes.get("llm_model"),
+        },
     )
 
 

@@ -1,9 +1,10 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.domains.catalog.models import Category, Product
 from app.domains.offers.models import Offer, OfferAvailability
 from app.domains.shopping_requests.models import (
@@ -11,8 +12,18 @@ from app.domains.shopping_requests.models import (
     ShoppingRequest,
     ShoppingRequestConstraints,
 )
-from app.domains.shopping_requests.parser import ParsedShoppingRequest, parse_shopping_request
+from app.domains.shopping_requests.parser import (
+    ParsedShoppingRequest,
+    merge_parsed_requests,
+    parse_shopping_request,
+)
 from app.domains.users.models import User
+from app.domains.watchlists.models import Watchlist
+from app.integrations.ollama import parse_with_ollama
+
+
+class ShoppingRequestLockedError(Exception):
+    pass
 
 
 async def create_shopping_request(
@@ -21,7 +32,7 @@ async def create_shopping_request(
     user: User,
     raw_text: str,
 ) -> ShoppingRequest:
-    parsed = parse_shopping_request(raw_text)
+    parsed = await _parse_request(raw_text)
     request = ShoppingRequest(
         user_id=user.id,
         raw_text=raw_text,
@@ -37,6 +48,31 @@ async def create_shopping_request(
     await _create_recommendation_drafts(session, request, parsed)
     await session.flush()
     return await get_shopping_request(session, user_id=user.id, request_id=request.id) or request
+
+
+async def update_shopping_request(
+    session: AsyncSession,
+    *,
+    request: ShoppingRequest,
+    raw_text: str,
+) -> ShoppingRequest:
+    linked_watchlist_id = await session.scalar(
+        select(Watchlist.id).where(Watchlist.source_request_id == request.id).limit(1)
+    )
+    if linked_watchlist_id is not None:
+        raise ShoppingRequestLockedError
+
+    parsed = await _parse_request(raw_text)
+    request.raw_text = raw_text
+    request.status = "parsed"
+    request.display_currency = parsed.max_price_currency or request.display_currency
+    request.budget_amount = parsed.max_price
+    _replace_constraints(request, parsed)
+    await session.execute(delete(Recommendation).where(Recommendation.request_id == request.id))
+    await session.flush()
+    await _create_recommendation_drafts(session, request, parsed)
+    await session.flush()
+    return request
 
 
 async def list_shopping_requests(
@@ -102,6 +138,31 @@ def _build_constraints(parsed: ParsedShoppingRequest) -> ShoppingRequestConstrai
         max_price_currency=parsed.max_price_currency,
         attributes=parsed.attributes,
     )
+
+
+def _replace_constraints(request: ShoppingRequest, parsed: ParsedShoppingRequest) -> None:
+    if request.constraints is None:
+        request.constraints = _build_constraints(parsed)
+        return
+
+    for field in (
+        "category",
+        "use_case",
+        "size_value",
+        "size_system",
+        "preferred_brand",
+        "color",
+        "max_price",
+        "max_price_currency",
+        "attributes",
+    ):
+        setattr(request.constraints, field, getattr(parsed, field))
+
+
+async def _parse_request(raw_text: str) -> ParsedShoppingRequest:
+    deterministic = parse_shopping_request(raw_text)
+    llm = await parse_with_ollama(raw_text, settings=settings)
+    return merge_parsed_requests(deterministic, llm)
 
 
 async def _create_recommendation_drafts(
