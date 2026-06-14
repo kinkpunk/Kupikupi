@@ -1,6 +1,6 @@
 const DEFAULT_API_BASE_URL = "http://localhost:8000/v1";
 
-export function getWebAppConfig(env = process.env) {
+export function getWebAppConfig(env = getPublicEnvironment()) {
   const appEnv = env.NEXT_PUBLIC_APP_ENV || "local";
   return {
     appEnv,
@@ -9,6 +9,17 @@ export function getWebAppConfig(env = process.env) {
     supportContactUrl: env.NEXT_PUBLIC_SUPPORT_CONTACT_URL || "",
     privacyPolicyUrl: env.NEXT_PUBLIC_PRIVACY_POLICY_URL || "",
     termsUrl: env.NEXT_PUBLIC_TERMS_URL || "",
+  };
+}
+
+function getPublicEnvironment() {
+  return {
+    NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    NEXT_PUBLIC_DEMO_ACCESS_TOKEN: process.env.NEXT_PUBLIC_DEMO_ACCESS_TOKEN,
+    NEXT_PUBLIC_SUPPORT_CONTACT_URL: process.env.NEXT_PUBLIC_SUPPORT_CONTACT_URL,
+    NEXT_PUBLIC_PRIVACY_POLICY_URL: process.env.NEXT_PUBLIC_PRIVACY_POLICY_URL,
+    NEXT_PUBLIC_TERMS_URL: process.env.NEXT_PUBLIC_TERMS_URL,
   };
 }
 
