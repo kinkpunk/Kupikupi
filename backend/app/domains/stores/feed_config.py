@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.stores.models import SourceConfig, Store
 
-SUPPORTED_FEED_SOURCE_TYPES = {"http_csv", "http_json"}
+SUPPORTED_FEED_SOURCE_TYPES = {"heureka_xml", "http_csv", "http_json"}
 REQUIRED_HTTP_CSV_COLUMNS = {"external_id", "product_url", "source_price", "product_name"}
 
 
@@ -46,6 +46,8 @@ class StoreFeedSourceConfig(BaseModel):
         _validate_http_url(self.endpoint_url, field_name="source.endpoint_url")
         if self.source_type == "http_csv":
             _validate_http_csv_settings(self.settings)
+        if self.source_type == "heureka_xml":
+            _validate_heureka_xml_settings(self.settings)
         return self
 
 
@@ -152,6 +154,40 @@ def store_feed_template() -> dict[str, Any]:
     }
 
 
+def heureka_xml_feed_template() -> dict[str, Any]:
+    return {
+        "store": {
+            "name": "Example Heureka Store",
+            "country": "CZ",
+            "url": "https://www.example.test",
+            "active": True,
+            "delivers_to_cz": True,
+        },
+        "source": {
+            "source_type": "heureka_xml",
+            "endpoint_url": "https://www.example.test/heureka.xml",
+            "active": True,
+            "sync_interval_minutes": 120,
+            "settings": {
+                "source_currency": "CZK",
+                "size_system": "EU",
+                "size_param_names": ["Velikost", "Size"],
+                "color_param_names": ["Barva", "Color"],
+                "category_map": {
+                    "Bezecke boty": {
+                        "slug": "running-shoes",
+                        "name": "Running Shoes",
+                    },
+                    "Tenisky": {
+                        "slug": "sneakers",
+                        "name": "Sneakers",
+                    },
+                },
+            },
+        },
+    }
+
+
 async def _get_store_by_name(session: AsyncSession, name: str) -> Store | None:
     result = await session.execute(select(Store).where(Store.name == name))
     return result.scalar_one_or_none()
@@ -185,6 +221,12 @@ def _validate_http_csv_settings(settings: dict[str, Any]) -> None:
             + ", ".join(missing_columns)
             + "."
         )
+
+
+def _validate_heureka_xml_settings(settings: dict[str, Any]) -> None:
+    category_map = settings.get("category_map")
+    if not isinstance(category_map, dict) or not category_map:
+        raise ValueError("source.settings.category_map must be a non-empty object.")
 
 
 def _validate_http_url(value: str, *, field_name: str) -> None:

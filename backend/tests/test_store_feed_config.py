@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 
 from app.domains.stores.feed_config import (
     StoreFeedConfig,
+    heureka_xml_feed_template,
     store_feed_template,
     upsert_store_feed_config,
 )
@@ -95,6 +96,43 @@ def test_store_feed_config_rejects_http_csv_without_required_columns() -> None:
     data["source"]["settings"]["columns"] = {"external_id": "id"}
 
     with pytest.raises(ValidationError, match="product_name"):
+        StoreFeedConfig.model_validate(data)
+
+
+def test_store_feed_config_accepts_heureka_xml() -> None:
+    data = store_feed_template()
+    data["source"] = {
+        "source_type": "heureka_xml",
+        "endpoint_url": "https://shop.example.test/heureka.xml",
+        "active": True,
+        "sync_interval_minutes": 120,
+        "settings": {
+            "category_map": {
+                "Bezecke boty": "running-shoes",
+            }
+        },
+    }
+
+    payload = StoreFeedConfig.model_validate(data)
+
+    assert payload.source.source_type == "heureka_xml"
+
+
+def test_heureka_xml_feed_template_is_valid() -> None:
+    payload = StoreFeedConfig.model_validate(heureka_xml_feed_template())
+
+    assert payload.source.source_type == "heureka_xml"
+
+
+def test_store_feed_config_rejects_heureka_xml_without_category_map() -> None:
+    data = store_feed_template()
+    data["source"] = {
+        "source_type": "heureka_xml",
+        "endpoint_url": "https://shop.example.test/heureka.xml",
+        "settings": {},
+    }
+
+    with pytest.raises(ValidationError, match="category_map"):
         StoreFeedConfig.model_validate(data)
 
 

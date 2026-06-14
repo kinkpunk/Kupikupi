@@ -38,7 +38,9 @@ Implemented and covered:
 - Closed field test runbook with go/no-go checklist.
 - Live FX-rate updater job for configured currencies.
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
-- Operator command for creating or updating `http_csv`/`http_json` store feed configs.
+- Heureka-compatible store XML feed adapter with category, variant, size, color, availability, and
+  CZK price extraction.
+- Operator command for creating or updating `heureka_xml`/`http_csv`/`http_json` store feed configs.
 - Store feed dry-run validation before database writes and field-test checklist validation for feed
   config or explicit demo-data-only mode.
 - Operator source sync script with JSON summary and non-zero failure exit codes.

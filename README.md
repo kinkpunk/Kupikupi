@@ -318,7 +318,7 @@ testing. Set `NEXT_PUBLIC_SUPPORT_CONTACT_URL`, `NEXT_PUBLIC_PRIVACY_POLICY_URL`
 - Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic.
 - Queue/cache: Redis, Celery.
 - Store integrations: official APIs, affiliate feeds, Heureka, Playwright scrapers.
-- Implemented source adapters: `static_json`, `http_json`, `http_csv`.
+- Implemented source adapters: `static_json`, `http_json`, `http_csv`, `heureka_xml`.
 - Telegram Bot: aiogram.
 - WebApp: Next.js, TypeScript.
 - Deployment: Docker Compose first, Kubernetes-ready later.

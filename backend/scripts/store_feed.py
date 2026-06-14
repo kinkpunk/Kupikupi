@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from app.db.session import async_session_factory
 from app.domains.stores.feed_config import (
     StoreFeedConfig,
+    heureka_xml_feed_template,
     store_feed_template,
     upsert_store_feed_config,
 )
@@ -150,7 +151,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--print-template",
         action="store_true",
-        help="Print an example http_csv feed config.",
+        help="Print an example feed config.",
+    )
+    parser.add_argument(
+        "--template-type",
+        choices=("http_csv", "heureka_xml"),
+        default="http_csv",
+        help="Feed format for --print-template.",
     )
     return parser.parse_args()
 
@@ -158,7 +165,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     if args.print_template:
-        print(json.dumps(store_feed_template(), ensure_ascii=False, indent=2, sort_keys=True))
+        template = (
+            heureka_xml_feed_template()
+            if args.template_type == "heureka_xml"
+            else store_feed_template()
+        )
+        print(json.dumps(template, ensure_ascii=False, indent=2, sort_keys=True))
         raise SystemExit(0)
     if args.config is None:
         print("Provide --config or --print-template.")

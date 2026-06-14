@@ -1806,7 +1806,7 @@ components:
           nullable: true
         source_type:
           type: string
-          enum: [fake, static_json, http_json, api, affiliate_feed, heureka, playwright]
+          enum: [fake, static_json, http_json, http_csv, heureka_xml]
           nullable: true
 
     FxRate:
@@ -1873,7 +1873,7 @@ components:
           format: uuid
         source_type:
           type: string
-          enum: [fake, static_json, http_json, api, affiliate_feed, heureka, playwright]
+          enum: [fake, static_json, http_json, http_csv, heureka_xml]
         endpoint_url:
           type: string
           format: uri
@@ -1902,7 +1902,7 @@ components:
       properties:
         source_type:
           type: string
-          enum: [fake, static_json, http_json, api, affiliate_feed, heureka, playwright]
+          enum: [fake, static_json, http_json, http_csv, heureka_xml]
         endpoint_url:
           type: string
           format: uri
