@@ -282,14 +282,16 @@ Use a real Telegram account allowed to access the staging bot:
 
 ## First Store Feed Configuration
 
-For the first real store feed, prefer `heureka_xml`, `http_csv`, or `http_json` source configs
-before scrapers. `heureka_xml` consumes a store-owned Heureka-compatible XML feed; the Heureka
+For the first real store feed, prefer `srovname_api`, `heureka_xml`, `http_csv`, or `http_json`
+source configs before scrapers. `srovname_api` consumes the Srovname.cz REST API with
+`X-API-KEY`. `heureka_xml` consumes a store-owned Heureka-compatible XML feed; the Heureka
 Marketplace API is an order/partner integration and is not an aggregated product-search API.
 Use the backend operator command to print a template and apply the final config:
 
 ```bash
 cd backend
 python scripts/store_feed.py --print-template
+python scripts/store_feed.py --print-template --template-type srovname_api
 python scripts/store_feed.py --print-template --template-type heureka_xml
 python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG" --dry-run --limit 3 --min-offers 1
 python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG"
@@ -336,6 +338,28 @@ Example `http_csv` source config settings:
 
 Required logical fields are `external_id`, `product_url`, `source_price`, and `product_name`.
 `source_currency` may come from a column or `defaults.source_currency`.
+
+For `srovname_api`, add `SROVNAME_API_KEY` to the runtime secret group and keep the feed config
+limited to non-secret values:
+
+```json
+{
+  "api_key_env": "SROVNAME_API_KEY",
+  "items_per_page": 100,
+  "max_pages": 10,
+  "default_availability": "in_stock",
+  "category_map": {
+    "Bezecke boty": {
+      "slug": "running-shoes",
+      "name": "Running Shoes"
+    }
+  }
+}
+```
+
+The adapter calls `GET /api/v1/eshop/products` with `page` and `itemsPerPage`, parses
+`products[]`, stores the active price from `salePrice` when present, keeps the original currency,
+and lets the existing source-sync pipeline normalize prices to EUR.
 
 For `heureka_xml`, configure `category_map` so paths from `CATEGORYTEXT` map to Kupikupi category
 slugs. The adapter reads `ITEM_ID`, `ITEMGROUP_ID`, `PRODUCTNAME`, `PRODUCT`, `URL`, `IMGURL`,

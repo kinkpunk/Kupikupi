@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from app.domains.stores.feed_config import (
     StoreFeedConfig,
     heureka_xml_feed_template,
+    srovname_api_feed_template,
     store_feed_template,
     upsert_store_feed_config,
 )
@@ -122,6 +123,39 @@ def test_heureka_xml_feed_template_is_valid() -> None:
     payload = StoreFeedConfig.model_validate(heureka_xml_feed_template())
 
     assert payload.source.source_type == "heureka_xml"
+
+
+def test_store_feed_config_accepts_srovname_api() -> None:
+    data = store_feed_template()
+    data["source"] = {
+        "source_type": "srovname_api",
+        "endpoint_url": "https://rest.srovname.cz/api/v1/",
+        "active": True,
+        "sync_interval_minutes": 720,
+        "settings": {
+            "api_key_env": "SROVNAME_API_KEY",
+            "items_per_page": 100,
+            "max_pages": 5,
+        },
+    }
+
+    payload = StoreFeedConfig.model_validate(data)
+
+    assert payload.source.source_type == "srovname_api"
+
+
+def test_srovname_api_feed_template_is_valid() -> None:
+    payload = StoreFeedConfig.model_validate(srovname_api_feed_template())
+
+    assert payload.source.source_type == "srovname_api"
+
+
+def test_store_feed_config_rejects_srovname_api_without_api_key_env() -> None:
+    data = srovname_api_feed_template()
+    data["source"]["settings"]["api_key_env"] = ""
+
+    with pytest.raises(ValidationError, match="api_key_env"):
+        StoreFeedConfig.model_validate(data)
 
 
 def test_store_feed_config_rejects_heureka_xml_without_category_map() -> None:

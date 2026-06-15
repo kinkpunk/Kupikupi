@@ -269,6 +269,7 @@ export default function AdminPage() {
               <option value="http_json">http_json</option>
               <option value="http_csv">http_csv</option>
               <option value="heureka_xml">heureka_xml</option>
+              <option value="srovname_api">srovname_api</option>
               <option value="static_json">static_json</option>
             </select>
           </label>

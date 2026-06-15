@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.stores.models import SourceConfig, Store
 
-SUPPORTED_FEED_SOURCE_TYPES = {"heureka_xml", "http_csv", "http_json"}
+SUPPORTED_FEED_SOURCE_TYPES = {"heureka_xml", "http_csv", "http_json", "srovname_api"}
 REQUIRED_HTTP_CSV_COLUMNS = {"external_id", "product_url", "source_price", "product_name"}
 
 
@@ -48,6 +48,8 @@ class StoreFeedSourceConfig(BaseModel):
             _validate_http_csv_settings(self.settings)
         if self.source_type == "heureka_xml":
             _validate_heureka_xml_settings(self.settings)
+        if self.source_type == "srovname_api":
+            _validate_srovname_api_settings(self.settings)
         return self
 
 
@@ -188,6 +190,40 @@ def heureka_xml_feed_template() -> dict[str, Any]:
     }
 
 
+def srovname_api_feed_template() -> dict[str, Any]:
+    return {
+        "store": {
+            "name": "Srovname.cz",
+            "country": "CZ",
+            "url": "https://www.srovname.cz",
+            "active": True,
+            "delivers_to_cz": True,
+        },
+        "source": {
+            "source_type": "srovname_api",
+            "endpoint_url": "https://rest.srovname.cz/api/v1/",
+            "active": True,
+            "sync_interval_minutes": 720,
+            "settings": {
+                "api_key_env": "SROVNAME_API_KEY",
+                "items_per_page": 100,
+                "max_pages": 10,
+                "default_availability": "in_stock",
+                "category_map": {
+                    "Bezecke boty": {
+                        "slug": "running-shoes",
+                        "name": "Running Shoes",
+                    },
+                    "Tenisky": {
+                        "slug": "sneakers",
+                        "name": "Sneakers",
+                    },
+                },
+            },
+        },
+    }
+
+
 async def _get_store_by_name(session: AsyncSession, name: str) -> Store | None:
     result = await session.execute(select(Store).where(Store.name == name))
     return result.scalar_one_or_none()
@@ -227,6 +263,18 @@ def _validate_heureka_xml_settings(settings: dict[str, Any]) -> None:
     category_map = settings.get("category_map")
     if not isinstance(category_map, dict) or not category_map:
         raise ValueError("source.settings.category_map must be a non-empty object.")
+
+
+def _validate_srovname_api_settings(settings: dict[str, Any]) -> None:
+    api_key_env = settings.get("api_key_env", "SROVNAME_API_KEY")
+    if not isinstance(api_key_env, str) or not api_key_env.strip():
+        raise ValueError("source.settings.api_key_env must be a non-empty string.")
+    items_per_page = int(settings.get("items_per_page", 100))
+    if items_per_page < 1 or items_per_page > 500:
+        raise ValueError("source.settings.items_per_page must be between 1 and 500.")
+    max_pages = int(settings.get("max_pages", 10))
+    if max_pages < 1 or max_pages > 100:
+        raise ValueError("source.settings.max_pages must be between 1 and 100.")
 
 
 def _validate_http_url(value: str, *, field_name: str) -> None:

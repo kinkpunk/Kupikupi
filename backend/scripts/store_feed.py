@@ -10,6 +10,7 @@ from app.db.session import async_session_factory
 from app.domains.stores.feed_config import (
     StoreFeedConfig,
     heureka_xml_feed_template,
+    srovname_api_feed_template,
     store_feed_template,
     upsert_store_feed_config,
 )
@@ -155,7 +156,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--template-type",
-        choices=("http_csv", "heureka_xml"),
+        choices=("http_csv", "heureka_xml", "srovname_api"),
         default="http_csv",
         help="Feed format for --print-template.",
     )
@@ -165,11 +166,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     if args.print_template:
-        template = (
-            heureka_xml_feed_template()
-            if args.template_type == "heureka_xml"
-            else store_feed_template()
-        )
+        if args.template_type == "heureka_xml":
+            template = heureka_xml_feed_template()
+        elif args.template_type == "srovname_api":
+            template = srovname_api_feed_template()
+        else:
+            template = store_feed_template()
         print(json.dumps(template, ensure_ascii=False, indent=2, sort_keys=True))
         raise SystemExit(0)
     if args.config is None:

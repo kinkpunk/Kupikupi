@@ -40,7 +40,10 @@ Implemented and covered:
 - Generic `http_csv` source adapter for affiliate or store CSV feeds.
 - Heureka-compatible store XML feed adapter with category, variant, size, color, availability, and
   CZK price extraction.
-- Operator command for creating or updating `heureka_xml`/`http_csv`/`http_json` store feed configs.
+- Srovname.cz REST API adapter with API-key header auth, pagination, sale-price parsing, and
+  source-sync compatible product/offer mapping.
+- Operator command for creating or updating `srovname_api`/`heureka_xml`/`http_csv`/`http_json`
+  store feed configs.
 - Store feed dry-run validation before database writes and field-test checklist validation for feed
   config or explicit demo-data-only mode.
 - Operator source sync script with JSON summary and non-zero failure exit codes.

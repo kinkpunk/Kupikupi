@@ -260,6 +260,7 @@ Store feed operator commands:
 ```bash
 cd backend
 python scripts/store_feed.py --print-template
+python scripts/store_feed.py --print-template --template-type srovname_api
 python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG" --dry-run --limit 3 --min-offers 1
 python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG"
 python scripts/source_sync.py --due --limit 10
@@ -277,7 +278,9 @@ admin token.
 The dry run validates the config, fetches sample offers without database writes, and fails if the
 feed returns fewer than `--min-offers` offers. Its report includes offer, product, EUR price, size,
 currency, availability, and warning counts. The apply command creates or updates a store and its
-`http_csv`/`http_json` source config.
+`http_csv`/`http_json`/`srovname_api` source config.
+For Srovname.cz staging, keep the API key only in environment secrets as `SROVNAME_API_KEY`;
+the `srovname_api` config stores the endpoint, pagination settings, and `api_key_env` name.
 Set `KUPIKUPI_DEMO_DATA_ONLY=1` only when the field test is explicitly limited to demo data.
 
 Telegram closed-test allowlist helper:
@@ -327,8 +330,9 @@ testing. Set `NEXT_PUBLIC_SUPPORT_CONTACT_URL`, `NEXT_PUBLIC_PRIVACY_POLICY_URL`
 
 - Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic.
 - Queue/cache: Redis, Celery.
-- Store integrations: official APIs, affiliate feeds, Heureka, Playwright scrapers.
-- Implemented source adapters: `static_json`, `http_json`, `http_csv`, `heureka_xml`.
+- Store integrations: official APIs, affiliate feeds, aggregator APIs, Playwright scrapers.
+- Implemented source adapters: `static_json`, `http_json`, `http_csv`, `heureka_xml`,
+  `srovname_api`.
 - Telegram Bot: aiogram.
 - WebApp: Next.js, TypeScript.
 - Deployment: Docker Compose first, Kubernetes-ready later.
