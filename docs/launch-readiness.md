@@ -113,8 +113,12 @@ Verified on 2026-06-17:
 - OpenAPI contract checks passed as part of the backend test suite.
 - Telegram Bot lint passed and all 37 tests passed.
 - WebApp all 41 tests and TypeScript check passed.
-- Alembic migration SQL generation, WebApp production build, npm audit, generated staging env
-  checklist, and Docker smoke were not run in this pass.
+- Demo-data-only staging env checklist passed with expected warnings for demo-only feed mode and
+  missing optional smoke tokens.
+- Targeted staging script tests passed for field-test checklist, staging preflight, and staging
+  smoke helpers.
+- Alembic migration SQL generation, WebApp production build, npm audit, remote staging smoke, and
+  Docker smoke were not run in this pass.
 
 ## Not Ready For Public User Testing Yet
 

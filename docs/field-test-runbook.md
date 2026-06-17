@@ -145,6 +145,7 @@ For the first Srovname response, record this intake checklist before applying th
 - matching risk: missing GTIN/SKU, duplicate-looking product names, and brand/category variants.
 
 Use `docs/srovname-real-data-intake.md` for the full operator checklist and go/no-go criteria.
+Use `docs/srovname-staging-source-config.md` for the staging config template and placeholder notes.
 
 Run sync:
 

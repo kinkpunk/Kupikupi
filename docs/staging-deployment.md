@@ -360,6 +360,8 @@ limited to non-secret values:
 The adapter calls `GET /api/v1/eshop/products` with `page` and `itemsPerPage`, parses
 `products[]`, stores the active price from `salePrice` when present, keeps the original currency,
 and lets the existing source-sync pipeline normalize prices to EUR.
+Use `docs/srovname-staging-source-config.md` for the full staging config template and placeholder
+notes before the first dry run.
 
 For `heureka_xml`, configure `category_map` so paths from `CATEGORYTEXT` map to Kupikupi category
 slugs. The adapter reads `ITEM_ID`, `ITEMGROUP_ID`, `PRODUCTNAME`, `PRODUCT`, `URL`, `IMGURL`,
@@ -404,7 +406,8 @@ python scripts/product_duplicates.py \
 
 ## Known Staging Limitations
 
-- Store data is still demo/static unless a real `http_csv` or `http_json` source config is added.
+- Store data is still demo/static unless a real `srovname_api`, `heureka_xml`, `http_csv`, or
+  `http_json` source config is added.
 - FX-rate freshness depends on the configured HTTP source availability.
 - Product duplicate candidates can be reviewed through CSV export or the WebApp admin screen and
   confirmed duplicates can be merged.
