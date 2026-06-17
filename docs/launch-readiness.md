@@ -1,10 +1,11 @@
 # Kupikupi Launch Readiness
 
-Status date: 2026-06-13
+Status date: 2026-06-17
 
 ## Current Readiness
 
-Kupikupi is ready for local MVP smoke testing with demo data.
+Kupikupi is ready for local MVP smoke testing with demo data and staging workflow validation.
+The real-price path is blocked on partner data access, not on missing core product code.
 
 Implemented and covered:
 
@@ -74,6 +75,22 @@ Implemented and covered:
   builds, and Docker image builds.
 - Demo seed, demo token helper, and local MVP smoke script.
 
+## Staging Baseline
+
+The staging baseline is in place for a closed technical test:
+
+- Northflank services are used for the API and Telegram Bot.
+- Northflank cron jobs are used for `source_sync` and notification cycle while the deployment stays
+  within the Sandbox service limits.
+- PostgreSQL and Redis are provisioned for staging.
+- The WebApp is deployed separately on Vercel.
+- The current data-source implementation supports `static_json`, `http_json`, `http_csv`,
+  `heureka_xml`, and `srovname_api`.
+
+This does not yet validate real Czech market prices. The first real-data pass still requires a
+`SROVNAME_API_KEY`, a staging `srovname_api` source config, a dry run, and a successful
+`source_sync`.
+
 ## Local MVP Test Scope
 
 The current local MVP can demonstrate:
@@ -90,24 +107,28 @@ The current local MVP can demonstrate:
 
 ## Latest Local Verification
 
-Verified on 2026-06-13:
+Verified on 2026-06-17:
 
-- Backend lint passed and all 142 tests passed.
+- Backend lint passed and all 168 tests passed.
 - OpenAPI contract checks passed as part of the backend test suite.
-- Alembic generated the complete PostgreSQL migration SQL through `0014_fx_rates`.
 - Telegram Bot lint passed and all 37 tests passed.
-- WebApp all 32 tests, TypeScript check, production build, and npm audit passed.
-- Generated staging env files passed `scripts/field_test_checklist.py` in explicit demo-data mode.
-- Docker smoke was not run because Docker CLI is not installed on the verification machine.
+- WebApp all 41 tests and TypeScript check passed.
+- Alembic migration SQL generation, WebApp production build, npm audit, generated staging env
+  checklist, and Docker smoke were not run in this pass.
 
 ## Not Ready For Public User Testing Yet
 
 Blocking gaps:
 
-- No real production or staging environment is configured.
-- No HTTPS public domain for WebApp/API.
-- No real Telegram Bot token or deployed public bot runtime.
-- Store integrations are still generic feed adapters; no live Czech store feed is configured yet.
+- Production is not configured.
+- The Srovname partner API key is not available yet.
+- No real `srovname_api` source config has been applied on staging.
+- The full real-price cycle has not been validated yet:
+  `Srovname API -> source sync -> offers -> watchlists -> deals -> Telegram notifications`.
+- Srovname may not expose size-level availability; size-sensitive matching still needs real-data
+  validation.
+- Store integrations are implemented, but no live Czech store feed has been validated end to end
+  yet.
 - Product matching has deterministic cross-store reuse, punctuation/diacritic-aware normalization,
   duplicate candidate review, manual duplicate merge, operator duplicate CSV export, and WebApp
   operator review UI, but still needs validation against real store feeds.
@@ -119,17 +140,19 @@ Blocking gaps:
 
 1. Freeze feature scope for the first closed field test.
 2. Run the full local backend, Telegram Bot, WebApp, OpenAPI, and migration checks.
-3. Generate real staging env files and run `scripts/field_test_checklist.py`.
-4. Deploy HTTPS staging with a real Telegram Bot token and tester allowlist.
-5. Run remote staging smoke and the manual Telegram scenario.
-6. Configure one real Czech store feed after the demo-data field test, unless real prices are part of
-   that first test's stated scope.
+3. Run `scripts/field_test_checklist.py` against the current staging env files.
+4. Run remote staging smoke and the manual Telegram scenario.
+5. Keep the first closed workflow test explicitly demo-data-only unless real prices are in scope.
+6. After `SROVNAME_API_KEY` is available, create the staging `srovname_api` config, run dry-run, run
+   `source_sync`, review duplicate candidates, and validate matching/deals/notifications.
 
 ## Go/No-Go Summary
 
 - Local developer demo: go.
 - Internal technical demo with demo data: go.
-- Closed user test with real Telegram users: no-go until staging HTTPS and real Telegram Bot launch
-  settings are in place.
+- Closed workflow test with real Telegram users and demo data: go after staging smoke, allowlist,
+  support/privacy/terms, observability, and export/delete checks pass.
+- Closed test that promises real prices: no-go until `SROVNAME_API_KEY`, source config, dry-run, and
+  source sync pass on staging.
 - Public beta: no-go until real store data, legal review, observability, and staging validation of
   data export/deletion procedures are in place.

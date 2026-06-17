@@ -1,12 +1,16 @@
 # Kupikupi Closed Field Test Runbook
 
-Status date: 2026-06-13
+Status date: 2026-06-17
 
 Use this checklist before inviting real Telegram users to a closed staging test.
 
 The first field test is a workflow validation, not a public beta. Do not delay it for additional
 admin UI, parser improvements, store adapters, or distributed tracing when the go criteria below
 are already satisfied.
+
+Current staging has API, Telegram Bot, PostgreSQL, Redis, cron jobs, and WebApp deployment paths in
+place. Real store-price validation remains blocked until `SROVNAME_API_KEY` is available and a
+staging `srovname_api` source config has passed dry-run and sync.
 
 ## Go Criteria
 
@@ -16,8 +20,8 @@ are already satisfied.
 - Telegram Bot starts with a real staging bot token.
 - Telegram WebApp URL is registered in Telegram Bot settings.
 - `TELEGRAM_ALLOWED_USER_IDS` is configured in backend and Telegram Bot environments.
-- At least one real or semi-real `http_csv`/`http_json` store feed is configured, or the test is
-  explicitly limited to demo data.
+- At least one real or semi-real `srovname_api`/`heureka_xml`/`http_csv`/`http_json` store feed is
+  configured, or the test is explicitly limited to demo data.
 - Support contact, privacy, and terms URLs are configured.
 - Error reporting, observability dashboard, and alert contact are configured.
 - Remote staging smoke passes.
@@ -110,8 +114,12 @@ Print a feed template:
 
 ```bash
 cd backend
-python scripts/store_feed.py --print-template
+python scripts/store_feed.py --print-template --template-type srovname_api
 ```
+
+For Srovname, keep the API key only in environment secrets as `SROVNAME_API_KEY`. The config should
+store `api_key_env`, endpoint and pagination settings, and a starter `category_map`; it should not
+contain the secret value itself.
 
 Apply the feed config:
 
@@ -122,9 +130,19 @@ python scripts/store_feed.py --config "$KUPIKUPI_STORE_FEED_CONFIG"
 ```
 
 The dry run must pass and show at least one offer, product details, EUR prices, size coverage for
-size-sensitive categories, and a plausible sample before applying the config.
+size-sensitive categories when the upstream source exposes it, and a plausible sample before
+applying the config.
 If `KUPIKUPI_DEMO_DATA_ONLY=1`, skip this section and tell testers the run does not validate real
 prices.
+
+For the first Srovname response, record this intake checklist before applying the config:
+
+- price fields: `salePrice`, regular price, currency, and EUR normalization result;
+- product identity: product URL, image URL, brand, category, GTIN/EAN, SKU or source product ID;
+- catalog fit: raw category names and the chosen `category_map` target;
+- availability: stock/in-stock signal and any delivery metadata;
+- size coverage: whether size-level availability exists for size-sensitive categories;
+- matching risk: missing GTIN/SKU, duplicate-looking product names, and brand/category variants.
 
 Run sync:
 
@@ -256,6 +274,9 @@ intentional deletion after the export and dry run.
 - Bot cannot authenticate users through backend.
 - Tester is not blocked when missing from `TELEGRAM_ALLOWED_USER_IDS`.
 - Store sync fails and the test depends on real offers.
+- `SROVNAME_API_KEY` is missing when the test promises real prices.
+- The `srovname_api` dry run returns no usable offers, missing prices/currencies, or unusable
+  product URLs.
 - Support/privacy/terms links are missing.
 - Observability dashboard or alert contact is missing.
 - Export/delete operator commands have not been validated on staging restore data.
