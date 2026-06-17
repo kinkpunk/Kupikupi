@@ -118,6 +118,7 @@ Verified on 2026-06-17:
 - Targeted staging script tests passed for field-test checklist, staging preflight, and staging
   smoke helpers.
 - Targeted privacy/user-data smoke tests passed for export/delete behavior on disposable test data.
+- Targeted error reporting tests passed for middleware exception payloads.
 - Alembic migration SQL generation, WebApp production build, npm audit, remote staging smoke, and
   Docker smoke were not run in this pass. PostgreSQL backup/restore CLI drill was not run because
   `pg_dump`/`pg_restore` are not installed locally.
@@ -138,9 +139,10 @@ Blocking gaps:
 - Product matching has deterministic cross-store reuse, punctuation/diacritic-aware normalization,
   duplicate candidate review, manual duplicate merge, operator duplicate CSV export, and WebApp
   operator review UI, but still needs validation against real store feeds.
-- No full observability stack yet: tracing provider and real alerting/dashboard infrastructure still
-  need setup.
-- Privacy and terms still require legal review and final hosted URLs before public beta.
+- Closed-test observability baseline is documented, but real dashboard panels, alert routing, and
+  external error collector delivery still need staging operator verification.
+- Closed-test support/privacy/terms link checklist is documented, but privacy and terms still
+  require legal review and final hosted URLs before public beta.
 
 ## Recommended Next Iterations
 

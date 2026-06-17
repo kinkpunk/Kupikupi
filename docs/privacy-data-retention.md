@@ -1,6 +1,6 @@
 # Privacy And Data Retention Draft
 
-Status date: 2026-06-07
+Status date: 2026-06-17
 
 This is a product and engineering draft, not final legal text. It defines what Kupikupi should
 communicate and enforce before closed user testing. Public beta requires legal review.
@@ -85,6 +85,8 @@ Before closed user testing, support these operator workflows:
 4. Support contact and legal links: configure `SUPPORT_CONTACT_URL`, `PRIVACY_POLICY_URL`,
    `TERMS_URL`, `NEXT_PUBLIC_SUPPORT_CONTACT_URL`, `NEXT_PUBLIC_PRIVACY_POLICY_URL`, and
    `NEXT_PUBLIC_TERMS_URL` for the Telegram Bot and WebApp entry points.
+   Use `docs/closed-test-legal-links.md` to validate closed-test support, privacy, and terms links
+   before inviting testers.
 
 Before public beta, validate these commands on staging restore data and decide whether admin tooling
 is needed. Use the smoke wrapper for the restore-data validation:

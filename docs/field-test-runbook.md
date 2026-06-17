@@ -255,8 +255,10 @@ Before inviting external testers:
 - Confirm support contact works.
 - Confirm privacy URL opens.
 - Confirm terms URL opens.
+- Complete `docs/closed-test-legal-links.md`.
 - Open the observability dashboard and confirm `/v1/ready`, request volume, error rate, and
   notification dispatch panels are visible.
+- Complete `docs/observability.md` staging baseline and smoke checklist.
 - Validate user export/delete commands on staging restore data:
 
   ```bash
