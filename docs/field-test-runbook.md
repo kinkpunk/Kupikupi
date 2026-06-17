@@ -144,6 +144,8 @@ For the first Srovname response, record this intake checklist before applying th
 - size coverage: whether size-level availability exists for size-sensitive categories;
 - matching risk: missing GTIN/SKU, duplicate-looking product names, and brand/category variants.
 
+Use `docs/srovname-real-data-intake.md` for the full operator checklist and go/no-go criteria.
+
 Run sync:
 
 ```bash

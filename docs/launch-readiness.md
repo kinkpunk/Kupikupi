@@ -144,7 +144,8 @@ Blocking gaps:
 4. Run remote staging smoke and the manual Telegram scenario.
 5. Keep the first closed workflow test explicitly demo-data-only unless real prices are in scope.
 6. After `SROVNAME_API_KEY` is available, create the staging `srovname_api` config, run dry-run, run
-   `source_sync`, review duplicate candidates, and validate matching/deals/notifications.
+   `source_sync`, review duplicate candidates, and validate matching/deals/notifications. Use
+   `docs/srovname-real-data-intake.md` for the first response intake checklist.
 
 ## Go/No-Go Summary
 

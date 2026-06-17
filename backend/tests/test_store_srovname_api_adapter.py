@@ -1,4 +1,5 @@
 import httpx
+import pytest
 
 from app.domains.stores.models import SourceConfig
 from app.integrations.stores.registry import adapter_from_source_config
@@ -91,6 +92,8 @@ async def test_srovname_api_adapter_fetches_products_with_api_key_header(monkeyp
     }
     assert records[1].source_old_price is None
     assert records[1].product is not None
+    assert records[1].product.sku is None
+    assert records[1].product.attributes["gtin"] is None
     assert records[1].product.category_slug == "running-shoes"
 
 
@@ -112,6 +115,113 @@ async def test_srovname_api_adapter_accepts_full_products_endpoint(monkeypatch) 
         records = await SrovnameApiSourceAdapter(source_config, client=client).fetch_offers()
 
     assert records == []
+
+
+async def test_srovname_api_adapter_handles_empty_products(monkeypatch) -> None:
+    monkeypatch.setenv("SROVNAME_API_KEY", "test-api-key")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"totalProducts": 0, "products": []})
+
+    source_config = SourceConfig(
+        source_type="srovname_api",
+        endpoint_url="https://rest.srovname.cz/api/v1/",
+        active=True,
+        settings={"items_per_page": 50},
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        records = await SrovnameApiSourceAdapter(source_config, client=client).fetch_offers()
+
+    assert records == []
+
+
+async def test_srovname_api_adapter_falls_back_when_sale_price_is_null(monkeypatch) -> None:
+    monkeypatch.setenv("SROVNAME_API_KEY", "test-api-key")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "totalProducts": 1,
+                "products": [
+                    {
+                        "id": "sr-null-sale",
+                        "title": "Adidas Ultraboost",
+                        "link": "https://shop.example.test/ultraboost",
+                        "price": {"value": 159.99, "currency": "eur"},
+                        "salePrice": None,
+                        "brand": "Adidas",
+                        "productCategory": "Running Shoes",
+                    }
+                ],
+            },
+        )
+
+    source_config = SourceConfig(
+        source_type="srovname_api",
+        endpoint_url="https://rest.srovname.cz/api/v1/",
+        active=True,
+        settings={},
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        records = await SrovnameApiSourceAdapter(source_config, client=client).fetch_offers()
+
+    assert records[0].source_price == 159.99
+    assert records[0].source_old_price is None
+    assert records[0].source_currency == "EUR"
+    assert records[0].discount_percent is None
+
+
+async def test_srovname_api_adapter_preserves_zero_sale_price(monkeypatch) -> None:
+    monkeypatch.setenv("SROVNAME_API_KEY", "test-api-key")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "totalProducts": 1,
+                "products": [
+                    {
+                        "id": "sr-zero-sale",
+                        "title": "Clearance Running Shoes",
+                        "link": "https://shop.example.test/clearance",
+                        "price": {"value": 100, "currency": "CZK"},
+                        "salePrice": {"value": 0, "currency": "CZK"},
+                        "productCategory": "Running Shoes",
+                    }
+                ],
+            },
+        )
+
+    source_config = SourceConfig(
+        source_type="srovname_api",
+        endpoint_url="https://rest.srovname.cz/api/v1/",
+        active=True,
+        settings={},
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        records = await SrovnameApiSourceAdapter(source_config, client=client).fetch_offers()
+
+    assert records[0].source_price == 0
+    assert records[0].source_old_price == 100
+    assert records[0].discount_percent == 100
+
+
+async def test_srovname_api_adapter_raises_for_api_errors(monkeypatch) -> None:
+    monkeypatch.setenv("SROVNAME_API_KEY", "test-api-key")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(401, json={"message": "invalid api key"}, request=request)
+
+    source_config = SourceConfig(
+        source_type="srovname_api",
+        endpoint_url="https://rest.srovname.cz/api/v1/",
+        active=True,
+        settings={},
+    )
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(httpx.HTTPStatusError):
+            await SrovnameApiSourceAdapter(source_config, client=client).fetch_offers()
 
 
 async def test_srovname_api_adapter_requires_api_key(monkeypatch) -> None:
