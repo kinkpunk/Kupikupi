@@ -109,7 +109,7 @@ The current local MVP can demonstrate:
 
 Verified on 2026-06-17:
 
-- Backend lint passed and all 168 tests passed.
+- Backend lint passed and all 173 tests passed.
 - OpenAPI contract checks passed as part of the backend test suite.
 - Telegram Bot lint passed and all 37 tests passed.
 - WebApp all 41 tests and TypeScript check passed.
@@ -117,8 +117,10 @@ Verified on 2026-06-17:
   missing optional smoke tokens.
 - Targeted staging script tests passed for field-test checklist, staging preflight, and staging
   smoke helpers.
+- Targeted privacy/user-data smoke tests passed for export/delete behavior on disposable test data.
 - Alembic migration SQL generation, WebApp production build, npm audit, remote staging smoke, and
-  Docker smoke were not run in this pass.
+  Docker smoke were not run in this pass. PostgreSQL backup/restore CLI drill was not run because
+  `pg_dump`/`pg_restore` are not installed locally.
 
 ## Not Ready For Public User Testing Yet
 

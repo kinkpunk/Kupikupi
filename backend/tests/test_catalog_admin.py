@@ -177,6 +177,73 @@ async def test_admin_can_list_product_duplicate_candidates(
     }
 
 
+async def test_admin_duplicate_candidates_cover_real_feed_variants(
+    client: TestClient,
+    db_session_factory,
+) -> None:
+    admin = await create_test_user(db_session_factory, is_admin=True)
+    token = create_access_token(str(admin.id))
+
+    async with db_session_factory() as session:
+        brand = Brand(name="Nike", normalized_name="nike")
+        running = Category(slug="running-shoes", name="Running Shoes")
+        sneakers = Category(slug="sneakers", name="Sneakers")
+        session.add_all([brand, running, sneakers])
+        await session.flush()
+        running_id = running.id
+        session.add_all(
+            [
+                Product(
+                    brand_id=brand.id,
+                    category_id=running.id,
+                    name="Nike Pegasus 41",
+                    model="Pegasus 41",
+                    sku="NIKE-PEGASUS-41-A",
+                ),
+                Product(
+                    brand_id=brand.id,
+                    category_id=running.id,
+                    name="Nike Air Zoom Pegasus 41",
+                    model="Pegasus-41",
+                    sku=None,
+                ),
+                Product(
+                    brand_id=brand.id,
+                    category_id=running.id,
+                    name="Nike Pégasus 41",
+                    model="Pégasus 41",
+                    sku="NIKE-PEGASUS-41-C",
+                ),
+                Product(
+                    brand_id=brand.id,
+                    category_id=sneakers.id,
+                    name="Nike Pegasus 41",
+                    model="Pegasus 41",
+                    sku="NIKE-PEGASUS-41-SNEAKER",
+                ),
+            ]
+        )
+        await session.commit()
+
+    response = client.get(
+        "/v1/admin/product-duplicate-candidates",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["items"]) == 1
+    group = body["items"][0]
+    assert group["category_id"] == str(running_id)
+    assert group["normalized_identity"] == "pegasus 41"
+    assert len(group["products"]) == 3
+    assert {product["sku"] for product in group["products"]} == {
+        "NIKE-PEGASUS-41-A",
+        None,
+        "NIKE-PEGASUS-41-C",
+    }
+
+
 async def test_non_admin_cannot_list_product_duplicate_candidates(
     client: TestClient,
     db_session_factory,

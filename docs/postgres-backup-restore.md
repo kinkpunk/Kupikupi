@@ -1,6 +1,6 @@
 # PostgreSQL Backup And Restore
 
-Status date: 2026-06-07
+Status date: 2026-06-17
 
 This procedure is required before closed user testing. It covers manual backups, restore drills,
 and minimum retention expectations for Kupikupi staging.
@@ -73,6 +73,37 @@ Then run a smoke check against restored data:
 2. list recent shopping requests for a test user;
 3. list watchlists and notifications;
 4. verify that price history exists for imported products.
+
+## Demo-Safe User Data Drill
+
+User export/delete validation is destructive for the selected user. Run it only against restored
+staging data or an explicitly disposable demo user:
+
+```bash
+cd backend
+python scripts/user_data_smoke.py \
+  --telegram-id 123456 \
+  --export-output /tmp/kupikupi-user-123456.json \
+  --confirm-delete
+```
+
+The report must show:
+
+- `exported: true`;
+- matching `dry_run_counts` and `deleted_counts`;
+- `deletion_verified: true`;
+- an export file that contains the selected Telegram ID and no refresh token hash.
+
+For local development without PostgreSQL CLI tools, the safe fallback is the automated SQLite-backed
+test coverage:
+
+```bash
+cd backend
+python -m pytest tests/test_privacy.py tests/test_user_data_smoke_script.py
+```
+
+This does not replace a real `pg_dump`/`pg_restore` drill, but it verifies the application-level
+export/delete behavior without touching staging data.
 
 ## Retention
 
